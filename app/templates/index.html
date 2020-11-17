@@ -1,0 +1,54 @@
+{% extends "appbuilder/base.html" %}
+
+{% block content %}
+<h2>
+	<center>{{_('Welcome')}}<center>
+</h2>
+
+<div class="well">
+	<dl>
+		<p>
+			<dt>
+				<h4>About us!</h4>
+			</dt>
+			<dd>
+				We are virtualizaion QE for testing RHEL performance on public clouds, ESXi, hyper-v.
+				<p>
+				    <dd><strong>Project lead</strong>: cheshi@redhat.com</dd>
+			    </p>
+			</dd>
+		</p>
+		<p>
+			<dt>
+				<h4>Our vision!</h4>
+			</dt>
+
+			<dd>
+				Making RHEL Performance Best
+			</dd>
+		</p>
+		<p>
+			<dt>
+				<h4>About the site!</h4>
+			</dt>
+			<dd>
+				This site is for collecting, displaying, querying, analyzing test logs. We are hoping the history logs
+				can guide our test better and sharing the test status more freindly.
+			</dd>
+			<dd>
+				User freindly is our top priority, if you have any difficuty to reach the data, please feedback to us.
+			</dd>
+		</p>
+		<p>
+			<dt>
+				<h4>About TestBugs!</h4>
+			</dt>
+
+			<dd>
+				Record the test failures with bugs mapping. We do not keep bugs status(NEW, POST, MODIFICATION or ON_QA)
+				syncing with bugzilla and we only care the test case pass or fail and the bug open or closed.
+			</dd>
+		</p>
+	</dl>
+</div>
+{% endblock %}
