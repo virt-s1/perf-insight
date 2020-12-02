@@ -50,6 +50,7 @@ class testrun_reporter():
         self.df_report = None
 
         self._load_raw_data()
+        self._build_dataframe()
 
     def _load_raw_data(self):
         # find all raw data files
@@ -80,7 +81,6 @@ class testrun_reporter():
         data['metadata']['path'] = os.path.dirname(json_file)
         data['metadata']['sample'] = re.search(r'/sample(\d)/',
                                                json_file).group(1)
-
         # Get params
         data['params'] = raw_data['parameters']['benchmark'][0]
 
@@ -102,11 +102,29 @@ class testrun_reporter():
 
         return (data)
 
+    def _build_dataframe(self):
+        datalist = []
+        for item in self.datastore:
+            data = {}
+            data['RW'] = item['params']['rw']
+            data['BS'] = item['params']['bs']
+            data['IODepth'] = item['params']['iodepth']
+            data['Numjobs'] = item['params']['numjobs']
+            data['Sample'] = item['metadata']['sample']
+            data['IOPS'] = item['kpis']['iops']
+            data['LAT(ms)'] = item['kpis']['lat'] / 1000000000
+            data['CLAT(ms)'] = item['kpis']['clat'] / 1000000000
+            #data['Path'] = item['metadata']['path']
+            datalist.append(data)
+
+        self.df_report = pd.DataFrame(datalist)
+
     def dump_vars(self):
-        print(self.dir)
-        print(self.runid)
-        print(self.report_csv)
-        print(self.datastore)
+        #print(self.dir)
+        #print(self.runid)
+        #print(self.report_csv)
+        #print(self.datastore)
+        print(self.df_report)
         pass
 
 
