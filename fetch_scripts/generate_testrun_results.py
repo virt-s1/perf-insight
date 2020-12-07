@@ -18,31 +18,25 @@ ARG_PARSER = argparse.ArgumentParser(description="Generate TestRun Results.")
 ARG_PARSER.add_argument('--datastore',
                         dest='datastore',
                         action='store',
-                        help='Specify the location of datastore file.',
+                        help='The datastore file for generating results.',
                         default='datastore.json',
-                        required=False)
-ARG_PARSER.add_argument('--testrun',
-                        dest='testrun',
-                        action='store',
-                        help='Specify a TestRun ID.',
-                        default=None,
                         required=False)
 ARG_PARSER.add_argument('--config',
                         dest='config',
                         action='store',
-                        help='Specify the yaml config file.',
+                        help='The yaml config file for generating results.',
                         default='generate_testrun_results.yaml',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
                         action='store',
-                        help='Specify a output format in [csv, ].',
+                        help='The output format, available in [csv, ].',
                         default='csv',
                         required=False)
 ARG_PARSER.add_argument('--output',
                         dest='output',
                         action='store',
-                        help='Specify a name for the output file.',
+                        help='The file to store TestRun results.',
                         default=None,
                         required=False)
 
@@ -50,7 +44,7 @@ ARGS = ARG_PARSER.parse_args()
 
 
 class testrun_report_generator():
-    """Generate TestRun Results according to customized configuration."""
+    """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
         codepath = os.path.split(os.path.abspath(__file__))[0]
