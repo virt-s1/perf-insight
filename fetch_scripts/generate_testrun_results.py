@@ -100,27 +100,20 @@ class testrun_report_generator():
             if 'factor' in cfg:
                 res = [x * cfg['factor'] for x in res]
 
-            # return the value or the whole list
-            if len(res) == 1:
-                return res[0]
-            else:
-                return res
+            # return the whole list or the only value
+            return res if len(res) > 1 else res[0]
 
         def _get_value_auto(cfg, data=None):
-            """Caluclate value."""
-            pass
+            """Get value by calculating."""
+            if cfg['name'] == 'Sample':
+                return 0
+            if cfg['name'] == 'Path':
+                value = os.path.join(data['path_lv_1'], data['path_lv_2'])
+                return value
 
         def _get_value_unknown(cfg, data=None):
-            """Unknown error."""
             print('ERROR: Unknown type in "source", config = "%s".' % cfg)
             exit(1)
-
-        self.config
-        self.datastore
-        self.datatable = []
-
-        splits = []
-        data = {}
 
         switch = {
             'metadata': _get_value_metadata,
@@ -128,61 +121,60 @@ class testrun_report_generator():
             'auto': _get_value_auto,
         }
 
-        # generate rows of the datatable
+        self.config
+        self.datastore
+        self.datatable = []
+
+        # generate rows for the datatable
         for iterdata in self.datastore:
             # generate one row
-            for cfg in self.config['columns']:
-                # get name
-                if 'unit' in cfg:
-                    name = '%s(%s)' % (cfg['name'], cfg['unit'])
-                else:
-                    name = cfg['name']
+            data = {}
+            for cfg in self.config.get('columns'):
+                # get name and unit
+                name = cfg.get('name')
+                unit = cfg.get('unit')
+                if unit:
+                    name = '%s(%s)' % (name, unit)
 
-                # get value
-                value = switch.get(cfg['source'], _get_value_unknown)(cfg,
-                                                                      iterdata)
+                # get and set value(s)
+                data[name] = switch.get(cfg['source'],
+                                        _get_value_unknown)(cfg, iterdata)
 
-                print(name, ' = ', value)
-                data[name] = value
+            # deal with split if needed
+            if self.config.get('defaults', {}).get('split'):
+                # split into samples
+                # get max number of samples
+                max_sample = 1
+                for value in data.values():
+                    if isinstance(value, list) and len(value) > max_sample:
+                        max_sample = len(value)
 
-            print(data)
-            self.datatable.append(data)
+                for index in range(1, max_sample + 1):
+                    sample_data = {}
+                    # deal with each column
+                    for name, value in data.items():
+                        if isinstance(value, list):
+                            # get the first value and save the rest
+                            sample_data[name] = value[0]
+                            data[name] = value[1:]
+                            # Set "WRONG" flags for user check
+                            if len(data[name]) == 0:
+                                data[name] = 'WRONG'
+                        else:
+                            sample_data[name] = value
 
-            # # get keys
-            # data['RW'] = iterdata['iteration_data']['parameters']['benchmark'][
-            #     0]['rw']
-            # data['BS'] = iterdata['iteration_data']['parameters']['benchmark'][
-            #     0]['bs']
-            # data['IODepth'] = iterdata['iteration_data']['parameters'][
-            #     'benchmark'][0]['iodepth']
-            # data['Numjobs'] = iterdata['iteration_data']['parameters'][
-            #     'benchmark'][0]['numjobs']
+                    # update related column
+                    sample_data['Sample'] = index
+                    sample_data['Path'] = os.path.join(data['Path'],
+                                                       'sample%s' % index)
 
-            # # get kpis
-            # for client in iterdata['iteration_data']['throughput']['iops_sec']:
-            #     if client['client_hostname'] == 'all':
-            #         iops = [x['value'] for x in client['samples']]
-            # for client in iterdata['iteration_data']['latency']['lat']:
-            #     if client['client_hostname'] == 'all':
-            #         lat = [x['value'] / 1000000 for x in client['samples']]
-            # for client in iterdata['iteration_data']['latency']['clat']:
-            #     if client['client_hostname'] == 'all':
-            #         clat = [x['value'] / 1000000 for x in client['samples']]
+                    # save this row (sample) to datatable
+                    self.datatable.append(sample_data.copy())
 
-            # # split into per sample
-            # data['Sample'] = 0
-            # for data['IOPS'], data['LAT(ms)'], data['CLAT(ms)'] in zip(
-            #         iops, lat, clat):
-            #     data['Sample'] += 1
-            #     data['Path'] = os.path.join(iterdata['path_lv_1'],
-            #                                 iterdata['path_lv_2'],
-            #                                 'sample%d' % data['Sample'])
-
-            #     # save this item
-            #     table.append(data.copy())
+            else:
+                self.datatable.append(data.copy())
 
     def _build_dataframe(self):
-
         self.dataframe = pd.DataFrame(self.datatable)
 
     def dump_to_csv(self):

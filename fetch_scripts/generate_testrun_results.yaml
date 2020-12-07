@@ -1,6 +1,6 @@
 testrun_report_generator:
   defaults:
-    factor: 1
+    split: yes
   columns:
     - name: Backend
       source: metadata
