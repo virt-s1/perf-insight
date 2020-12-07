@@ -76,7 +76,6 @@ class testrun_report_generator():
         self.datatable = []
         self.dataframe = None
         self._parse_data()
-        exit(0)
         self._build_dataframe()
 
     def _parse_data(self):
@@ -133,12 +132,21 @@ class testrun_report_generator():
         for iterdata in self.datastore:
             # generate one row
             for cfg in self.config['columns']:
-                name = cfg['name']
+                # get name
+                if 'unit' in cfg:
+                    name = '%s(%s)' % (cfg['name'], cfg['unit'])
+                else:
+                    name = cfg['name']
+
+                # get value
                 value = switch.get(cfg['source'], _get_value_unknown)(cfg,
                                                                       iterdata)
-                print(name, ' = ', value)
 
-                continue
+                print(name, ' = ', value)
+                data[name] = value
+
+            print(data)
+            self.datatable.append(data)
 
             # # get keys
             # data['RW'] = iterdata['iteration_data']['parameters']['benchmark'][
@@ -175,7 +183,7 @@ class testrun_report_generator():
 
     def _build_dataframe(self):
 
-        self.dataframe = pd.DataFrame(table)
+        self.dataframe = pd.DataFrame(self.datatable)
 
     def dump_to_csv(self):
         with open(self.output, 'w') as f:
