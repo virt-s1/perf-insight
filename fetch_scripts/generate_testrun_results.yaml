@@ -1,0 +1,15 @@
+testrun_report_generator:
+  defaults:
+    factor: 1
+  keys:
+    - Backend
+    - Driver
+    - Format
+    - Type
+    - source_label: MSize(Kbits)
+      target_label: MSize
+      target_unit: Kbits
+  kpis:
+    - source_label: BW(Mbits/s)
+      target_label: BW
+      target_unit: Mbits/s
