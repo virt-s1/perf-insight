@@ -136,13 +136,15 @@ class testrun_report_generator():
 
             # deal with split if needed
             if self.config.get('defaults', {}).get('split'):
-                # split into samples
                 # get max number of samples
                 max_sample = 1
                 for value in data.values():
                     if isinstance(value, list) and len(value) > max_sample:
                         max_sample = len(value)
+                need_split = True if max_sample > 1 else False
 
+            if need_split:
+                # split into samples
                 for index in range(1, max_sample + 1):
                     sample_data = {}
                     # deal with each column
@@ -157,15 +159,15 @@ class testrun_report_generator():
                         else:
                             sample_data[name] = value
 
-                    # update related column
+                    # update related columns
                     sample_data['Sample'] = index
                     sample_data['Path'] = os.path.join(data['Path'],
                                                        'sample%s' % index)
 
                     # save this row (sample) to datatable
                     self.datatable.append(sample_data.copy())
-
             else:
+                # no need to split, save directly
                 self.datatable.append(data.copy())
 
     def _build_dataframe(self):
