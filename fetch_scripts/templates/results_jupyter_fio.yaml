@@ -2,25 +2,13 @@ testrun_results_generator:
   defaults:
     split: yes
   columns:
-    - name: Backend
-      source: metadata
-      key: disk.backend
-    - name: Driver
-      source: metadata
-      key: disk.driver
-    - name: Format
-      source: metadata
-      key: disk.format
-    - name: RW
-      source: datastore
-      jqexpr: ".iteration_data.parameters.benchmark[].rw"
     - name: BS
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].bs"
     - name: IOdepth
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
-    - name: NumJobs
+    - name: Numjobs
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
     - name: Sample

@@ -15,17 +15,23 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(description="Generate TestRun Results.")
-ARG_PARSER.add_argument('--datastore',
-                        dest='datastore',
-                        action='store',
-                        help='The datastore file for generating results.',
-                        default='datastore.json',
-                        required=False)
 ARG_PARSER.add_argument('--config',
                         dest='config',
                         action='store',
                         help='The yaml config file for generating results.',
                         default='generate_testrun_results.yaml',
+                        required=False)
+ARG_PARSER.add_argument('--datastore',
+                        dest='datastore',
+                        action='store',
+                        help='The json file where stores the datastore.',
+                        default='datastore.json',
+                        required=False)
+ARG_PARSER.add_argument('--metadata',
+                        dest='metadata',
+                        action='store',
+                        help='The json file where stores the metadata.',
+                        default='testrun_metadata.json',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
@@ -43,7 +49,7 @@ ARG_PARSER.add_argument('--output',
 ARGS = ARG_PARSER.parse_args()
 
 
-class testrun_report_generator():
+class testrun_results_generator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
@@ -57,13 +63,17 @@ class testrun_report_generator():
         with open(ARGS.datastore, 'r') as f:
             self.datastore = json.load(f)
 
+        # load metadata
+        with open(ARGS.metadata, 'r') as f:
+            self.metadata = json.load(f)
+
         # parse parameters
         self.output = ARGS.output
         self.output_format = ARGS.output_format
 
         if self.output is None and self.output_format == 'csv':
             fpath = os.path.dirname(ARGS.datastore)
-            fname = 'testrun_report.csv'
+            fname = 'testrun_results.csv'
             self.output = os.path.join(fpath, fname)
 
         # init
@@ -83,7 +93,8 @@ class testrun_report_generator():
         """
         def _get_value_metadata(cfg, data=None):
             """Get value from metadata."""
-            pass
+            if cfg.get('key'):
+                return self.metadata.get(cfg.get('key'))
 
         def _get_value_datastore(cfg, data=None):
             """Get value(s) from datastore."""
@@ -135,14 +146,17 @@ class testrun_report_generator():
                                         _get_value_unknown)(cfg, iterdata)
 
             # deal with split if needed
+            need_split = False
             if self.config.get('defaults', {}).get('split'):
-                # split into samples
                 # get max number of samples
                 max_sample = 1
                 for value in data.values():
                     if isinstance(value, list) and len(value) > max_sample:
                         max_sample = len(value)
+                need_split = True if max_sample > 1 else False
 
+            if need_split:
+                # split into samples
                 for index in range(1, max_sample + 1):
                     sample_data = {}
                     # deal with each column
@@ -157,15 +171,15 @@ class testrun_report_generator():
                         else:
                             sample_data[name] = value
 
-                    # update related column
+                    # update related columns
                     sample_data['Sample'] = index
                     sample_data['Path'] = os.path.join(data['Path'],
                                                        'sample%s' % index)
 
                     # save this row (sample) to datatable
                     self.datatable.append(sample_data.copy())
-
             else:
+                # no need to split, save directly
                 self.datatable.append(data.copy())
 
     def _build_dataframe(self):
@@ -176,16 +190,15 @@ class testrun_report_generator():
             f.write(self.dataframe.to_csv())
 
     def show_vars(self):
-        #print(self.output)
-        #print(self.output_format)
-        #print(self.datastore)
+        print(self.output)
+        print(self.output_format)
+        print(self.datastore)
         print(self.dataframe)
         pass
 
 
 if __name__ == '__main__':
-    report = testrun_report_generator(ARGS)
-    report.show_vars()
-    report.dump_to_csv()
+    gen = testrun_results_generator(ARGS)
+    gen.dump_to_csv()
 
 exit(0)

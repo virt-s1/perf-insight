@@ -2,6 +2,33 @@ testrun_results_generator:
   defaults:
     split: yes
   columns:
+    - name: Testrun
+      source: metadata
+      key: testrun.id
+    - name: Platform
+      source: metadata
+      key: testrun.platform
+    - name: Branch
+      source: metadata
+      key: os.branch
+    - name: Compose
+      source: metadata
+      key: os.compose
+    - name: Kernel
+      source: metadata
+      key: os.kernel
+    - name: Flavor
+      source: metadata
+      key: vm.flavor
+    - name: CPU_Model
+      source: metadata
+      key: host.cpu_model
+    - name: CPU
+      source: metadata
+      key: vm.cpu
+    - name: Memory
+      source: metadata
+      key: vm.memory
     - name: Backend
       source: metadata
       key: disk.backend
@@ -20,7 +47,7 @@ testrun_results_generator:
     - name: IOdepth
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
-    - name: NumJobs
+    - name: Numjobs
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
     - name: Sample
@@ -41,3 +68,12 @@ testrun_results_generator:
       factor: 0.000001
     - name: Path
       source: auto
+    - name: Tool_Version
+      source: metadata
+      key: testrun.tool_version
+    - name: Run_Time
+      source: metadata
+      key: testrun.run_time
+    - name: Comments
+      source: metadata
+      key: testrun.comments
