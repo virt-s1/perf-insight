@@ -1,4 +1,4 @@
-testrun_report_generator:
+testrun_results_generator:
   defaults:
     split: yes
   columns:

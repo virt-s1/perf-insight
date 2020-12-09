@@ -49,7 +49,7 @@ ARG_PARSER.add_argument('--output',
 ARGS = ARG_PARSER.parse_args()
 
 
-class testrun_report_generator():
+class testrun_results_generator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
@@ -73,7 +73,7 @@ class testrun_report_generator():
 
         if self.output is None and self.output_format == 'csv':
             fpath = os.path.dirname(ARGS.datastore)
-            fname = 'testrun_report.csv'
+            fname = 'testrun_results.csv'
             self.output = os.path.join(fpath, fname)
 
         # init
@@ -93,7 +93,6 @@ class testrun_report_generator():
         """
         def _get_value_metadata(cfg, data=None):
             """Get value from metadata."""
-            print(self.metadata)
             if cfg.get('key'):
                 return self.metadata.get(cfg.get('key'))
 
@@ -191,16 +190,15 @@ class testrun_report_generator():
             f.write(self.dataframe.to_csv())
 
     def show_vars(self):
-        #print(self.output)
-        #print(self.output_format)
-        #print(self.datastore)
+        print(self.output)
+        print(self.output_format)
+        print(self.datastore)
         print(self.dataframe)
         pass
 
 
 if __name__ == '__main__':
-    report = testrun_report_generator(ARGS)
-    report.show_vars()
-    report.dump_to_csv()
+    gen = testrun_results_generator(ARGS)
+    gen.dump_to_csv()
 
 exit(0)
