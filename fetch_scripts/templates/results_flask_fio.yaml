@@ -1,0 +1,79 @@
+testrun_results_generator:
+  defaults:
+    split: yes
+  columns:
+    - name: Testrun
+      source: metadata
+      key: testrun.id
+    - name: Platform
+      source: metadata
+      key: testrun.platform
+    - name: Branch
+      source: metadata
+      key: os.branch
+    - name: Compose
+      source: metadata
+      key: os.compose
+    - name: Kernel
+      source: metadata
+      key: os.kernel
+    - name: Flavor
+      source: metadata
+      key: vm.flavor
+    - name: CPU_Model
+      source: metadata
+      key: host.cpu_model
+    - name: CPU
+      source: metadata
+      key: vm.cpu
+    - name: Memory
+      source: metadata
+      key: vm.memory
+    - name: Backend
+      source: metadata
+      key: disk.backend
+    - name: Driver
+      source: metadata
+      key: disk.driver
+    - name: Format
+      source: metadata
+      key: disk.format
+    - name: RW
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].rw"
+    - name: BS
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].bs"
+    - name: IOdepth
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
+    - name: Numjobs
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
+    - name: Sample
+      source: auto
+    - name: IOPS
+      source: datastore
+      jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
+      multiple: true
+    - name: LAT
+      source: datastore
+      jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
+      unit: ms
+      factor: 0.000001
+    - name: CLAT
+      source: datastore
+      jqexpr: '.iteration_data.latency.clat[] | select(.client_hostname=="all") | .samples[].value'
+      unit: ms
+      factor: 0.000001
+    - name: Path
+      source: auto
+    - name: Tool_Version
+      source: metadata
+      key: testrun.tool_version
+    - name: Run_Time
+      source: metadata
+      key: testrun.run_time
+    - name: Comments
+      source: metadata
+      key: testrun.comments
