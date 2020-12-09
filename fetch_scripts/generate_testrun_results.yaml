@@ -4,12 +4,13 @@ testrun_report_generator:
   columns:
     - name: Backend
       source: metadata
+      key: disk.backend
     - name: Driver
       source: metadata
+      key: disk.driver
     - name: Format
       source: metadata
-    - name: Type
-      source: metadata
+      key: disk.format
     - name: RW
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].rw"

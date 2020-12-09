@@ -15,17 +15,23 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(description="Generate TestRun Results.")
-ARG_PARSER.add_argument('--datastore',
-                        dest='datastore',
-                        action='store',
-                        help='The datastore file for generating results.',
-                        default='datastore.json',
-                        required=False)
 ARG_PARSER.add_argument('--config',
                         dest='config',
                         action='store',
                         help='The yaml config file for generating results.',
                         default='generate_testrun_results.yaml',
+                        required=False)
+ARG_PARSER.add_argument('--datastore',
+                        dest='datastore',
+                        action='store',
+                        help='The json file where stores the datastore.',
+                        default='datastore.json',
+                        required=False)
+ARG_PARSER.add_argument('--metadata',
+                        dest='metadata',
+                        action='store',
+                        help='The json file where stores the metadata.',
+                        default='testrun_metadata.json',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
@@ -57,6 +63,10 @@ class testrun_report_generator():
         with open(ARGS.datastore, 'r') as f:
             self.datastore = json.load(f)
 
+        # load metadata
+        with open(ARGS.metadata, 'r') as f:
+            self.metadata = json.load(f)
+
         # parse parameters
         self.output = ARGS.output
         self.output_format = ARGS.output_format
@@ -83,7 +93,9 @@ class testrun_report_generator():
         """
         def _get_value_metadata(cfg, data=None):
             """Get value from metadata."""
-            pass
+            print(self.metadata)
+            if cfg.get('key'):
+                return self.metadata.get(cfg.get('key'))
 
         def _get_value_datastore(cfg, data=None):
             """Get value(s) from datastore."""
@@ -135,6 +147,7 @@ class testrun_report_generator():
                                         _get_value_unknown)(cfg, iterdata)
 
             # deal with split if needed
+            need_split = False
             if self.config.get('defaults', {}).get('split'):
                 # get max number of samples
                 max_sample = 1

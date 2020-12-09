@@ -9,13 +9,15 @@
             "type": "python",
             "request": "launch",
             "program": "fetch_scripts/generate_testrun_results.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "--config",
                 "generate_testrun_results.yaml",
                 "--datastore",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/datastore.json"
+                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/datastore.json",
+                "--metadata",
+                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/testrun_metadata.json"
             ]
         },
         {
