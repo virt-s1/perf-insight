@@ -1,0 +1,22 @@
+benchmark_comparison_generator:
+  defaults:
+    dataframe_round: 4
+    dataframe_fillna: "NaN"
+  kpi_defaults:
+    higher_is_better: yes
+    max_percent_dev: 10
+    regression_threshold: 5
+    confidence_threshold: 0.95
+  keys:
+    - BS
+    - IOdepth
+    - Numjobs
+  kpis:
+    - source_label: IOPS
+      target_label: IOPS
+    - source_label: LAT(ms)
+      target_label: LAT
+      target_unit: ms
+    - source_label: CLAT(ms)
+      target_label: CLAT
+      target_unit: ms
