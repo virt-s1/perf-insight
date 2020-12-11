@@ -62,7 +62,11 @@ class benchmark_comparison_generator():
 
         # load testrun results for test and base samples
         self.df_test = pd.read_csv(ARGS.test)
+        if 'Unnamed: 0' in self.df_test.columns:
+            self.df_test = self.df_test.drop(columns=['Unnamed: 0'])
         self.df_base = pd.read_csv(ARGS.base)
+        if 'Unnamed: 0' in self.df_base.columns:
+            self.df_base = self.df_base.drop(columns=['Unnamed: 0'])
 
         # parse parameters
         self.output = ARGS.output
