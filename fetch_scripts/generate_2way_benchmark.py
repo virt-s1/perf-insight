@@ -137,16 +137,20 @@ class benchmark_comparison_generator():
             f.write(self.dataframe.to_csv())
 
     def show_vars(self):
-        print(self.config)
-        print(self.keys_cfg)
-        print(self.kpis_cfg)
-        # print(self.df_test)
-        # print(self.df_base)
-        # print(self.output)
-        # print(self.output_format)
-        # print(self.datatable)
-        # print(self.dataframe)
-        pass
+        """Print the value of varibles to the stdout."""
+        def _show(name, value):
+            print('\n> _show(%s):\n' % name)
+            print(value)
+
+        # _show('self.config', self.config)
+        # _show('self.keys_cfg', self.keys_cfg)
+        # _show('self.kpis_cfg', self.kpis_cfg)
+        # _show('self.df_test', self.df_test)
+        # _show('self.df_base', self.df_base)
+        # _show('self.output', self.output)
+        # _show('self.output_format', self.output_format)
+        # _show('self.datatable', self.datatable)
+        # _show('self.dataframe', self.dataframe)
 
 
 if __name__ == '__main__':
