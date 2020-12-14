@@ -154,7 +154,7 @@ class benchmark_comparison_generator():
         # expaned the report dataframe with KPI columns
         for kpi_cfg in self.kpis_cfg:
             expansion = [
-                'BASE-AVG', 'BASE-%SD', 'TEST-AVG', 'TEST-%SD', '%DIFF',
+                'TEST-AVG', 'TEST-%SD', 'BASE-AVG', 'BASE-%SD', '%DIFF',
                 'SIGN', 'SPEC'
             ]
             for suffix in expansion:
