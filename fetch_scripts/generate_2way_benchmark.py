@@ -5,7 +5,6 @@ Generate the 2-way benchmark comparison for the TEST and BASE testruns.
 
 import argparse
 import logging
-import json
 import yaml
 import os
 import pandas as pd
@@ -40,7 +39,8 @@ ARG_PARSER.add_argument('--base',
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
                         action='store',
-                        help='The output format, available in [csv, ].',
+                        choices=('csv', 'html'),
+                        help='The output file format.',
                         default='csv',
                         required=False)
 ARG_PARSER.add_argument('--output',
@@ -109,9 +109,9 @@ class benchmark_comparison_generator():
         self.output = ARGS.output
         self.output_format = ARGS.output_format
 
-        if self.output is None and self.output_format == 'csv':
+        if self.output is None:
             fpath = os.path.dirname(ARGS.test)
-            fname = '2way_benchmark.csv'
+            fname = '2way_benchmark.{0}'.format(self.output_format)
             self.output = os.path.join(fpath, fname)
 
         # init
@@ -370,8 +370,21 @@ class benchmark_comparison_generator():
         self._format_df_report()
 
     def dump_to_csv(self):
+        """Dump the report dataframe to a CSV file."""
         with open(self.output, 'w') as f:
             f.write(self.df_report.to_csv())
+
+    def dump_to_html(self):
+        """Dump the report dataframe to a HTML file."""
+        with open(self.output, 'w') as f:
+            f.write(self.df_report.to_html())
+
+    def dump_to_file(self):
+        """Dump the report dataframe to a file."""
+        if self.output_format == 'csv':
+            self.dump_to_csv()
+        else:
+            self.dump_to_html()
 
     def show_vars(self):
         """Print the value of varibles to the stdout."""
@@ -379,20 +392,20 @@ class benchmark_comparison_generator():
             print('\n> _show(%s):\n' % name)
             print(value)
 
-        # _show('self.config', self.config)
-        # _show('self.keys_cfg', self.keys_cfg)
-        # _show('self.kpis_cfg', self.kpis_cfg)
+        _show('self.config', self.config)
+        _show('self.keys_cfg', self.keys_cfg)
+        _show('self.kpis_cfg', self.kpis_cfg)
         _show('self.df_test', self.df_test)
-        # _show('self.df_base', self.df_base)
-        # _show('self.output', self.output)
-        # _show('self.output_format', self.output_format)
-        # _show('self.df_params', self.df_params)
+        _show('self.df_base', self.df_base)
+        _show('self.output', self.output)
+        _show('self.output_format', self.output_format)
+        _show('self.df_params', self.df_params)
         _show('self.df_report', self.df_report)
 
 
 if __name__ == '__main__':
     gen = benchmark_comparison_generator(ARGS)
-    gen.show_vars()
-    gen.dump_to_csv()
+    # gen.show_vars()
+    gen.dump_to_file()
 
 exit(0)
