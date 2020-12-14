@@ -20,7 +20,7 @@ testrun_results_generator:
     - name: IOdepth
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
-    - name: NumJobs
+    - name: Numjobs
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
     - name: Sample

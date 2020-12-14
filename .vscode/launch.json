@@ -5,6 +5,38 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: generate_2way_benchmark.py",
+            "type": "python",
+            "request": "launch",
+            "program": "fetch_scripts/generate_2way_benchmark.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--config",
+                "generate_2way_benchmark.yaml",
+                "--base",
+                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/testrun_results.csv",
+                "--test",
+                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.4.0-20201130.n.1_lite_scsi_D201203T085926/testrun_results.csv",
+                "--output-format",
+                "html",
+            ]
+        },
+        {
+            "name": "Python: generate_2way_metadata.py",
+            "type": "python",
+            "request": "launch",
+            "program": "fetch_scripts/generate_2way_metadata.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--base",
+                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/testrun_metadata.json",
+                "--test",
+                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.4.0-20201130.n.1_lite_scsi_D201203T085926/testrun_metadata.json",
+            ]
+        },
+        {
             "name": "Python: generate_testrun_results.py",
             "type": "python",
             "request": "launch",
