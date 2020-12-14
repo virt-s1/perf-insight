@@ -343,8 +343,7 @@ class benchmark_comparison_generator():
 
     def dump_to_csv(self):
         with open(self.output, 'w') as f:
-            pass
-            #f.write(self.dataframe.to_csv())
+            f.write(self.df_report.to_csv())
 
     def show_vars(self):
         """Print the value of varibles to the stdout."""
