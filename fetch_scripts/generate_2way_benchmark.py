@@ -158,8 +158,8 @@ class benchmark_comparison_generator():
                 'SIGN', 'SPEC'
             ]
             for suffix in expansion:
-                self.df_report.insert(len(self.df_report.columns),
-                                      kpi_cfg['name'] + '-' + suffix, 0)
+                name = '{0}-{1}'.format(kpi_cfg['name'], suffix)
+                self.df_report.insert(len(self.df_report.columns), name, 0)
 
     def _fill_df_report(self):
         """Fill up the report dataframe.
@@ -321,11 +321,38 @@ class benchmark_comparison_generator():
                 row[kpi_name + '-SIGN'] = significance
                 row[kpi_name + '-SPEC'] = speculate
 
-            # Show current row
-            print(row)
-
             # write the row back
             self.df_report.iloc[index] = row
+
+    def _format_df_report(self):
+        """Format the report dataframe.
+
+        Input:
+            - self.config: customized configuration.
+
+        Updates:
+            - self.df_report: report dataframe to be updated.
+        """
+        # format the dataframe
+        defaults = self.config.get('defaults', {})
+        dataframe_round = defaults.get('dataframe_round', 2)
+        dataframe_fillna = defaults.get('dataframe_fillna')
+
+        self.df_report = self.df_report.round(dataframe_round)
+        self.df_report = self.df_report.fillna(dataframe_fillna)
+
+        # add units to the columns
+        renames = [(x['name'], x['unit']) for x in self.keys_cfg if x['unit']]
+        for name, unit in renames:
+            new_name = '{0}({1})'.format(name, unit)
+            self.df_report.rename(columns={name: new_name}, inplace=True)
+
+        renames = [(x['name'], x['unit']) for x in self.kpis_cfg if x['unit']]
+        for name, unit in renames:
+            for suffix in ('TEST-AVG', 'BASE-AVG'):
+                old_name = '{0}-{1}'.format(name, suffix)
+                new_name = '{0}-{1}({2})'.format(name, suffix, unit)
+            self.df_report.rename(columns={old_name: new_name}, inplace=True)
 
     def _parse_data(self):
         """Parse data from the testrun results.
@@ -340,6 +367,7 @@ class benchmark_comparison_generator():
         # init the report dataframe
         self._init_df_report()
         self._fill_df_report()
+        self._format_df_report()
 
     def dump_to_csv(self):
         with open(self.output, 'w') as f:

@@ -1,6 +1,6 @@
 benchmark_comparison_generator:
   defaults:
-    dataframe_round: 4
+    dataframe_round: 2
     dataframe_fillna: "NaN"
   kpi_defaults:
     higher_is_better: yes
@@ -8,6 +8,7 @@ benchmark_comparison_generator:
     regression_threshold: 0.05
     confidence_threshold: 0.95
   keys:
+    - name: RW
     - name: BS
     - name: IOdepth
     - name: Numjobs
