@@ -9,6 +9,9 @@ import json
 import yaml
 import os
 import pandas as pd
+import numpy as np
+from scipy.stats import ttest_rel
+from scipy.stats import ttest_ind
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
@@ -151,12 +154,178 @@ class benchmark_comparison_generator():
         # expaned the report dataframe with KPI columns
         for kpi_cfg in self.kpis_cfg:
             expansion = [
-                'T-mean', 'T-%sd', 'B-mean', 'B-%sd', '%diff', 'sign',
-                'speculate'
+                'BASE-AVG', 'BASE-%SD', 'TEST-AVG', 'TEST-%SD', '%DIFF',
+                'SIGN', 'SPEC'
             ]
             for suffix in expansion:
                 self.df_report.insert(len(self.df_report.columns),
                                       kpi_cfg['name'] + '-' + suffix, 0)
+
+    def _fill_df_report(self):
+        """Fill up the report dataframe.
+
+        Input:
+            - self.df_test: dataframe for the TEST samples.
+            - self.df_base: dataframe for the BASE samples.
+            - self.keys_cfg: customized configuration for KEYs.
+            - self.kpis_cfg: customized configuration for KPIs.
+
+        Updates:
+            - self.df_report: report dataframe to be updated.
+        """
+        def _get_statistics(df_base, df_test, kpi_cfg):
+            """Calculate basic statistics for the specified KPI.
+
+            Returns:
+            1. mean of the base samples
+            2. %stddev of the base samples
+            3. mean of the test samples
+            4. %stddev of the test samples
+            5. %diff of the test mean over base mean
+            """
+            kpi_from = kpi_cfg['from']
+
+            # calculate the "mean" and "%sd"
+            base_mean = df_base[kpi_from].mean()
+            base_pctsd = df_base[kpi_from].std(ddof=1) / base_mean * 100
+            test_mean = df_test[kpi_from].mean()
+            test_pctsd = df_test[kpi_from].std(ddof=1) / test_mean * 100
+
+            # calculate the "%diff"
+            pctdiff = (test_mean - base_mean) / base_mean * 100
+
+            return (base_mean, base_pctsd, test_mean, test_pctsd, pctdiff)
+
+        def _get_significance(df_base, df_test, kpi_cfg, paired=False):
+            """Get the t-test significance for the specified KPI.
+
+            Returns:
+                The Significance which value between 0 and 1. When the
+                calculation fails, it will return 'nan' instead.
+            """
+            kpi_from = kpi_cfg['from']
+            array1 = df_base[kpi_from]
+            array2 = df_test[kpi_from]
+
+            if paired:
+                (statistic, pvalue) = ttest_rel(array1, array2)
+            else:
+                (statistic, pvalue) = ttest_ind(array1, array2)
+
+            significance = 1 - pvalue
+
+            return significance
+
+        def _get_speculate(base_pctsd, test_pctsd, pctdiff, significance,
+                           kpi_cfg):
+            """Get the speculate of the specified KPI.
+
+            To get the speculate, we need to consider the following conditions:
+            1. The "%sd" for both samples should below MAX_PCT_DEV;
+            2. Whether the "%diff" of the KPI beyonds REGRESSION_THRESHOLD;
+            3. Whether the "significance" beyonds CONFIDENCE_THRESHOLD.
+
+            Returns:
+                - 'Data Invalid':         the input data is invalid;
+                - 'Variance Too Large':   the "%sd" beyonds MAX_PCT_DEV;
+                - 'No Difference':        the "%diff" is zero;
+                - 'No Significance':      the "significance" is less than the
+                                          CONFIDENCE_THRESHOLD;
+                - 'Major Improvement' and 'Major Regression':
+                    the "significance" beyonds CONFIDENCE_THRESHOLD and "%diff"
+                    beyonds REGRESSION_THRESHOLD;
+                - 'Minor Improvement' and 'Minor Regression':
+                    the "significance" beyonds CONFIDENCE_THRESHOLD but "%diff"
+                    is below REGRESSION_THRESHOLD;
+            """
+
+            higher_is_better = kpi_cfg['higher_is_better']
+            MAX_PCT_DEV = kpi_cfg['max_percent_dev']
+            REGRESSION_THRESHOLD = kpi_cfg['regression_threshold']
+            CONFIDENCE_THRESHOLD = kpi_cfg['confidence_threshold']
+
+            # data check
+            if MAX_PCT_DEV < 0 or MAX_PCT_DEV > 100:
+                raise ValueError('Invalid parameter: max_percent_dev')
+            if CONFIDENCE_THRESHOLD < 0 or CONFIDENCE_THRESHOLD > 1:
+                raise ValueError('Invalid parameter: confidence_threshold')
+            if REGRESSION_THRESHOLD < 0 or REGRESSION_THRESHOLD > 1:
+                raise ValueError('Invalid parameter: regression_threshold')
+
+            if np.isnan(pctdiff):
+                return np.nan
+
+            if pctdiff == 0:
+                return 'No Difference'
+
+            if np.isnan(significance) or significance < 0 or significance > 1:
+                return 'Data Invalid'
+
+            if base_pctsd < 0 or test_pctsd < 0:
+                return 'Data Invalid'
+
+            if base_pctsd > MAX_PCT_DEV or test_pctsd > MAX_PCT_DEV:
+                return 'Variance Too Large'
+
+            if significance < CONFIDENCE_THRESHOLD:
+                return 'No Significance'
+
+            if (higher_is_better and pctdiff > 0) or (not higher_is_better
+                                                      and pctdiff < 0):
+                if abs(pctdiff) >= REGRESSION_THRESHOLD * 100:
+                    return 'Major Improvement'
+                else:
+                    return 'Minor Improvement'
+            else:
+                if abs(pctdiff) >= REGRESSION_THRESHOLD * 100:
+                    return 'Major Regression'
+                else:
+                    return 'Minor Regression'
+
+        # walk each row of the report dataframe, get related data from the
+        # test and base dataframes, calculate the KPIs and fill the results
+        # back to the report dataframe.
+        for (index, row) in self.df_report.iterrows():
+            # spotlight to the related data in test and base dataframes
+            df_test = self.df_test
+            df_base = self.df_base
+
+            for key_cfg in self.keys_cfg:
+                # filter by each KEY
+                key_name = key_cfg['name']
+                key_from = key_cfg['from']
+                df_test = df_test[df_test[key_from] == row[key_name]]
+                df_base = df_base[df_base[key_from] == row[key_name]]
+
+            for kpi_cfg in self.kpis_cfg:
+                # calculate each KPI
+                kpi_name = kpi_cfg['name']
+
+                # calculate the "mean", "%sd" and "%diff"
+                (base_mean, base_pctsd, test_mean, test_pctsd,
+                 pctdiff) = _get_statistics(df_base, df_test, kpi_cfg)
+
+                # calculate the significance
+                significance = _get_significance(df_base, df_test, kpi_cfg)
+
+                # calculate the speculate
+                speculate = _get_speculate(base_pctsd, test_pctsd, pctdiff,
+                                           significance, kpi_cfg)
+
+                # update the current KPI
+                row[kpi_name + '-BASE-AVG'] = base_mean
+                row[kpi_name + '-BASE-%SD'] = base_pctsd
+                row[kpi_name + '-TEST-AVG'] = test_mean
+                row[kpi_name + '-TEST-%SD'] = test_pctsd
+                row[kpi_name + '-%DIFF'] = pctdiff
+                row[kpi_name + '-SIGN'] = significance
+                row[kpi_name + '-SPEC'] = speculate
+
+            # Show current row
+            print(row)
+
+            # write the row back
+            self.df_report.iloc[index] = row
 
     def _parse_data(self):
         """Parse data from the testrun results.
@@ -170,7 +339,7 @@ class benchmark_comparison_generator():
         """
         # init the report dataframe
         self._init_df_report()
-        #self._fill_df_report()
+        self._fill_df_report()
 
     def dump_to_csv(self):
         with open(self.output, 'w') as f:
