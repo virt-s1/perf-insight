@@ -8,15 +8,16 @@ benchmark_comparison_generator:
     regression_threshold: 5
     confidence_threshold: 0.95
   keys:
-    - BS
-    - IOdepth
-    - Numjobs
+    - name: BS
+    - name: IOdepth
+    - name: Numjobs
   kpis:
-    - source_label: IOPS
-      target_label: IOPS
-    - source_label: LAT(ms)
-      target_label: LAT
-      target_unit: ms
-    - source_label: CLAT(ms)
-      target_label: CLAT
-      target_unit: ms
+    - name: IOPS
+    - name: LAT
+      unit: ms
+      from: LAT(ms)
+      higher_is_better: no
+    - name: CLAT
+      unit: ms
+      from: CLAT(ms)
+      higher_is_better: no

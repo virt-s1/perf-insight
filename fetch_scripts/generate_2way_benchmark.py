@@ -53,14 +53,48 @@ ARGS = ARG_PARSER.parse_args()
 class benchmark_comparison_generator():
     """Generate 2-way benchmark comparison report."""
     def __init__(self, ARGS):
-        # load config
+        # load and expend config
         codepath = os.path.split(os.path.abspath(__file__))[0]
         filename = os.path.join(codepath, ARGS.config)
         with open(filename, 'r') as f:
             c = yaml.safe_load(f)
             self.config = c[__class__.__name__]
 
-        # load testrun results for test and base samples
+        self.keys_cfg = self.config.get('keys')
+        for item in self.keys_cfg:
+            if not item.get('name'):
+                print('Error: "name" must be given.')
+                return (1)
+            if 'from' not in item:
+                item['from'] = item['name']
+            if 'unit' not in item:
+                item['unit'] = None
+
+        self.kpis_cfg = self.config.get('kpis')
+        for item in self.kpis_cfg:
+            if not item.get('name'):
+                print('Error: "name" must be given.')
+                return (1)
+            if 'from' not in item:
+                item['from'] = item['name']
+            if 'unit' not in item:
+                item['unit'] = None
+
+            kpi_defaults = self.config.get('kpi_defaults', {})
+            if 'higher_is_better' not in item:
+                item['higher_is_better'] = kpi_defaults.get(
+                    'higher_is_better', True)
+            if 'max_percent_dev' not in item:
+                item['max_percent_dev'] = kpi_defaults.get(
+                    'max_percent_dev', 10)
+            if 'regression_threshold' not in item:
+                item['regression_threshold'] = kpi_defaults.get(
+                    'regression_threshold', 5)
+            if 'confidence_threshold' not in item:
+                item['confidence_threshold'] = kpi_defaults.get(
+                    'confidence_threshold', 0.95)
+
+    # load testrun results for test and base samples
         self.df_test = pd.read_csv(ARGS.test)
         if 'Unnamed: 0' in self.df_test.columns:
             self.df_test = self.df_test.drop(columns=['Unnamed: 0'])
@@ -104,12 +138,14 @@ class benchmark_comparison_generator():
 
     def show_vars(self):
         print(self.config)
-        print(self.df_test)
-        print(self.df_base)
-        print(self.output)
-        print(self.output_format)
-        print(self.datatable)
-        print(self.dataframe)
+        print(self.keys_cfg)
+        print(self.kpis_cfg)
+        # print(self.df_test)
+        # print(self.df_base)
+        # print(self.output)
+        # print(self.output_format)
+        # print(self.datatable)
+        # print(self.dataframe)
         pass
 
 
