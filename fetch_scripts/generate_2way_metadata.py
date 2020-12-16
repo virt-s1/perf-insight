@@ -113,11 +113,17 @@ class metadata_comparison_generator():
             f.write(self.dataframe.to_csv())
 
     def show_vars(self):
-        print(self.output)
-        print(self.output_format)
-        print(self.datastore)
-        print(self.dataframe)
-        pass
+        """Print the value of varibles to the stdout."""
+        def _show(name, value):
+            print('\n> _show(%s):\n' % name)
+            print(value)
+
+        _show('self.test', self.test)
+        _show('self.base', self.base)
+        _show('self.output', self.output)
+        _show('self.output_format', self.output_format)
+        _show('self.datatable', self.datatable)
+        _show('self.dataframe', self.dataframe)
 
 
 if __name__ == '__main__':
