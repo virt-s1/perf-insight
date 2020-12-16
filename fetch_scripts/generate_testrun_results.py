@@ -36,7 +36,8 @@ ARG_PARSER.add_argument('--metadata',
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
                         action='store',
-                        help='The output format, available in [csv, ].',
+                        choices=('csv', 'html'),
+                        help='The output file format.',
                         default='csv',
                         required=False)
 ARG_PARSER.add_argument('--output',
@@ -45,7 +46,6 @@ ARG_PARSER.add_argument('--output',
                         help='The file to store TestRun results.',
                         default=None,
                         required=False)
-
 ARGS = ARG_PARSER.parse_args()
 
 
@@ -71,9 +71,9 @@ class testrun_results_generator():
         self.output = ARGS.output
         self.output_format = ARGS.output_format
 
-        if self.output is None and self.output_format == 'csv':
+        if self.output is None:
             fpath = os.path.dirname(ARGS.datastore)
-            fname = 'testrun_results.csv'
+            fname = 'testrun_results.{0}'.format(self.output_format)
             self.output = os.path.join(fpath, fname)
 
         # init
@@ -186,8 +186,21 @@ class testrun_results_generator():
         self.dataframe = pd.DataFrame(self.datatable)
 
     def dump_to_csv(self):
+        """Dump the report dataframe to a CSV file."""
         with open(self.output, 'w') as f:
             f.write(self.dataframe.to_csv())
+
+    def dump_to_html(self):
+        """Dump the report dataframe to a HTML file."""
+        with open(self.output, 'w') as f:
+            f.write(self.dataframe.to_html())
+
+    def dump_to_file(self):
+        """Dump the report dataframe to a file."""
+        if self.output_format == 'csv':
+            self.dump_to_csv()
+        else:
+            self.dump_to_html()
 
     def show_vars(self):
         print(self.output)
@@ -199,6 +212,6 @@ class testrun_results_generator():
 
 if __name__ == '__main__':
     gen = testrun_results_generator(ARGS)
-    gen.dump_to_csv()
+    gen.dump_to_file()
 
 exit(0)
