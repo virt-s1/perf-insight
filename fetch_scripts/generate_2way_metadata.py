@@ -98,7 +98,7 @@ class metadata_comparison_generator():
         keys.sort()
 
         for key in keys:
-            data['Name'] = key
+            data['KEY'] = key
             data['TEST'] = self.test.get(key)
             data['BASE'] = self.base.get(key)
 
