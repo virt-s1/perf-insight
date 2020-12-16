@@ -24,13 +24,13 @@ ARG_PARSER.add_argument('--config',
 ARG_PARSER.add_argument('--datastore',
                         dest='datastore',
                         action='store',
-                        help='The json file where stores the datastore.',
+                        help='The json file which contains the datastore.',
                         default='datastore.json',
                         required=False)
 ARG_PARSER.add_argument('--metadata',
                         dest='metadata',
                         action='store',
-                        help='The json file where stores the metadata.',
+                        help='The json file which contains the metadata.',
                         default='testrun_metadata.json',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
@@ -203,11 +203,18 @@ class testrun_results_generator():
             self.dump_to_html()
 
     def show_vars(self):
-        print(self.output)
-        print(self.output_format)
-        print(self.datastore)
-        print(self.dataframe)
-        pass
+        """Print the value of varibles to the stdout."""
+        def _show(name, value):
+            print('\n> _show(%s):\n' % name)
+            print(value)
+
+        _show('self.config', self.config)
+        _show('self.datastore', self.datastore)
+        _show('self.metadata', self.metadata)
+        _show('self.output', self.output)
+        _show('self.output_format', self.output_format)
+        _show('self.datatable', self.datatable)
+        _show('self.dataframe', self.dataframe)
 
 
 if __name__ == '__main__':
