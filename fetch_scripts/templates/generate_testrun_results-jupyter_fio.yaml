@@ -2,6 +2,9 @@ testrun_results_generator:
   defaults:
     split: yes
   columns:
+    - name: RW
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].rw"
     - name: BS
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].bs"

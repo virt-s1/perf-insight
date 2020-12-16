@@ -130,3 +130,4 @@ dmypy.json
 
 # customized settings
 fetch_scripts/data_source
+fetch_scripts/workspace
