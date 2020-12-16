@@ -43,7 +43,7 @@ if __name__ == '__main__':
     logdir = os.path.realpath(
         ARGS.logdir) if ARGS.logdir is not None else os.getcwd()
     testrun = ARGS.testrun or os.path.basename(logdir)
-    output = ARGS.testrun or os.path.join(logdir, 'datastore.json')
+    output = ARGS.output or os.path.join(logdir, 'datastore.json')
 
     # collect data for the datastore
     datastore = []
