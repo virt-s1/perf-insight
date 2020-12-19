@@ -8,11 +8,38 @@ from sqlalchemy import (Column, ForeignKey, Integer, String, Text, Date, Float,
 from sqlalchemy.orm import relationship
 
 
-class Storage_Report(Model):
+class Storage_Run(Model):
     '''
     table for storing storage test result
     '''
     id = Column(Integer, primary_key=True)
+    testrun = Column(String(100))
+    platform = Column(String(50))
+    flavor = Column(String(50))
+    branch = Column(String(50))
+    compose = Column(String(50), nullable=True)
+    kernel = Column(String(50))
+    casenum = Column(Integer)
+    result = Column(String(50))
+    # metadata is reserved, so use metadata_l instead
+    metadata_l = Column(Text)
+
+    def __repr__(self):
+        return self.id
+
+    def result_url(self):
+        print("testrun is {}".format(self.testrun))
+        if self.testrun is not None and self.testrun != '' and "None" not in self.testrun:
+            self.result = url_for('StorageResultPubView.list',_flt_0_testrun=str(self.testrun), _flt_0_platform=str(self.platform))
+            print("testrun is {}".format(self.testrun))
+        return Markup('<a href="' + self.result + '">result</a>')
+
+class Storage_Result(Model):
+    '''
+    table for storing storage test result
+    '''
+    id = Column(Integer, primary_key=True)
+    testrun = Column(String(100))
     kernel = Column(String(50))
     branch = Column(String(50))
     backend = Column(String(50))
@@ -20,29 +47,30 @@ class Storage_Report(Model):
     format = Column(String(50), nullable=True)
     rw = Column(Integer)
     bs = Column(Integer)
-    rw = Column(Integer)
     iodepth = Column(Integer)
     numjobs = Column(Integer)
-    round = Column(Integer)
-    bw = Column(Integer)
     iops = Column(Integer)
     latency = Column(Integer)
+    clat = Column(Integer)
     tool_version = Column(String(50), nullable=True)
     compose = Column(String(50), nullable=True)
     cpu = Column(String(100), nullable=True)
+    cpu_model = Column(String(100), nullable=True)
     memory = Column(String(100), nullable=True)
     platform = Column(String(50))
-    instance_type = Column(String(50), nullable=True)
-    test_date = Column(Date)
+    flavor = Column(String(50), nullable=True)
+    run_time = Column(Date)
     comments = Column(String, nullable=True)
+    sample = Column(String, nullable=True)
+    path = Column(String, nullable=True)
     testrun = Column(String(100))
-    debug = Column(String, nullable=True)
-    def debug_url(self):
-        if self.debug:
+    details = Column(String, nullable=True)
+    def details_url(self):
+        if self.details:
             return Markup(
-                '<a href="' + str(self.debug) + '"> debug </a>')
+                '<a href="' + str(self.details) + '"> details </a>')
         else:
-            return self.debug
+            return self.details
 
 class FailureType(Model):
     '''
