@@ -120,9 +120,13 @@ $ ./generate_2way_metadata.py \
 
 Run the following script to generate the benchmark config:
 
-```bash
-# To be done.
-```
+The CSV table will be like this:
+
+| name     | higher_is_better | max_percent_dev | regression_threshold | confidence_threshold |
+| -------- | ---------------- | --------------- | -------------------- | -------------------- |
+| IOPS     | yes              | 5               | 0.05                 | 0.95                 |
+| LAT(ms)  | no               | 5               | 0.05                 | 0.95                 |
+| CLAT(ms) | no               | 5               | 0.05                 | 0.95                 |
 
 Run the following script to generate the benchmark comparison:
 

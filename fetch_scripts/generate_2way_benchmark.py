@@ -118,6 +118,22 @@ class benchmark_comparison_generator():
         self.df_report = None
         self._parse_data()
 
+    def _parse_data(self):
+        """Parse data from the testrun results.
+
+        Input:
+            - self.df_test: dataframe for the TEST samples.
+            - self.df_base: dataframe for the BASE samples.
+            - self.config: customized configuration.
+        Updates:
+            - self.df_report: report dataframe to be updated.
+        """
+        # build the report dataframe
+        self._init_df_report()
+        self._fill_df_report()
+        # format the report dataframe
+        self._format_df_report()
+
     def _init_df_report(self):
         """Init the report dataframe.
 
@@ -333,41 +349,57 @@ class benchmark_comparison_generator():
         Updates:
             - self.df_report: report dataframe to be updated.
         """
-        # format the dataframe
+        # get defaults
         defaults = self.config.get('defaults', {})
-        dataframe_round = defaults.get('dataframe_round', 2)
-        dataframe_fillna = defaults.get('dataframe_fillna')
+        default_round = defaults.get('round')
+        default_round_pct = defaults.get('round_pct')
+        default_fillna = defaults.get('fillna', '')
 
-        self.df_report = self.df_report.round(dataframe_round)
-        self.df_report = self.df_report.fillna(dataframe_fillna)
+        # apply rounds
+        decimals_mapper = {}
 
-        # add units to the columns
-        renames = [(x['name'], x['unit']) for x in self.keys_cfg if x['unit']]
-        for name, unit in renames:
-            new_name = '{0}({1})'.format(name, unit)
-            self.df_report.rename(columns={name: new_name}, inplace=True)
-
-        renames = [(x['name'], x['unit']) for x in self.kpis_cfg if x['unit']]
-        for name, unit in renames:
+        for column in self.keys_cfg:
+            name = column['name']
+            decimal = column.get('round', default_round)
+            if decimal is not None:
+                decimals_mapper.update({name: decimal})
+        for column in self.kpis_cfg:
             for suffix in ('TEST-AVG', 'BASE-AVG'):
-                old_name = '{0}-{1}'.format(name, suffix)
-                new_name = '{0}-{1}({2})'.format(name, suffix, unit)
-            self.df_report.rename(columns={old_name: new_name}, inplace=True)
+                name = '{0}-{1}'.format(column['name'], suffix)
+                decimal = column.get('round', default_round)
+                if decimal is not None:
+                    decimals_mapper.update({name: decimal})
+            for suffix in ('TEST-%SD', 'BASE-%SD', '%DIFF'):
+                name = '{0}-{1}'.format(column['name'], suffix)
+                decimal = column.get('round_pct', default_round_pct)
+                if decimal is not None:
+                    decimals_mapper.update({name: decimal})
+            name = '{0}-{1}'.format(column['name'], 'SIGN')
+            decimals_mapper.update({name: 2})
 
-    def _parse_data(self):
-        """Parse data from the testrun results.
+        self.df_report = self.df_report.round(decimals=decimals_mapper)
 
-        Input:
-            - self.df_test: dataframe for the TEST samples.
-            - self.df_base: dataframe for the BASE samples.
-            - self.config: customized configuration.
-        Updates:
-            - self.df_report: report dataframe to be updated.
-        """
-        # init the report dataframe
-        self._init_df_report()
-        self._fill_df_report()
-        self._format_df_report()
+        # fill non-values
+        self.df_report = self.df_report.fillna(default_fillna)
+
+        # add units to the column names
+        columns_mapper = {}
+
+        for column in self.keys_cfg:
+            if column.get('unit'):
+                old_name = column['name']
+                new_name = '{0}({1})'.format(column['name'], column['unit'])
+                columns_mapper.update({old_name: new_name})
+        for column in self.kpis_cfg:
+            if column.get('unit'):
+                name = column['name']
+                unit = column['unit']
+                for suffix in ('TEST-AVG', 'BASE-AVG'):
+                    old_name = '{0}-{1}'.format(name, suffix)
+                    new_name = '{0}-{1}({2})'.format(name, suffix, unit)
+                columns_mapper.update({old_name: new_name})
+
+        self.df_report.rename(columns=columns_mapper, inplace=True)
 
     def dump_to_csv(self):
         """Dump the report dataframe to a CSV file."""

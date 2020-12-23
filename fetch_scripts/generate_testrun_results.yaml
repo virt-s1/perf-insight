@@ -1,16 +1,18 @@
 testrun_results_generator:
   defaults:
     split: yes
+    round: 6
+    fillna: "NaN"
   columns:
     - name: Backend
       source: metadata
-      key: disk.backend
+      key: hardware.disk.backend
     - name: Driver
       source: metadata
-      key: disk.driver
+      key: hardware.disk.driver
     - name: Format
       source: metadata
-      key: disk.format
+      key: hardware.disk.format
     - name: RW
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].rw"
@@ -28,16 +30,18 @@ testrun_results_generator:
     - name: IOPS
       source: datastore
       jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
-      multiple: true
+      round: 0
     - name: LAT
       source: datastore
       jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
+      round: 3
     - name: CLAT
       source: datastore
       jqexpr: '.iteration_data.latency.clat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
+      round: 3
     - name: Path
       source: auto
