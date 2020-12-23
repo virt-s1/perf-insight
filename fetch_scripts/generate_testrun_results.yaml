@@ -6,13 +6,13 @@ testrun_results_generator:
   columns:
     - name: Backend
       source: metadata
-      key: disk.backend
+      key: hardware.disk.backend
     - name: Driver
       source: metadata
-      key: disk.driver
+      key: hardware.disk.driver
     - name: Format
       source: metadata
-      key: disk.format
+      key: hardware.disk.format
     - name: RW
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].rw"
