@@ -349,13 +349,38 @@ class benchmark_comparison_generator():
         Updates:
             - self.df_report: report dataframe to be updated.
         """
-        # format the dataframe
+        # get defaults
         defaults = self.config.get('defaults', {})
-        dataframe_round = defaults.get('dataframe_round', 2)
-        dataframe_fillna = defaults.get('dataframe_fillna', '')
+        default_round = defaults.get('round')
+        default_round_pct = defaults.get('round_pct')
+        default_fillna = defaults.get('fillna', '')
 
-        self.df_report = self.df_report.round(dataframe_round)
-        self.df_report = self.df_report.fillna(dataframe_fillna)
+        # apply rounds
+        decimals_mapper = {}
+
+        for column in self.keys_cfg:
+            name = column['name']
+            decimal = column.get('round', default_round)
+            if decimal is not None:
+                decimals_mapper.update({name: decimal})
+        for column in self.kpis_cfg:
+            for suffix in ('TEST-AVG', 'BASE-AVG'):
+                name = '{0}-{1}'.format(column['name'], suffix)
+                decimal = column.get('round', default_round)
+                if decimal is not None:
+                    decimals_mapper.update({name: decimal})
+            for suffix in ('TEST-%SD', 'BASE-%SD', '%DIFF'):
+                name = '{0}-{1}'.format(column['name'], suffix)
+                decimal = column.get('round_pct', default_round_pct)
+                if decimal is not None:
+                    decimals_mapper.update({name: decimal})
+            name = '{0}-{1}'.format(column['name'], 'SIGN')
+            decimals_mapper.update({name: 2})
+
+        self.df_report = self.df_report.round(decimals=decimals_mapper)
+
+        # fill non-values
+        self.df_report = self.df_report.fillna(default_fillna)
 
         # add units to the column names
         columns_mapper = {}
