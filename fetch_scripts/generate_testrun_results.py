@@ -139,13 +139,8 @@ class testrun_results_generator():
             # generate one row
             data = {}
             for cfg in self.config.get('columns'):
-                # get name and unit
-                name = cfg.get('name')
-                unit = cfg.get('unit')
-                if unit:
-                    name = '%s(%s)' % (name, unit)
-
                 # get and set value(s)
+                name = cfg.get('name')
                 data[name] = switch.get(cfg['source'],
                                         _get_value_unknown)(cfg, iterdata)
 
@@ -191,13 +186,31 @@ class testrun_results_generator():
         self.dataframe = pd.DataFrame(self.datatable)
 
     def _format_dataframe(self):
-        # format the dataframe
+        # get defaults
         defaults = self.config.get('defaults', {})
-        dataframe_round = defaults.get('dataframe_round', 2)
-        dataframe_fillna = defaults.get('dataframe_fillna', '')
+        default_round = defaults.get('round')
+        default_fillna = defaults.get('fillna', '')
 
-        self.dataframe = self.dataframe.round(dataframe_round)
-        self.dataframe = self.dataframe.fillna(dataframe_fillna)
+        # apply rounds
+        decimals_mapper = {}
+        for column in self.config.get('columns'):
+            name = column['name']
+            decimal = column.get('round', default_round)
+            if decimal is not None:
+                decimals_mapper.update({name: decimal})
+        self.dataframe = self.dataframe.round(decimals=decimals_mapper)
+
+        # fill non-values
+        self.dataframe = self.dataframe.fillna(default_fillna)
+
+        # add units to the column names
+        columns_mapper = {}
+        for column in self.config.get('columns'):
+            if column.get('unit'):
+                old_name = column['name']
+                new_name = '{0}({1})'.format(column['name'], column['unit'])
+                columns_mapper.update({old_name: new_name})
+        self.dataframe.rename(columns=columns_mapper, inplace=True)
 
     def dump_to_csv(self):
         """Dump the report dataframe to a CSV file."""
