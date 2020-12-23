@@ -80,10 +80,14 @@ class testrun_results_generator():
         self.datatable = []
         self.dataframe = None
         self._parse_data()
-        self._build_dataframe()
 
     def _parse_data(self):
-        """Parse data from the datastore.
+        self._build_datatable()
+        self._build_dataframe()
+        self._format_dataframe()
+
+    def _build_datatable(self):
+        """Parse data from the datastore into datatable.
 
         Input:
         - self.datastore: datastore.
@@ -183,7 +187,17 @@ class testrun_results_generator():
                 self.datatable.append(data.copy())
 
     def _build_dataframe(self):
+        # create the dataframe
         self.dataframe = pd.DataFrame(self.datatable)
+
+    def _format_dataframe(self):
+        # format the dataframe
+        defaults = self.config.get('defaults', {})
+        dataframe_round = defaults.get('dataframe_round', 2)
+        dataframe_fillna = defaults.get('dataframe_fillna', '')
+
+        self.dataframe = self.dataframe.round(dataframe_round)
+        self.dataframe = self.dataframe.fillna(dataframe_fillna)
 
     def dump_to_csv(self):
         """Dump the report dataframe to a CSV file."""

@@ -118,6 +118,22 @@ class benchmark_comparison_generator():
         self.df_report = None
         self._parse_data()
 
+    def _parse_data(self):
+        """Parse data from the testrun results.
+
+        Input:
+            - self.df_test: dataframe for the TEST samples.
+            - self.df_base: dataframe for the BASE samples.
+            - self.config: customized configuration.
+        Updates:
+            - self.df_report: report dataframe to be updated.
+        """
+        # build the report dataframe
+        self._init_df_report()
+        self._fill_df_report()
+        # format the report dataframe
+        self._format_df_report()
+
     def _init_df_report(self):
         """Init the report dataframe.
 
@@ -336,7 +352,7 @@ class benchmark_comparison_generator():
         # format the dataframe
         defaults = self.config.get('defaults', {})
         dataframe_round = defaults.get('dataframe_round', 2)
-        dataframe_fillna = defaults.get('dataframe_fillna')
+        dataframe_fillna = defaults.get('dataframe_fillna', '')
 
         self.df_report = self.df_report.round(dataframe_round)
         self.df_report = self.df_report.fillna(dataframe_fillna)
@@ -353,21 +369,6 @@ class benchmark_comparison_generator():
                 old_name = '{0}-{1}'.format(name, suffix)
                 new_name = '{0}-{1}({2})'.format(name, suffix, unit)
             self.df_report.rename(columns={old_name: new_name}, inplace=True)
-
-    def _parse_data(self):
-        """Parse data from the testrun results.
-
-        Input:
-            - self.df_test: dataframe for the TEST samples.
-            - self.df_base: dataframe for the BASE samples.
-            - self.config: customized configuration.
-        Updates:
-            - self.df_report: report dataframe to be updated.
-        """
-        # init the report dataframe
-        self._init_df_report()
-        self._fill_df_report()
-        self._format_df_report()
 
     def dump_to_csv(self):
         """Dump the report dataframe to a CSV file."""
