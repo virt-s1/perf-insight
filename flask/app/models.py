@@ -8,7 +8,7 @@ from sqlalchemy import (Column, ForeignKey, Integer, String, Text, Date, Float,
 from sqlalchemy.orm import relationship
 
 
-class Storage_Run(Model):
+class StorageRun(Model):
     '''
     table for storing storage test result
     '''
@@ -21,8 +21,14 @@ class Storage_Run(Model):
     kernel = Column(String(50))
     casenum = Column(Integer)
     result = Column(String(50))
-    # metadata is reserved, so use metadata_l instead
-    metadata_l = Column(Text)
+    # metadata location in the file system
+    rawdata = Column(String, nullable=True)
+    def rawdata_url(self):
+        if self.rawdata:
+            return Markup(
+                '<a href="' + str(self.rawdata) + '"> rawdata </a>')
+        else:
+            return self.rawdata
 
     def __repr__(self):
         return self.id
@@ -34,7 +40,7 @@ class Storage_Run(Model):
             print("testrun is {}".format(self.testrun))
         return Markup('<a href="' + self.result + '">result</a>')
 
-class Storage_Result(Model):
+class StorageResult(Model):
     '''
     table for storing storage test result
     '''
@@ -62,15 +68,14 @@ class Storage_Result(Model):
     run_time = Column(Date)
     comments = Column(String, nullable=True)
     sample = Column(String, nullable=True)
-    path = Column(String, nullable=True)
-    testrun = Column(String(100))
-    details = Column(String, nullable=True)
-    def details_url(self):
-        if self.details:
+    #path = Column(String, nullable=True)
+    rawdata = Column(String, nullable=True)
+    def rawdata_url(self):
+        if self.rawdata:
             return Markup(
-                '<a href="' + str(self.details) + '"> details </a>')
+                '<a href="' + str(self.raw) + '"> rawdata </a>')
         else:
-            return self.details
+            return self.raw
 
 class FailureType(Model):
     '''
