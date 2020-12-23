@@ -357,18 +357,24 @@ class benchmark_comparison_generator():
         self.df_report = self.df_report.round(dataframe_round)
         self.df_report = self.df_report.fillna(dataframe_fillna)
 
-        # add units to the columns
-        renames = [(x['name'], x['unit']) for x in self.keys_cfg if x['unit']]
-        for name, unit in renames:
-            new_name = '{0}({1})'.format(name, unit)
-            self.df_report.rename(columns={name: new_name}, inplace=True)
+        # add units to the column names
+        columns_mapper = {}
 
-        renames = [(x['name'], x['unit']) for x in self.kpis_cfg if x['unit']]
-        for name, unit in renames:
-            for suffix in ('TEST-AVG', 'BASE-AVG'):
-                old_name = '{0}-{1}'.format(name, suffix)
-                new_name = '{0}-{1}({2})'.format(name, suffix, unit)
-            self.df_report.rename(columns={old_name: new_name}, inplace=True)
+        for column in self.keys_cfg:
+            if column.get('unit'):
+                old_name = column['name']
+                new_name = '{0}({1})'.format(column['name'], column['unit'])
+                columns_mapper.update({old_name: new_name})
+        for column in self.kpis_cfg:
+            if column.get('unit'):
+                name = column['name']
+                unit = column['unit']
+                for suffix in ('TEST-AVG', 'BASE-AVG'):
+                    old_name = '{0}-{1}'.format(name, suffix)
+                    new_name = '{0}-{1}({2})'.format(name, suffix, unit)
+                columns_mapper.update({old_name: new_name})
+
+        self.df_report.rename(columns=columns_mapper, inplace=True)
 
     def dump_to_csv(self):
         """Dump the report dataframe to a CSV file."""
