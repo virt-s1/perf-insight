@@ -2,12 +2,14 @@ benchmark_comparison_generator:
   defaults:
     round: 6
     round_pct: 2
+    use_abbr: yes
     fillna: "NaN"
   kpi_defaults:
     higher_is_better: yes
-    max_percent_dev: 10
-    regression_threshold: 0.05
+    max_pctdev_threshold: 0.10
     confidence_threshold: 0.95
+    negligible_threshold: 0.05
+    regression_threshold: 0.10
   keys:
     - name: RW
     - name: BS

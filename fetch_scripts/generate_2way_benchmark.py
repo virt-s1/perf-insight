@@ -87,15 +87,18 @@ class benchmark_comparison_generator():
             if 'higher_is_better' not in item:
                 item['higher_is_better'] = kpi_defaults.get(
                     'higher_is_better', True)
-            if 'max_percent_dev' not in item:
-                item['max_percent_dev'] = kpi_defaults.get(
-                    'max_percent_dev', 10)
-            if 'regression_threshold' not in item:
-                item['regression_threshold'] = kpi_defaults.get(
-                    'regression_threshold', 5)
+            if 'max_pctdev_threshold' not in item:
+                item['max_pctdev_threshold'] = kpi_defaults.get(
+                    'max_pctdev_threshold', 0.10)
             if 'confidence_threshold' not in item:
                 item['confidence_threshold'] = kpi_defaults.get(
                     'confidence_threshold', 0.95)
+            if 'negligible_threshold' not in item:
+                item['negligible_threshold'] = kpi_defaults.get(
+                    'negligible_threshold', 0.05)
+            if 'regression_threshold' not in item:
+                item['regression_threshold'] = kpi_defaults.get(
+                    'regression_threshold', 0.10)
 
     # load testrun results for test and base samples
         self.df_test = pd.read_csv(ARGS.test)
@@ -232,71 +235,87 @@ class benchmark_comparison_generator():
 
             return significance
 
-        def _get_conclusion(base_pctsd, test_pctsd, pctdiff, significance,
-                            kpi_cfg):
+        def _get_conclusion(base_pctsd,
+                            test_pctsd,
+                            pctdiff,
+                            significance,
+                            kpi_cfg,
+                            use_abbr=False):
             """Get the conclusion of the specified KPI.
 
-            To get the conclusion, we need to consider the following conditions:
-            1. The "%SD" for both samples should below MAX_PCT_DEV;
-            2. Whether the "%DF" of the KPI beyonds REGRESSION_THRESHOLD;
-            3. Whether the "significance" beyonds CONFIDENCE_THRESHOLD.
+            An algorithm helps reaching a preliminary conclusion for each KPI.
+            ID - Invalid Data           Any of the input data is invalid.
+            HV - High Variance          %SD > MAX_PCTDEV_THRESHOLD
+            NS - No Significance        SGN < CONFIDENCE_THRESHOLD
+            NC - Negligible Changes     abs(%DF) <= NEGLIGIBLE_THRESHOLD
+            MI - Moderately Improved    NEGLIGIBLE_THRESHOLD < abs(%DF) <=
+                                        REGRESSION_THRESHOLD.
+            MR - Moderately Regressed   Same as above, but in the negative
+                                        direction.
+            DI - Dramatically Improved  abs(%DF) > REGRESSION_THRESHOLD
+            DR - Dramatically Regressed Same as above, but in the negative
+                                        direction.
 
-            Returns:
-                - 'Data Invalid':         the input data is invalid;
-                - 'Variance Too Large':   the "%SD" beyonds MAX_PCT_DEV;
-                - 'No Difference':        the "%DF" is zero;
-                - 'No Significance':      the "significance" is less than the
-                                          CONFIDENCE_THRESHOLD;
-                - 'Major Improvement' and 'Major Regression':
-                    the "significance" beyonds CONFIDENCE_THRESHOLD and "%DF"
-                    beyonds REGRESSION_THRESHOLD;
-                - 'Minor Improvement' and 'Minor Regression':
-                    the "significance" beyonds CONFIDENCE_THRESHOLD but "%DF"
-                    is below REGRESSION_THRESHOLD;
+            Returns: any of the conclusion mentioned above or "np.nan".
             """
 
+            abbrs = {
+                'Invalid Data': 'ID',
+                'High Variance': 'HV',
+                'No Significance': 'NS',
+                'Negligible Changes': 'NC',
+                'Moderately Improved': 'MI',
+                'Moderately Regressed': 'MR',
+                'Dramatically Improved': 'DI',
+                'Dramatically Regressed': 'DR'
+            }
+
             higher_is_better = kpi_cfg['higher_is_better']
-            MAX_PCT_DEV = kpi_cfg['max_percent_dev']
-            REGRESSION_THRESHOLD = kpi_cfg['regression_threshold']
+            MAX_PCTDEV_THRESHOLD = kpi_cfg['max_pctdev_threshold'] * 100
+            NEGLIGIBLE_THRESHOLD = kpi_cfg['negligible_threshold'] * 100
+            REGRESSION_THRESHOLD = kpi_cfg['regression_threshold'] * 100
             CONFIDENCE_THRESHOLD = kpi_cfg['confidence_threshold']
 
             # data check
-            if MAX_PCT_DEV < 0 or MAX_PCT_DEV > 100:
-                raise ValueError('Invalid parameter: max_percent_dev')
+            if MAX_PCTDEV_THRESHOLD < 0:
+                raise ValueError('Invalid value: max_pctdev_threshold')
             if CONFIDENCE_THRESHOLD < 0 or CONFIDENCE_THRESHOLD > 1:
-                raise ValueError('Invalid parameter: confidence_threshold')
-            if REGRESSION_THRESHOLD < 0 or REGRESSION_THRESHOLD > 1:
-                raise ValueError('Invalid parameter: regression_threshold')
+                raise ValueError('Invalid value: confidence_threshold')
+            if NEGLIGIBLE_THRESHOLD < 0:
+                raise ValueError('Invalid value: negligible_threshold')
+            if REGRESSION_THRESHOLD < 0:
+                raise ValueError('Invalid value: regression_threshold')
 
+            # get conclusion
             if np.isnan(pctdiff):
                 return np.nan
 
-            if pctdiff == 0:
-                return 'No Difference'
-
             if np.isnan(significance) or significance < 0 or significance > 1:
-                return 'Data Invalid'
-
-            if base_pctsd < 0 or test_pctsd < 0:
-                return 'Data Invalid'
-
-            if base_pctsd > MAX_PCT_DEV or test_pctsd > MAX_PCT_DEV:
-                return 'Variance Too Large'
-
-            if significance < CONFIDENCE_THRESHOLD:
-                return 'No Significance'
-
-            if (higher_is_better and pctdiff > 0) or (not higher_is_better
-                                                      and pctdiff < 0):
-                if abs(pctdiff) >= REGRESSION_THRESHOLD * 100:
-                    return 'Major Improvement'
-                else:
-                    return 'Minor Improvement'
+                conclusion = 'Invalid Data'
+            elif base_pctsd < 0 or test_pctsd < 0:
+                conclusion = 'Invalid Data'
+            elif base_pctsd > MAX_PCTDEV_THRESHOLD:
+                conclusion = 'High Variance'
+            elif test_pctsd > MAX_PCTDEV_THRESHOLD:
+                conclusion = 'High Variance'
+            elif significance < CONFIDENCE_THRESHOLD:
+                conclusion = 'No Significance'
+            elif abs(pctdiff) <= NEGLIGIBLE_THRESHOLD:
+                conclusion = 'Negligible Changes'
             else:
-                if abs(pctdiff) >= REGRESSION_THRESHOLD * 100:
-                    return 'Major Regression'
+                if abs(pctdiff) <= REGRESSION_THRESHOLD:
+                    conclusion = 'Moderately '
                 else:
-                    return 'Minor Regression'
+                    conclusion = 'Dramatically '
+
+                if higher_is_better and pctdiff > 0:
+                    conclusion += 'Improved'
+                else:
+                    conclusion += 'Regressed'
+
+            # try to return the abbreviation if asked
+            return conclusion if not use_abbr else abbrs.get(
+                conclusion, conclusion)
 
         # walk each row of the report dataframe, get related data from the
         # test and base dataframes, calculate the KPIs and fill the results
@@ -325,8 +344,10 @@ class benchmark_comparison_generator():
                 significance = _get_significance(df_base, df_test, kpi_cfg)
 
                 # calculate the conclusion
+                use_abbr = self.config.get('defaults',
+                                           {}).get('use_abbr', False)
                 conclusion = _get_conclusion(base_pctsd, test_pctsd, pctdiff,
-                                             significance, kpi_cfg)
+                                             significance, kpi_cfg, use_abbr)
 
                 # update the current KPI
                 row[kpi_name + '-BASE-AVG'] = base_mean
