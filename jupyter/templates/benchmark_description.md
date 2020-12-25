@@ -37,6 +37,7 @@ The following parameters can be specified by the users.
 
 | Parameters           | Description                           | Default |
 | -------------------- | ------------------------------------- | :------ |
+| HIGHER_IS_BETTER     | Describe the direction of improvement | True    |
 | MAX_PCTDEV_THRESHOLD | Max %SD can be accepted (0 = disable) | 0.10    |
 | CONFIDENCE_THRESHOLD | Min SIG to be considered reproducible | 0.95    |
 | NEGLIGIBLE_THRESHOLD | Max %DF can be ignored (0 = disable)  | 0.05    |
