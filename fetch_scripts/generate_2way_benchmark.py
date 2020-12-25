@@ -173,7 +173,7 @@ class benchmark_comparison_generator():
         # expaned the report dataframe with KPI columns
         for kpi_cfg in self.kpis_cfg:
             expansion = [
-                'BASE-AVG', 'BASE-%SD', 'TEST-AVG', 'TEST-%SD', '%DF', 'SIG',
+                'BASE-AVG', 'BASE-%SD', 'TEST-AVG', 'TEST-%SD', '%DF', 'SGN',
                 'CON'
             ]
             for suffix in expansion:
@@ -355,7 +355,7 @@ class benchmark_comparison_generator():
                 row[kpi_name + '-TEST-AVG'] = test_mean
                 row[kpi_name + '-TEST-%SD'] = test_pctsd
                 row[kpi_name + '-%DF'] = pctdiff
-                row[kpi_name + '-SIG'] = significance
+                row[kpi_name + '-SGN'] = significance
                 row[kpi_name + '-CON'] = conclusion
 
             # write the row back
@@ -395,7 +395,7 @@ class benchmark_comparison_generator():
                 decimal = column.get('round_pct', default_round_pct)
                 if decimal is not None:
                     decimals_mapper.update({name: decimal})
-            name = '{0}-{1}'.format(column['name'], 'SIG')
+            name = '{0}-{1}'.format(column['name'], 'SGN')
             decimals_mapper.update({name: 2})
 
         self.df_report = self.df_report.round(decimals=decimals_mapper)
