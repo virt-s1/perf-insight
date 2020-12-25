@@ -1,12 +1,12 @@
 **Description**
 
-This benchmark report compares the TEST run over BASE run. The title of this form composes from 2 parts. the first part is the KEYs which identify a specified test case, the second part is the KPIs which are the test results.
+This benchmark report compares the TEST results over the BASE results. The column names of the table consist of two parts. The first part is the KEYs that identifies the specified test case, and the second part is the KPIs as the test results.
 
-KPI is shorten for "Key Performance Indicator", it measures the performance that a test can reach and it generally reflects how effective a system is. In this form, each KPI are devided into seven columns. Take KPI "IOPS" as an example, "IOPS" (Input/Output Operations Per Second) is a typical KPI of the performance testing for storage. It will be devided into the following seven columns:
+KPI is the abbreviation of "Key Performance Indicator", it measures the performance that a test can achieve, and usually reflects the effectiveness of the system. In this table, each KPI is divided into 7 columns. Take "IOPS" as an example, "IOPS" (input/output operations per second) is a typical KPI for storage performance testing. It will be divided into the following seven columns:
 1. IOPS-BASE-AVG: The **mean value** of the BASE samples
 4. IOPS-BASE-%SD: The **standard deviation in percentage** of the BASE samples
-5. IOPS-TEST-AVG: Same as the above one, but for TEST samples.
-6. IOPS-TEST-%SD: Same as the above one, but for TEST samples.
+5. IOPS-TEST-AVG: Same as above, but for TEST samples.
+6. IOPS-TEST-%SD: Same as above, but for TEST samples.
 7. IOPS-%DF: The **differance in percentage** of TEST over BASE samples.
 8. IOPS-SGN: The **significance** calculated by the t-test of the two samples.
 9. IOPS-CON: The preliminary **conclusion** determined by algorithm.
@@ -33,7 +33,7 @@ An algorithm helps reaching a preliminary conclusion for each KPI.
 | DI   | Dramatically Improved  | abs(%DF) > REGRESSION_THRESHOLD                          |
 | DR   | Dramatically Regressed | Same as above, but in the negative direction.            |
 
-The following parameters can be specified by the users.
+The following parameters can be specified by users.
 
 | Parameters           | Description                           | Default |
 | -------------------- | ------------------------------------- | :------ |
