@@ -17,7 +17,7 @@ benchmark_comparison_generator:
     - name: Numjobs
   kpis:
     - name: IOPS
-      round: 0
+      round: 1
     - name: LAT
       unit: ms
       from: LAT(ms)

@@ -21,7 +21,7 @@ testrun_results_generator:
     - name: IOPS
       source: datastore
       jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
-      round: 0
+      round: 1
     - name: LAT
       source: datastore
       jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
