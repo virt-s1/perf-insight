@@ -170,8 +170,8 @@ class benchmark_comparison_generator():
         # expaned the report dataframe with KPI columns
         for kpi_cfg in self.kpis_cfg:
             expansion = [
-                'TEST-AVG', 'TEST-%SD', 'BASE-AVG', 'BASE-%SD', '%DIFF',
-                'SIGN', 'SPEC'
+                'BASE-AVG', 'BASE-%SD', 'TEST-AVG', 'TEST-%SD', '%DF', 'SIG',
+                'CON'
             ]
             for suffix in expansion:
                 name = '{0}-{1}'.format(kpi_cfg['name'], suffix)
@@ -201,7 +201,7 @@ class benchmark_comparison_generator():
             """
             kpi_from = kpi_cfg['from']
 
-            # calculate the "mean" and "%sd"
+            # calculate the "mean" and "%stddev"
             base_mean = df_base[kpi_from].mean()
             base_pctsd = df_base[kpi_from].std(ddof=1) / base_mean * 100
             test_mean = df_test[kpi_from].mean()
@@ -232,26 +232,26 @@ class benchmark_comparison_generator():
 
             return significance
 
-        def _get_speculate(base_pctsd, test_pctsd, pctdiff, significance,
-                           kpi_cfg):
-            """Get the speculate of the specified KPI.
+        def _get_conclusion(base_pctsd, test_pctsd, pctdiff, significance,
+                            kpi_cfg):
+            """Get the conclusion of the specified KPI.
 
-            To get the speculate, we need to consider the following conditions:
-            1. The "%sd" for both samples should below MAX_PCT_DEV;
-            2. Whether the "%diff" of the KPI beyonds REGRESSION_THRESHOLD;
+            To get the conclusion, we need to consider the following conditions:
+            1. The "%SD" for both samples should below MAX_PCT_DEV;
+            2. Whether the "%DF" of the KPI beyonds REGRESSION_THRESHOLD;
             3. Whether the "significance" beyonds CONFIDENCE_THRESHOLD.
 
             Returns:
                 - 'Data Invalid':         the input data is invalid;
-                - 'Variance Too Large':   the "%sd" beyonds MAX_PCT_DEV;
-                - 'No Difference':        the "%diff" is zero;
+                - 'Variance Too Large':   the "%SD" beyonds MAX_PCT_DEV;
+                - 'No Difference':        the "%DF" is zero;
                 - 'No Significance':      the "significance" is less than the
                                           CONFIDENCE_THRESHOLD;
                 - 'Major Improvement' and 'Major Regression':
-                    the "significance" beyonds CONFIDENCE_THRESHOLD and "%diff"
+                    the "significance" beyonds CONFIDENCE_THRESHOLD and "%DF"
                     beyonds REGRESSION_THRESHOLD;
                 - 'Minor Improvement' and 'Minor Regression':
-                    the "significance" beyonds CONFIDENCE_THRESHOLD but "%diff"
+                    the "significance" beyonds CONFIDENCE_THRESHOLD but "%DF"
                     is below REGRESSION_THRESHOLD;
             """
 
@@ -317,25 +317,25 @@ class benchmark_comparison_generator():
                 # calculate each KPI
                 kpi_name = kpi_cfg['name']
 
-                # calculate the "mean", "%sd" and "%diff"
+                # calculate the "mean", "%SD" and "%DF"
                 (base_mean, base_pctsd, test_mean, test_pctsd,
                  pctdiff) = _get_statistics(df_base, df_test, kpi_cfg)
 
                 # calculate the significance
                 significance = _get_significance(df_base, df_test, kpi_cfg)
 
-                # calculate the speculate
-                speculate = _get_speculate(base_pctsd, test_pctsd, pctdiff,
-                                           significance, kpi_cfg)
+                # calculate the conclusion
+                conclusion = _get_conclusion(base_pctsd, test_pctsd, pctdiff,
+                                             significance, kpi_cfg)
 
                 # update the current KPI
                 row[kpi_name + '-BASE-AVG'] = base_mean
                 row[kpi_name + '-BASE-%SD'] = base_pctsd
                 row[kpi_name + '-TEST-AVG'] = test_mean
                 row[kpi_name + '-TEST-%SD'] = test_pctsd
-                row[kpi_name + '-%DIFF'] = pctdiff
-                row[kpi_name + '-SIGN'] = significance
-                row[kpi_name + '-SPEC'] = speculate
+                row[kpi_name + '-%DF'] = pctdiff
+                row[kpi_name + '-SIG'] = significance
+                row[kpi_name + '-CON'] = conclusion
 
             # write the row back
             self.df_report.iloc[index] = row
@@ -369,12 +369,12 @@ class benchmark_comparison_generator():
                 decimal = column.get('round', default_round)
                 if decimal is not None:
                     decimals_mapper.update({name: decimal})
-            for suffix in ('TEST-%SD', 'BASE-%SD', '%DIFF'):
+            for suffix in ('TEST-%SD', 'BASE-%SD', '%DF'):
                 name = '{0}-{1}'.format(column['name'], suffix)
                 decimal = column.get('round_pct', default_round_pct)
                 if decimal is not None:
                     decimals_mapper.update({name: decimal})
-            name = '{0}-{1}'.format(column['name'], 'SIGN')
+            name = '{0}-{1}'.format(column['name'], 'SIG')
             decimals_mapper.update({name: 2})
 
         self.df_report = self.df_report.round(decimals=decimals_mapper)
