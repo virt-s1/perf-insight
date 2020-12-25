@@ -287,22 +287,36 @@ class benchmark_comparison_generator():
                 raise ValueError('Invalid value: regression_threshold')
 
             # get conclusion
-            if np.isnan(pctdiff):
-                return np.nan
+            conclusion = None
 
-            if np.isnan(significance) or significance < 0 or significance > 1:
-                conclusion = 'Invalid Data'
-            elif base_pctsd < 0 or test_pctsd < 0:
-                conclusion = 'Invalid Data'
-            elif base_pctsd > MAX_PCTDEV_THRESHOLD:
-                conclusion = 'High Variance'
-            elif test_pctsd > MAX_PCTDEV_THRESHOLD:
-                conclusion = 'High Variance'
-            elif significance < CONFIDENCE_THRESHOLD:
+            # check for 'not available'
+            if np.isnan(pctdiff):
+                conclusion = np.nan
+
+            # check for 'Invalid Data'
+            if not conclusion:
+                if np.isnan(significance):
+                    conclusion = 'Invalid Data'
+                elif significance < 0 or significance > 1:
+                    conclusion = 'Invalid Data'
+                elif base_pctsd < 0 or test_pctsd < 0:
+                    conclusion = 'Invalid Data'
+
+            # check for 'High Variance'
+            if not conclusion and MAX_PCTDEV_THRESHOLD != 0:
+                if max(base_pctsd, test_pctsd) > MAX_PCTDEV_THRESHOLD:
+                    conclusion = 'High Variance'
+
+            # check for 'No Significance'
+            if not conclusion and significance < CONFIDENCE_THRESHOLD:
                 conclusion = 'No Significance'
-            elif abs(pctdiff) <= NEGLIGIBLE_THRESHOLD:
+
+            # check for 'Negligible Changes'
+            if not conclusion and abs(pctdiff) <= NEGLIGIBLE_THRESHOLD:
                 conclusion = 'Negligible Changes'
-            else:
+
+            # check for 'Improvment' and 'Regression'
+            if not conclusion:
                 if abs(pctdiff) <= REGRESSION_THRESHOLD:
                     conclusion = 'Moderately '
                 else:
@@ -313,7 +327,7 @@ class benchmark_comparison_generator():
                 else:
                     conclusion += 'Regressed'
 
-            # try to return the abbreviation if asked
+            # return conclusion or its abbreviation if asked
             return conclusion if not use_abbr else abbrs.get(
                 conclusion, conclusion)
 
