@@ -41,6 +41,3 @@ metadata_comparison_generator:
       key: testrun.date
     - name: Comments
       key: testrun.comments
-    - name: Correlate
-      test_key: test.correlate_y
-      base_key: test.correlate_x
