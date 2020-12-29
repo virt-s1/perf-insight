@@ -20,7 +20,7 @@ KPI is the abbreviation of "Key Performance Indicator", it measures the performa
 
 **About conclusion**
 
-An algorithm helps reaching a preliminary conclusion for each KPI.
+An algorithm helps reaching a preliminary conclusion for each KPI. It could be any of the following ones:
 
 | Abbr | Conclusion             | Reaching Condition (priority decreasing)                 |
 | :--- | :--------------------- | :------------------------------------------------------- |
