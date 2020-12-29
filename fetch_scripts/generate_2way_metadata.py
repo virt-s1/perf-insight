@@ -95,6 +95,8 @@ class metadata_comparison_generator():
         show_undefined = defaults.get('show_undefined', True)
 
         data = {}
+        defined_test_keys = []
+        defined_base_keys = []
 
         for item in self.config.get('metadata', {}):
             # get display name
@@ -116,17 +118,30 @@ class metadata_comparison_generator():
             # save to the data table
             self.datatable.append(data.copy())
 
+            # save defined keys
+            defined_test_keys.append(test_key)
+            defined_base_keys.append(base_key)
+
         # deal with undefined metadata
-        # if show_undefined:
-        #     # get undefined keys
+        if show_undefined:
+            # get undefined keys
+            undefined_test_keys = [
+                x for x in self.test.keys() if x not in defined_test_keys
+            ]
+            undefined_base_keys = [
+                x for x in self.base.keys() if x not in defined_base_keys
+            ]
+            undefined_keys = list(
+                set(undefined_test_keys) | set(undefined_base_keys))
+            undefined_keys.sort()
 
-        #     keys = list(self.test.keys() | self.base.keys())
-        #     # keys.sort()
+            for key in undefined_keys:
+                data['NAME'] = data['KEY'] = key
+                data['TEST'] = self.test.get(key)
+                data['BASE'] = self.base.get(key)
 
-        #     # for key in keys:
-        #     #     data['KEY'] = key
-        #     #     data['TEST'] = self.test.get(key)
-        #     #     data['BASE'] = self.base.get(key)
+                # save to the data table
+                self.datatable.append(data.copy())
 
         # build dataframe
         self._build_dataframe()
