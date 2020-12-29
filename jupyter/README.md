@@ -2,7 +2,8 @@
 
 ### Build image
 ```
-podman build -t jupyter_reporting ./container/
+cd perf-insight
+podman build -t jupyter_reporting . -f ./jupyter/container/Dockerfile 
 ```
 
 ### Generate Jupyter report
