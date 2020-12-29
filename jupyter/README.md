@@ -2,8 +2,7 @@
 
 ### Build image
 ```
-cd container
-podman build -t jupyter_reporting .
+podman build -t jupyter_reporting ./container/
 ```
 
 ### Generate Jupyter report
