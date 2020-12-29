@@ -257,7 +257,7 @@ class StorageResultPubView(ModelView):
     search_columns = [
         'id', 'testrun', 'kernel', 'branch', 'backend', 'driver', 'format', 'rw', 'bs',
         'iodepth', 'numjobs', 'iops', 'latency', 'clat', 'tool_version', 'compose',
-        'cpu', 'cpu_model', 'memory', 'platform', 'flavor', 'run_time', 'comments', 'sample',
+        'cpu', 'cpu_model', 'memory', 'platform', 'flavor', 'date', 'comments', 'sample',
         'testrun'
     ]
 
@@ -266,7 +266,7 @@ class StorageResultPubView(ModelView):
             "fields": [
                 'testrun', 'platform', 'flavor', 'branch', 'compose', 'kernel', 'cpu', 'cpu_model', 'memory','backend', 'driver', 'format', 'rw', 'bs',
                 'iodepth', 'numjobs', 'sample', 'iops', 'latency', 'clat', 'tool_version', 
-                   'run_time',  'rawdata_url', 'comments'
+                   'date',  'rawdata_url', 'comments'
             ]
         }),
         ("Description", {
