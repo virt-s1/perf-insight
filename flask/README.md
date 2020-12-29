@@ -1,4 +1,4 @@
-# perf-insight  
+# perf-insight/flask
 
 The performance test report system, allowing quality engineers to gain insight into the valuable data in the test results.
 
@@ -8,10 +8,10 @@ The performance test report system, allowing quality engineers to gain insight i
 
 ## Swith to repo directory and install required pkgs
 
-    cd perf-insight
+    cd perf-insight/flask
     pip install -r requirements.txt
 
-## Create an Admin user(only required at first run)
+## Create an Admin user (only required at first run)
 
     flask fab create-admin
 
