@@ -75,8 +75,8 @@ class TestResult(DB_BASE):
     backend = Column(String(50))
     driver = Column(String(50), nullable=True)
     format = Column(String(50), nullable=True)
-    rw = Column(Integer)
-    bs = Column(Integer)
+    rw = Column(String(50))
+    bs = Column(String(50))
     iodepth = Column(Integer)
     numjobs = Column(Integer)
     iops = Column(Integer)
@@ -89,7 +89,7 @@ class TestResult(DB_BASE):
     memory = Column(String(100), nullable=True)
     platform = Column(String(50))
     flavor = Column(String(50), nullable=True)
-    run_time = Column(String)
+    date = Column(String)
     comments = Column(String, nullable=True)
     sample = Column(String, nullable=True)
     testrun = Column(String(100))
@@ -109,15 +109,15 @@ def testrun_write():
         LOG.info("No row found, please check!")
         sys.exit(1)
     testrun = TestRun()
-    testrun.testrun = tmp_raw['Testrun']
-    testrun.platform = tmp_raw['Platform']
-    testrun.flavor = tmp_raw['Flavor']
-    testrun.branch = tmp_raw['Branch']
-    testrun.compose = tmp_raw['Compose']
-    testrun.kernel = tmp_raw['Kernel']
+    testrun.testrun = tmp_raw['testrun']
+    testrun.platform = tmp_raw['platform']
+    testrun.flavor = tmp_raw['flavor']
+    testrun.branch = tmp_raw['branch']
+    testrun.compose = tmp_raw['compose']
+    testrun.kernel = tmp_raw['kernel']
     testrun.casenum = case_count
     testrun.result = ''
-    testrun.rawdata = tmp_raw['Testrun']
+    testrun.rawdata = tmp_raw['testrun']
 
     session = DB_SESSION()
     results = session.query(TestRun).filter_by(testrun=testrun.testrun).all()
@@ -162,31 +162,31 @@ def testresult_write():
             tmp_raw = r
             case_count += 1
             testresult = TestResult()
-            testresult.testrun = tmp_raw['Testrun']
-            testresult.kernel = tmp_raw['Kernel']
-            testresult.branch = tmp_raw['Branch']
-            testresult.backend = tmp_raw['Backend']
-            testresult.driver = tmp_raw['Driver']
-            testresult.format = tmp_raw['Format']
-            testresult.rw = tmp_raw['RW']
-            testresult.bs = tmp_raw['BS']
-            testresult.iodepth = tmp_raw['IOdepth']
-            testresult.numjobs = tmp_raw['Numjobs']
-            testresult.iops = tmp_raw['IOPS']
-            testresult.latency = tmp_raw['LAT(ms)']
-            testresult.clat = tmp_raw['CLAT(ms)']
+            testresult.testrun = tmp_raw['testrun']
+            testresult.kernel = tmp_raw['kernel']
+            testresult.branch = tmp_raw['branch']
+            testresult.backend = tmp_raw['backend']
+            testresult.driver = tmp_raw['driver']
+            testresult.format = tmp_raw['format']
+            testresult.rw = tmp_raw['rw']
+            testresult.bs = tmp_raw['bs']
+            testresult.iodepth = tmp_raw['iodepth']
+            testresult.numjobs = tmp_raw['numjobs']
+            testresult.iops = tmp_raw['iops']
+            testresult.latency = tmp_raw['lat(ms)']
+            testresult.clat = tmp_raw['clat(ms)']
             testresult.tool_version = tmp_raw['']
-            testresult.compose = tmp_raw['Tool_Version']
-            testresult.cpu = tmp_raw['CPU']
-            testresult.cpu_model = tmp_raw['CPU_Model']
-            testresult.memory = tmp_raw['Memory']
-            testresult.platform = tmp_raw['Platform']
-            testresult.flavor = tmp_raw['Flavor']
-            tmp_date = time.strptime(tmp_raw['Run_Time'], "%a %b %d %H:%M:%S %Z %Y")
-            testresult.run_time = "{}-{}-{}".format(tmp_date.tm_year,tmp_date.tm_mon,tmp_date.tm_mday)
-            testresult.comments = tmp_raw['Comments']
-            testresult.sample = tmp_raw['Sample']
-            testresult.rawdata = tmp_raw['Path']
+            testresult.compose = tmp_raw['tool_version']
+            testresult.cpu = tmp_raw['cpu']
+            testresult.cpu_model = tmp_raw['cpu_model']
+            testresult.memory = tmp_raw['memory']
+            testresult.platform = tmp_raw['platform']
+            testresult.flavor = tmp_raw['flavor']
+            tmp_date = time.strptime(tmp_raw['date'], "%a %b %d %H:%M:%S %Z %Y")
+            testresult.date = "{}-{}-{}".format(tmp_date.tm_year,tmp_date.tm_mon,tmp_date.tm_mday)
+            testresult.comments = tmp_raw['comments']
+            testresult.sample = tmp_raw['sample']
+            testresult.rawdata = tmp_raw['path']
             session = DB_SESSION()
             try:
                 session.add(testresult)

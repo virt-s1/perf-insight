@@ -51,8 +51,8 @@ class StorageResult(Model):
     backend = Column(String(50))
     driver = Column(String(50), nullable=True)
     format = Column(String(50), nullable=True)
-    rw = Column(Integer)
-    bs = Column(Integer)
+    rw = Column(String(50))
+    bs = Column(String(50))
     iodepth = Column(Integer)
     numjobs = Column(Integer)
     iops = Column(Integer)
@@ -65,7 +65,7 @@ class StorageResult(Model):
     memory = Column(String(100), nullable=True)
     platform = Column(String(50))
     flavor = Column(String(50), nullable=True)
-    run_time = Column(Date)
+    date = Column(Date)
     comments = Column(String, nullable=True)
     sample = Column(String, nullable=True)
     #path = Column(String, nullable=True)
@@ -73,7 +73,7 @@ class StorageResult(Model):
     def rawdata_url(self):
         if self.rawdata:
             return Markup(
-                '<a href="' + str(self.raw) + '"> rawdata </a>')
+                '<a href="' + str(self.rawdata) + '"> rawdata </a>')
         else:
             return self.raw
 
