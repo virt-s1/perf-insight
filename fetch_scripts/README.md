@@ -118,15 +118,14 @@ $ ./generate_2way_metadata.py \
     --output ./workspace/2way_metadata.csv
 ```
 
-Run the following script to generate the benchmark config:
+Run the following script to generate the benchmark parameters:
 
-The CSV table will be like this:
-
-| name     | higher_is_better | max_percent_dev | regression_threshold | confidence_threshold |
-| -------- | ---------------- | --------------- | -------------------- | -------------------- |
-| IOPS     | yes              | 5               | 0.05                 | 0.95                 |
-| LAT(ms)  | no               | 5               | 0.05                 | 0.95                 |
-| CLAT(ms) | no               | 5               | 0.05                 | 0.95                 |
+```bash
+$ ./generate_2way_parameters.py \
+    --benchmark_config ./workspace/generate_2way_benchmark.yaml \
+    --output-format csv \
+    --output ./workspace/2way_parameters.csv
+```
 
 Run the following script to generate the benchmark comparison:
 
