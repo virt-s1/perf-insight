@@ -143,6 +143,11 @@ class metadata_comparison_generator():
                 # save to the data table
                 self.datatable.append(data.copy())
 
+        # remove keys if asked
+        if not show_keys:
+            for item in self.datatable:
+                item.pop('KEY', None)
+
         # build dataframe
         self._build_dataframe()
 
@@ -170,7 +175,6 @@ class metadata_comparison_generator():
 
 if __name__ == '__main__':
     gen = metadata_comparison_generator(ARGS)
-    gen.show_vars()
     gen.dump_to_csv()
 
 exit(0)
