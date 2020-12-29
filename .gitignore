@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 # customized settings
-fetch_scripts/data_source
-fetch_scripts/workspace
+data_process/data_source
+data_process/workspace
