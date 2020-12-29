@@ -15,12 +15,12 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(description="Generate the 2-way metadata \
 comparison for the TEST and BASE testruns.")
-# ARG_PARSER.add_argument('--config',
-#                         dest='config',
-#                         action='store',
-#                         help='The yaml config file for generating comparison.',
-#                         default='generate_2way_metadata.yaml',
-#                         required=False)
+ARG_PARSER.add_argument('--config',
+                        dest='config',
+                        action='store',
+                        help='The yaml config file for generating comparison.',
+                        default='generate_2way_metadata.yaml',
+                        required=False)
 ARG_PARSER.add_argument('--test',
                         dest='test',
                         action='store',
@@ -53,11 +53,11 @@ class metadata_comparison_generator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
-        # codepath = os.path.split(os.path.abspath(__file__))[0]
-        # filename = os.path.join(codepath, ARGS.config)
-        # with open(filename, 'r') as f:
-        #     c = yaml.safe_load(f)
-        #     self.config = c[__class__.__name__]
+        codepath = os.path.split(os.path.abspath(__file__))[0]
+        filename = os.path.join(codepath, ARGS.config)
+        with open(filename, 'r') as f:
+            c = yaml.safe_load(f)
+            self.config = c[__class__.__name__]
 
         # load metadata for test and base testruns
         with open(ARGS.test, 'r') as f:
@@ -78,7 +78,6 @@ class metadata_comparison_generator():
         self.datatable = []
         self.dataframe = None
         self._parse_data()
-        self._build_dataframe()
 
     def _parse_data(self):
         """Parse data from the metadata dicts.
@@ -90,20 +89,67 @@ class metadata_comparison_generator():
         Output:
         - self.datatable: datatable to be generated.
         """
+        # get defaults
+        defaults = self.config.get('defaults', {})
+        show_keys = defaults.get('show_keys', True)
+        show_undefined = defaults.get('show_undefined', True)
+
         data = {}
+        defined_test_keys = []
+        defined_base_keys = []
 
-        # keys = self.test.keys()                           # test
-        # keys = list(self.test.keys() & self.base.keys())  # intersection
-        keys = list(self.test.keys() | self.base.keys())  # union
-        keys.sort()
+        for item in self.config.get('metadata', {}):
+            # get display name
+            data['NAME'] = item.get('name')
 
-        for key in keys:
-            data['KEY'] = key
-            data['TEST'] = self.test.get(key)
-            data['BASE'] = self.base.get(key)
+            # get keys
+            test_key = item.get('test_key') or item.get('key')
+            base_key = item.get('base_key') or item.get('key')
+
+            if test_key == base_key:
+                data['KEY'] = test_key
+            else:
+                data['KEY'] = '{0}/{1}'.format(test_key, base_key)
+
+            # get values
+            data['TEST'] = self.test.get(test_key)
+            data['BASE'] = self.base.get(base_key)
 
             # save to the data table
             self.datatable.append(data.copy())
+
+            # save defined keys
+            defined_test_keys.append(test_key)
+            defined_base_keys.append(base_key)
+
+        # deal with undefined metadata
+        if show_undefined:
+            # get undefined keys
+            undefined_test_keys = [
+                x for x in self.test.keys() if x not in defined_test_keys
+            ]
+            undefined_base_keys = [
+                x for x in self.base.keys() if x not in defined_base_keys
+            ]
+            undefined_keys = list(
+                set(undefined_test_keys) | set(undefined_base_keys))
+            undefined_keys.sort()
+
+            for key in undefined_keys:
+                data['NAME'] = data['KEY'] = key
+                data['TEST'] = self.test.get(key)
+                data['BASE'] = self.base.get(key)
+
+                # save to the data table
+                self.datatable.append(data.copy())
+
+        # remove keys if asked
+        if not show_keys:
+            for item in self.datatable:
+                item.pop('KEY', None)
+
+        # build dataframe
+        self._build_dataframe()
 
     def _build_dataframe(self):
         self.dataframe = pd.DataFrame(self.datatable)
@@ -118,6 +164,7 @@ class metadata_comparison_generator():
             print('\n> _show(%s):\n' % name)
             print(value)
 
+        _show('self.config', self.config)
         _show('self.test', self.test)
         _show('self.base', self.base)
         _show('self.output', self.output)
