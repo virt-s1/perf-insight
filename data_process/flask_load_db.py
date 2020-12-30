@@ -182,11 +182,12 @@ def testresult_write():
             testresult.memory = tmp_raw['memory']
             testresult.platform = tmp_raw['platform']
             testresult.flavor = tmp_raw['flavor']
-            tmp_date = time.strptime(tmp_raw['date'], "%a %b %d %H:%M:%S %Z %Y")
-            testresult.date = "{}-{}-{}".format(tmp_date.tm_year,tmp_date.tm_mon,tmp_date.tm_mday)
+            #tmp_date = time.strptime(tmp_raw['date'], "%a %b %d %H:%M:%S %Z %Y")
+            #testresult.date = "{}-{}-{}".format(tmp_date.tm_year,tmp_date.tm_mon,tmp_date.tm_mday)
+            testresult.date = tmp_raw['date']
             testresult.comments = tmp_raw['comments']
             testresult.sample = tmp_raw['sample']
-            testresult.rawdata = tmp_raw['path']
+            testresult.rawdata = tmp_raw['Path']
             session = DB_SESSION()
             try:
                 session.add(testresult)
