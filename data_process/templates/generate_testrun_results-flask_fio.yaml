@@ -73,7 +73,7 @@ testrun_results_generator:
       unit: ms
       factor: 0.000001
       round: 3
-    - name: path
+    - name: Path
       source: auto
     - name: tool_version
       source: metadata
