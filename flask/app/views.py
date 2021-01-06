@@ -46,6 +46,22 @@ def jupiter_prepare(baserun, testrun, target_dir):
     shutil.copy(testrun_dir + '/datastore.json', target_dir + '/testrun.datastore.json')
     shutil.copy(testrun_dir + '/testrun_metadata.json', target_dir + '/testrun.testrun_metadata.json')
 
+def generate_dirname():
+    num_list = []
+    current_dir = os.listdir(REPORT_PATH)
+    old_found = False
+    for dir in current_dir:
+        if '2way_comparison_' in dir:
+            old_found = True
+            num_list.append(int(dir[-6:]))
+    if not old_found:
+        new_name = '2way_comparison_000000'
+    else:
+        new_num = str(max(num_list) + 1).zfill(6)
+        new_name = '2way_comparison_{}'.format(new_num)
+    return new_name
+
+
 class YamlFormWidget(FormWidget):
     template = 'widgets/yaml_show.html'
 
@@ -202,7 +218,10 @@ metadata_comparison_generator:
 
     def form_post(self, form):
         # post process form
-        tmpdir = tempfile.mkdtemp(suffix=None, prefix='jupiter', dir=REPORT_PATH)
+        # tmpdir = tempfile.mkdtemp(suffix=None, prefix='jupiter', dir=REPORT_PATH)
+        new_dir = generate_dirname()
+        tmpdir = '{}/{}'.format(REPORT_PATH, new_dir)
+        os.mkdir(tmpdir, mode=666)
         print('save to {}'.format(tmpdir))
         tmp_config = tmpdir + '/' + 'benchmark_config.yaml'
         if os.path.exists(tmp_config):
@@ -211,7 +230,7 @@ metadata_comparison_generator:
             fh.write(form.yaml1.data)
             fh.write(form.yaml2.data)
             fh.write(form.yaml3.data)
-        self.message = Markup('Please wait for 2 minutes, the compare result will be available at <a href="http://{}/perf-insight//workspace/benchmark_reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, tmpdir, self.result))
+        self.message = Markup('Please wait for 2 minutes, the compare result will be available at <a href="http://{}/perf-insight/benchmark_reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, new_dir, self.result))
         # to do: prepare data for jupiter here.
         baserun = form.baserun.data = request.args['baserun']
         testrun = request.args['testrun']
