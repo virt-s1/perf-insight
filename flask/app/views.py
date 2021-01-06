@@ -43,8 +43,8 @@ def jupiter_prepare(baserun, testrun, target_dir):
     testrun_dir = DATA_PATH + '/testruns/' + testrun
     shutil.copy(baserun_dir + '/datastore.json', target_dir + '/base.datastore.json')
     shutil.copy(baserun_dir + '/testrun_metadata.json', target_dir + '/base.testrun_metadata.json')
-    shutil.copy(testrun_dir + '/datastore.json', target_dir + '/base.datastore.json')
-    shutil.copy(testrun_dir + '/testrun_metadata.json', target_dir + '/base.testrun_metadata.json')
+    shutil.copy(testrun_dir + '/datastore.json', target_dir + '/testrun.datastore.json')
+    shutil.copy(testrun_dir + '/testrun_metadata.json', target_dir + '/testrun.testrun_metadata.json')
 
 class YamlFormWidget(FormWidget):
     template = 'widgets/yaml_show.html'
