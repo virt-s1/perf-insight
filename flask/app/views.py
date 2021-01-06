@@ -24,6 +24,28 @@ from flask_appbuilder.charts.views import (DirectByChartView, DirectChartView,
 from flask_appbuilder.models.group import (aggregate_sum, aggregate_count,
                                            aggregate, aggregate_avg)
 
+import shutil, os
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
+
+with open(os.getenv('HOME')+'/.perf-insight.yaml','r') as fh:
+     keys_data = load(fh, Loader=Loader)
+APACHE_SERVER = keys_data['flask']['apache_server']
+DATA_PATH = keys_data['flask']['data_path']
+REPORT_PATH = '{}/benchmark_reports/'.format(DATA_PATH)
+
+def jupiter_prepare(baserun, testrun, target_dir):
+    baserun_dir = DATA_PATH + '/testruns/' + baserun
+    testrun_dir = DATA_PATH + '/testruns/' + testrun
+    shutil.copy(baserun_dir + '/datastore.json', target_dir + '/base.datastore.json')
+    shutil.copy(baserun_dir + '/testrun_metadata.json', target_dir + '/base.testrun_metadata.json')
+    shutil.copy(testrun_dir + '/datastore.json', target_dir + '/base.datastore.json')
+    shutil.copy(testrun_dir + '/testrun_metadata.json', target_dir + '/base.testrun_metadata.json')
+
 class YamlFormWidget(FormWidget):
     template = 'widgets/yaml_show.html'
 
@@ -48,13 +70,16 @@ class YamlFormView(SimpleFormView):
             form.yaml2.data = '''
 benchmark_comparison_generator:
   defaults:
-    dataframe_round: 2
-    dataframe_fillna: "NaN"
+    round: 6
+    round_pct: 2
+    use_abbr: yes
+    fillna: "NaN"
   kpi_defaults:
     higher_is_better: yes
-    max_percent_dev: 10
-    regression_threshold: 0.05
+    max_pctdev_threshold: 0.10
     confidence_threshold: 0.95
+    negligible_threshold: 0.05
+    regression_threshold: 0.10
   keys:
     - name: RW
     - name: BS
@@ -62,15 +87,18 @@ benchmark_comparison_generator:
     - name: Numjobs
   kpis:
     - name: IOPS
+      round: 1
     - name: LAT
       unit: ms
       from: LAT(ms)
       higher_is_better: no
+      round: 3
     - name: CLAT
       unit: ms
       from: CLAT(ms)
-      higher_is_better: no        
-        '''
+      higher_is_better: no
+      round: 3
+'''
         if session.get('yaml1') is not None:
             form.yaml1.data = session['yaml1']
         elif session.get('yaml1') is None or len(session['yaml1']) < 10:
@@ -78,16 +106,18 @@ benchmark_comparison_generator:
 testrun_results_generator:
   defaults:
     split: yes
+    round: 6
+    fillna: "NaN"
   columns:
     - name: Backend
       source: metadata
-      key: disk.backend
+      key: hardware.disk.backend
     - name: Driver
       source: metadata
-      key: disk.driver
+      key: hardware.disk.driver
     - name: Format
       source: metadata
-      key: disk.format
+      key: hardware.disk.format
     - name: RW
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].rw"
@@ -105,35 +135,89 @@ testrun_results_generator:
     - name: IOPS
       source: datastore
       jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
-      multiple: true
+      round: 0
     - name: LAT
       source: datastore
       jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
+      round: 3
     - name: CLAT
       source: datastore
       jqexpr: '.iteration_data.latency.clat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
+      round: 3
     - name: Path
       source: auto
-        '''
+'''
+        if session.get('yaml3') is not None:
+            form.yaml1.data = session['yaml1']
+        elif session.get('yaml3') is None or len(session['yaml3']) < 10:
+            form.yaml3.data = '''
+metadata_comparison_generator:
+  defaults:
+    show_keys: yes
+    show_undefined: yes
+  metadata:
+    - name: ID
+      key: testrun.id
+    - name: Type
+      key: testrun.type
+    - name: Platform
+      key: testrun.platform
+    - name: Branch
+      key: os.branch
+    - name: Compose
+      key: os.compose
+    - name: Kernel
+      key: os.kernel
+    - name: Disk Capacity
+      key: hardware.disk.capacity
+    - name: Disk Backend
+      key: hardware.disk.backend
+    - name: Disk Driver
+      key: hardware.disk.driver
+    - name: Disk Format
+      key: hardware.disk.format
+    - name: FIO version
+      key: tool.fio.version
+    - name: Hypervisor CPU
+      key: hypervisor.cpu
+    - name: Hypervisor CPU Model
+      key: hypervisor.cpu_model
+    - name: Hypervisor Version
+      key: hypervisor.version
+    - name: Guest CPU
+      key: guest.cpu
+    - name: Guest Flavor
+      key: guest.flavor
+    - name: Guest Memory
+      key: guest.memory
+    - name: Date
+      key: testrun.date
+    - name: Comments
+      key: testrun.comments
+'''
 
     def form_post(self, form):
         # post process form
-        tmpdir = tempfile.mkdtemp(suffix=None, prefix='jupiter', dir='/tmp/benchmark_reports/')
+        tmpdir = tempfile.mkdtemp(suffix=None, prefix='jupiter', dir=REPORT_PATH)
         print('save to {}'.format(tmpdir))
-        tmp = tmpdir + '/' + 'generate_testrun_results.yaml'
-        with open(tmp,'w') as fh:
+        tmp_config = tmpdir + '/' + 'benchmark_config.yaml'
+        if os.path.exists(tmp_config):
+            os.unlink(tmp_config)
+        with open(tmp_config,'w+') as fh:
             fh.write(form.yaml1.data)
-        tmp = tmpdir + '/' + 'generate_2way_benchmark.yaml'
-        with open(tmp,'w') as fh:
             fh.write(form.yaml2.data)
-        self.message = Markup(' Please wait for 2 minutes, the compare result will be available at <a href="/static/workspace/benchmark_reports/{}/default.html" class="alert-link">compared {}</a> '.format(tmpdir, self.result))
+            fh.write(form.yaml3.data)
+        self.message = Markup('Please wait for 2 minutes, the compare result will be available at <a href="http://{}/perf-insight//workspace/benchmark_reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, tmpdir, self.result))
         # to do: prepare data for jupiter here.
+        baserun = form.baserun.data = request.args['baserun']
+        testrun = request.args['testrun']
+        jupiter_prepare(baserun,testrun, tmpdir)
         flash(self.message, 'success')
-        cmd = 'podman xxxxxxx xxxx &'
+        cmd = 'podman run --volume {}:/workspace:rw jupyter_reporting &'.format(tmpdir)
         subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, encoding='utf-8')
         #session['yaml1'] = form.yaml1.data
         #session['yaml2'] = form.yaml2.data
