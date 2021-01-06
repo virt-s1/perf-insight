@@ -50,7 +50,7 @@ paths=$(ls -d $logdir/*/*/sample*/clients/*/)
 for path in $paths; do
     echo "Generating plots in $path..."
     cd $path
-    $fio_generate_plots fio
+    $fio_generate_plots fio 2>/dev/null
 done
 
 exit 0

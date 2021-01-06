@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 '''
 Write/delete test data to sqlite for flask
 
@@ -186,7 +186,7 @@ def testresult_write():
             #testresult.date = "{}-{}-{}".format(tmp_date.tm_year,tmp_date.tm_mon,tmp_date.tm_mday)
             testresult.date = tmp_raw['date']
             testresult.comments = tmp_raw['comments']
-            testresult.sample = tmp_raw['sample']
+            testresult.sample = tmp_raw['Sample']
             testresult.rawdata = tmp_raw['Path']
             session = DB_SESSION()
             try:
