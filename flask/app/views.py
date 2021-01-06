@@ -42,9 +42,9 @@ def jupiter_prepare(baserun, testrun, target_dir):
     baserun_dir = DATA_PATH + '/testruns/' + baserun
     testrun_dir = DATA_PATH + '/testruns/' + testrun
     shutil.copy(baserun_dir + '/datastore.json', target_dir + '/base.datastore.json')
-    shutil.copy(baserun_dir + '/metadata.json', target_dir + '/base.testrun_metadata.json')
+    shutil.copy(baserun_dir + '/metadata.json', target_dir + '/base.metadata.json')
     shutil.copy(testrun_dir + '/datastore.json', target_dir + '/test.datastore.json')
-    shutil.copy(testrun_dir + '/metadata.json', target_dir + '/test.testrun_metadata.json')
+    shutil.copy(testrun_dir + '/metadata.json', target_dir + '/test.metadata.json')
 
 def generate_dirname():
     num_list = []
