@@ -35,4 +35,7 @@ class YamlForm(DynamicForm):
     yaml2 = StringField(('2way_benchmark config'),
         description=(''),
         validators = [DataRequired()], widget=BS3TextAreaFieldWidget_1())
+    yaml3 = StringField(('2way_metadata config'),
+        description=(''),
+        validators = [DataRequired()], widget=BS3TextAreaFieldWidget_1())
     #reset = SubmitField("Reset",widget=BS3ButtonFieldWidget())
