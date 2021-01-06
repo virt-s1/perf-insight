@@ -86,7 +86,7 @@ class StorageResult(Model):
     def rawdata_url(self):
         if self.rawdata:
             return Markup(
-                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.rawdata) + '> rawdata </a>')
+                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.testrun) + '/' + str(self.rawdata) + '> rawdata </a>')
         else:
             return self.raw
 
