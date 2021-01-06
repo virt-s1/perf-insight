@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 '''
 Write/delete test data to sqlite for flask
 
