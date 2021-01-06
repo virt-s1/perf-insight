@@ -11,10 +11,10 @@ podman build -t jupyter_reporting . -f ./jupyter/container/Dockerfile
 ```
 workspace/
 ├── base.datastore.json
-├── base.testrun_metadata.json
+├── base.metadata.json
 ├── benchmark_config.yaml
 ├── test.datastore.json
-└── test.testrun_metadata.json
+└── test.metadata.json
 ```
 
 2. Change folder selinux context, or cannot read file inside container:
