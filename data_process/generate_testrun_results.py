@@ -31,7 +31,7 @@ ARG_PARSER.add_argument('--metadata',
                         dest='metadata',
                         action='store',
                         help='The json file which contains the metadata.',
-                        default='testrun_metadata.json',
+                        default='metadata.json',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',

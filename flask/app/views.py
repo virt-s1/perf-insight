@@ -42,23 +42,23 @@ def jupiter_prepare(baserun, testrun, target_dir):
     baserun_dir = DATA_PATH + '/testruns/' + baserun
     testrun_dir = DATA_PATH + '/testruns/' + testrun
     shutil.copy(baserun_dir + '/datastore.json', target_dir + '/base.datastore.json')
-    shutil.copy(baserun_dir + '/testrun_metadata.json', target_dir + '/base.testrun_metadata.json')
+    shutil.copy(baserun_dir + '/metadata.json', target_dir + '/base.metadata.json')
     shutil.copy(testrun_dir + '/datastore.json', target_dir + '/testrun.datastore.json')
-    shutil.copy(testrun_dir + '/testrun_metadata.json', target_dir + '/testrun.testrun_metadata.json')
+    shutil.copy(testrun_dir + '/metadata.json', target_dir + '/testrun.metadata.json')
 
 def generate_dirname():
     num_list = []
     current_dir = os.listdir(REPORT_PATH)
     old_found = False
     for dir in current_dir:
-        if '2way_comparison_' in dir:
+        if 'benchmark_' in dir:
             old_found = True
             num_list.append(int(dir[-6:]))
     if not old_found:
-        new_name = '2way_comparison_000000'
+        new_name = 'benchmark_000000'
     else:
         new_num = str(max(num_list) + 1).zfill(6)
-        new_name = '2way_comparison_{}'.format(new_num)
+        new_name = 'benchmark_{}'.format(new_num)
     return new_name
 
 
@@ -230,7 +230,7 @@ metadata_comparison_generator:
             fh.write(form.yaml1.data)
             fh.write(form.yaml2.data)
             fh.write(form.yaml3.data)
-        self.message = Markup('Please wait for 2 minutes, the compare result will be available at <a href="http://{}/perf-insight/benchmark_reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, new_dir, self.result))
+        self.message = Markup('Please wait for 2 minutes, the compare result will be available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, new_dir, self.result))
         # to do: prepare data for jupiter here.
         baserun = form.baserun.data = request.args['baserun']
         testrun = request.args['testrun']
