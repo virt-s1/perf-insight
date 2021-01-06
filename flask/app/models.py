@@ -6,7 +6,20 @@ from flask_appbuilder.security.sqla.models import User
 from sqlalchemy import (Column, ForeignKey, Integer, String, Text, Date, Float,
                         MetaData)
 from sqlalchemy.orm import relationship
+from flask import request
+import os
 
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
+
+with open(os.getenv('HOME')+'/.perf-insight.yaml','r') as fh:
+     keys_data = load(fh, Loader=Loader)
+
+APACHE_SERVER = keys_data['flask']['apache_server']
 
 class StorageRun(Model):
     '''
@@ -26,7 +39,7 @@ class StorageRun(Model):
     def rawdata_url(self):
         if self.rawdata:
             return Markup(
-                '<a href="' + str(self.rawdata) + '"> rawdata </a>')
+                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.rawdata) + '> rawdata </a>')
         else:
             return self.rawdata
 
@@ -73,7 +86,7 @@ class StorageResult(Model):
     def rawdata_url(self):
         if self.rawdata:
             return Markup(
-                '<a href="' + str(self.rawdata) + '"> rawdata </a>')
+                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.rawdata) + '> rawdata </a>')
         else:
             return self.raw
 
