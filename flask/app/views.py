@@ -38,6 +38,10 @@ APACHE_SERVER = keys_data['flask']['apache_server']
 DATA_PATH = keys_data['flask']['data_path']
 REPORT_PATH = '{}/reports/'.format(DATA_PATH)
 
+TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/generate_2way_benchmark.yaml'
+TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/generate_2way_metadata.yaml'
+TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/generate_testrun_results.yaml'
+
 def jupiter_prepare(baserun, testrun, target_dir):
     baserun_dir = DATA_PATH + '/testruns/' + baserun
     testrun_dir = DATA_PATH + '/testruns/' + testrun
@@ -83,138 +87,18 @@ class YamlFormView(SimpleFormView):
         if session.get('yaml2') is not None:
             form.yaml2.data = session['yaml2']
         elif session.get('yaml2') is None or len(session['yaml2']) < 10:
-            form.yaml2.data = '''
-benchmark_comparison_generator:
-  defaults:
-    round: 6
-    round_pct: 2
-    use_abbr: yes
-    fillna: "NaN"
-  kpi_defaults:
-    higher_is_better: yes
-    max_pctdev_threshold: 0.10
-    confidence_threshold: 0.95
-    negligible_threshold: 0.05
-    regression_threshold: 0.10
-  keys:
-    - name: RW
-    - name: BS
-    - name: IOdepth
-    - name: Numjobs
-  kpis:
-    - name: IOPS
-      round: 1
-    - name: LAT
-      unit: ms
-      from: LAT(ms)
-      higher_is_better: no
-      round: 3
-    - name: CLAT
-      unit: ms
-      from: CLAT(ms)
-      higher_is_better: no
-      round: 3
-'''
+            with open(TWO_WAY_BENCHMARK_YAML, 'r') as fh:
+                form.yaml2.data = fh.read()
         if session.get('yaml1') is not None:
             form.yaml1.data = session['yaml1']
         elif session.get('yaml1') is None or len(session['yaml1']) < 10:
-            form.yaml1.data = '''
-testrun_results_generator:
-  defaults:
-    split: yes
-    round: 6
-    fillna: "NaN"
-  columns:
-    - name: Backend
-      source: metadata
-      key: hardware.disk.backend
-    - name: Driver
-      source: metadata
-      key: hardware.disk.driver
-    - name: Format
-      source: metadata
-      key: hardware.disk.format
-    - name: RW
-      source: datastore
-      jqexpr: ".iteration_data.parameters.benchmark[].rw"
-    - name: BS
-      source: datastore
-      jqexpr: ".iteration_data.parameters.benchmark[].bs"
-    - name: IOdepth
-      source: datastore
-      jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
-    - name: Numjobs
-      source: datastore
-      jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
-    - name: Sample
-      source: auto
-    - name: IOPS
-      source: datastore
-      jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
-      round: 0
-    - name: LAT
-      source: datastore
-      jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
-      unit: ms
-      factor: 0.000001
-      round: 3
-    - name: CLAT
-      source: datastore
-      jqexpr: '.iteration_data.latency.clat[] | select(.client_hostname=="all") | .samples[].value'
-      unit: ms
-      factor: 0.000001
-      round: 3
-    - name: Path
-      source: auto
-'''
+            with open(TESTRUN_RESULTS_YAML, 'r') as fh:
+                form.yaml1.data = fh.read()
         if session.get('yaml3') is not None:
-            form.yaml1.data = session['yaml1']
+            form.yaml3.data = session['yaml3']
         elif session.get('yaml3') is None or len(session['yaml3']) < 10:
-            form.yaml3.data = '''
-metadata_comparison_generator:
-  defaults:
-    show_keys: yes
-    show_undefined: yes
-  metadata:
-    - name: ID
-      key: testrun.id
-    - name: Type
-      key: testrun.type
-    - name: Platform
-      key: testrun.platform
-    - name: Branch
-      key: os.branch
-    - name: Compose
-      key: os.compose
-    - name: Kernel
-      key: os.kernel
-    - name: Disk Capacity
-      key: hardware.disk.capacity
-    - name: Disk Backend
-      key: hardware.disk.backend
-    - name: Disk Driver
-      key: hardware.disk.driver
-    - name: Disk Format
-      key: hardware.disk.format
-    - name: FIO version
-      key: tool.fio.version
-    - name: Hypervisor CPU
-      key: hypervisor.cpu
-    - name: Hypervisor CPU Model
-      key: hypervisor.cpu_model
-    - name: Hypervisor Version
-      key: hypervisor.version
-    - name: Guest CPU
-      key: guest.cpu
-    - name: Guest Flavor
-      key: guest.flavor
-    - name: Guest Memory
-      key: guest.memory
-    - name: Date
-      key: testrun.date
-    - name: Comments
-      key: testrun.comments
-'''
+            with open(TWO_WAY_METADATA_YAML, 'r') as fh:
+                form.yaml3.data = fh.read()
 
     def form_post(self, form):
         # post process form
