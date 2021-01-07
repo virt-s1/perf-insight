@@ -53,9 +53,7 @@ class metadata_comparison_generator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
-        codepath = os.path.split(os.path.abspath(__file__))[0]
-        filename = os.path.join(codepath, ARGS.config)
-        with open(filename, 'r') as f:
+        with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
             self.config = c[__class__.__name__]
 
@@ -70,9 +68,7 @@ class metadata_comparison_generator():
         self.output_format = ARGS.output_format
 
         if self.output is None and self.output_format == 'csv':
-            fpath = os.path.dirname(ARGS.test)
-            fname = '2way_metadata.csv'
-            self.output = os.path.join(fpath, fname)
+            self.output = '2way_metadata.csv'
 
         # init
         self.datatable = []
