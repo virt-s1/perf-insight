@@ -49,8 +49,9 @@ paths=$(ls -d $logdir/*/*/sample*/clients/*/)
 
 for path in $paths; do
     echo "Generating plots in $path..."
-    cd $path
+    pushd $path &>/dev/null
     $fio_generate_plots fio 2>/dev/null
+    popd &>/dev/null
 done
 
 exit 0
