@@ -57,7 +57,7 @@
 {% endmacro %}
 {% macro render_form_controls() %}
     <div class="well well-sm">
-        <button type="submit" onclick="handleClick()" class="btn  btn-sm btn-primary">{{_("Confirm")}}
+        <button id="submit" type="submit" class="btn  btn-sm btn-primary">{{_("Confirm")}}
             <i class="fa fa-check"></i></button>
             {{ lnk_back() }}
     </div>
@@ -68,14 +68,20 @@
   </div>
 </form>
 <script>
+    document.getElementById("submit").onclick = function() {handleClick()};
     function handleClick(){
-    var source = new EventSource("/progress");
-	source.onmessage = function(event) {
+    var evtSource = new EventSource("/progress");
+    evtSource.onerror = (e) => {
+          console.log("An error occurred while attempting to connect.");
+          setTimeout(handleClick, 1000);
+          var evtSource = new EventSource("/progress");
+        };
+	evtSource.onmessage = function(event) {
 		$('.progress-bar').css('width', event.data+'%').attr('aria-valuenow', event.data);
 		$('.progress-bar-label').text(event.data+'s');
 
 		if(event.data == 0){
-			source.close()
+			evtSource.close()
 		}
 	}
     }
