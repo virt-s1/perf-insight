@@ -109,8 +109,8 @@ class metadata_comparison_generator():
                 data['KEY'] = '{0}/{1}'.format(test_key, base_key)
 
             # get values
-            data['TEST'] = self.test.get(test_key)
             data['BASE'] = self.base.get(base_key)
+            data['TEST'] = self.test.get(test_key)
 
             # save to the data table
             self.datatable.append(data.copy())
@@ -134,8 +134,8 @@ class metadata_comparison_generator():
 
             for key in undefined_keys:
                 data['NAME'] = data['KEY'] = key
-                data['TEST'] = self.test.get(key)
                 data['BASE'] = self.base.get(key)
+                data['TEST'] = self.test.get(key)
 
                 # save to the data table
                 self.datatable.append(data.copy())
