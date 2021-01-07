@@ -42,9 +42,7 @@ class benchmark_parameters_generator():
     """Generate user parameter report for the 2-way benchmark comparison.."""
     def __init__(self, ARGS):
         # load and expend config
-        codepath = os.path.split(os.path.abspath(__file__))[0]
-        filename = os.path.join(codepath, ARGS.config)
-        with open(filename, 'r') as f:
+        with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
             self.config = c.get('benchmark_comparison_generator', {})
 
@@ -80,10 +78,8 @@ class benchmark_parameters_generator():
         self.output_format = ARGS.output_format
 
         if self.output is None:
-            fpath = os.path.dirname(codepath)
-            fname = '2way_benchmark_configuration.{0}'.format(
+            self.output = '2way_benchmark_configuration.{0}'.format(
                 self.output_format)
-            self.output = os.path.join(fpath, fname)
 
         # init
         self._parse_data()

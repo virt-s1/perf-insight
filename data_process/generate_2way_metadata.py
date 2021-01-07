@@ -36,7 +36,7 @@ ARG_PARSER.add_argument('--base',
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
                         action='store',
-                        help='The output format, available in [csv, ].',
+                        help='The output format, available in [csv, html].',
                         default='csv',
                         required=False)
 ARG_PARSER.add_argument('--output',
@@ -53,9 +53,7 @@ class metadata_comparison_generator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
-        codepath = os.path.split(os.path.abspath(__file__))[0]
-        filename = os.path.join(codepath, ARGS.config)
-        with open(filename, 'r') as f:
+        with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
             self.config = c[__class__.__name__]
 
@@ -69,10 +67,9 @@ class metadata_comparison_generator():
         self.output = ARGS.output
         self.output_format = ARGS.output_format
 
-        if self.output is None and self.output_format == 'csv':
-            fpath = os.path.dirname(ARGS.test)
-            fname = '2way_metadata.csv'
-            self.output = os.path.join(fpath, fname)
+        if self.output is None:
+            self.output = '2way_benchmark_configuration.{0}'.format(
+                self.output_format)
 
         # init
         self.datatable = []
@@ -112,8 +109,8 @@ class metadata_comparison_generator():
                 data['KEY'] = '{0}/{1}'.format(test_key, base_key)
 
             # get values
-            data['TEST'] = self.test.get(test_key)
             data['BASE'] = self.base.get(base_key)
+            data['TEST'] = self.test.get(test_key)
 
             # save to the data table
             self.datatable.append(data.copy())
@@ -137,8 +134,8 @@ class metadata_comparison_generator():
 
             for key in undefined_keys:
                 data['NAME'] = data['KEY'] = key
-                data['TEST'] = self.test.get(key)
                 data['BASE'] = self.base.get(key)
+                data['TEST'] = self.test.get(key)
 
                 # save to the data table
                 self.datatable.append(data.copy())
@@ -155,8 +152,21 @@ class metadata_comparison_generator():
         self.dataframe = pd.DataFrame(self.datatable)
 
     def dump_to_csv(self):
+        """Dump the report dataframe to a CSV file."""
         with open(self.output, 'w') as f:
             f.write(self.dataframe.to_csv())
+
+    def dump_to_html(self):
+        """Dump the report dataframe to a HTML file."""
+        with open(self.output, 'w') as f:
+            f.write(self.dataframe.to_html())
+
+    def dump_to_file(self):
+        """Dump the report dataframe to a file."""
+        if self.output_format == 'csv':
+            self.dump_to_csv()
+        else:
+            self.dump_to_html()
 
     def show_vars(self):
         """Print the value of varibles to the stdout."""
@@ -175,6 +185,6 @@ class metadata_comparison_generator():
 
 if __name__ == '__main__':
     gen = metadata_comparison_generator(ARGS)
-    gen.dump_to_csv()
+    gen.dump_to_file()
 
 exit(0)

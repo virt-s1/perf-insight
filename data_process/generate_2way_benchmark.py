@@ -57,9 +57,7 @@ class benchmark_comparison_generator():
     """Generate 2-way benchmark comparison report."""
     def __init__(self, ARGS):
         # load and expend config
-        codepath = os.path.split(os.path.abspath(__file__))[0]
-        filename = os.path.join(codepath, ARGS.config)
-        with open(filename, 'r') as f:
+        with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
             self.config = c[__class__.__name__]
 
@@ -113,9 +111,7 @@ class benchmark_comparison_generator():
         self.output_format = ARGS.output_format
 
         if self.output is None:
-            fpath = os.path.dirname(ARGS.test)
-            fname = '2way_benchmark.{0}'.format(self.output_format)
-            self.output = os.path.join(fpath, fname)
+            self.output = '2way_benchmark.{0}'.format(self.output_format)
 
         # init
         self.df_report = None

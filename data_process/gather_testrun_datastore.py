@@ -40,9 +40,8 @@ ARGS = ARG_PARSER.parse_args()
 if __name__ == '__main__':
 
     # parse parameters
-    logdir = os.path.realpath(
-        ARGS.logdir) if ARGS.logdir is not None else os.getcwd()
-    testrun = ARGS.testrun or os.path.basename(logdir)
+    logdir = ARGS.logdir if ARGS.logdir else os.getcwd()
+    testrun = ARGS.testrun or os.path.basename(os.path.abspath(logdir))
     output = ARGS.output or os.path.join(logdir, 'datastore.json')
 
     # collect data for the datastore
