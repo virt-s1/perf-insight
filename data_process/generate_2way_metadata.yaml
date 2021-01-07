@@ -1,6 +1,6 @@
 metadata_comparison_generator:
   defaults:
-    show_keys: yes
+    show_keys: no
     show_undefined: yes
   metadata:
     - name: ID
