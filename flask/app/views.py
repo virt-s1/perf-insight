@@ -11,7 +11,7 @@ from flask_babel import lazy_gettext as _
 
 from . import appbuilder, db
 import subprocess
-from .forms import YamlForm
+from .forms import YamlForm, NewTestrunForm
 import tempfile
 
 from .models import (StorageRun, StorageResult, Bugs, FailureType,
@@ -37,6 +37,7 @@ with open(os.getenv('HOME')+'/.perf-insight.yaml','r') as fh:
 APACHE_SERVER = keys_data['flask']['apache_server']
 DATA_PATH = keys_data['flask']['data_path']
 REPORT_PATH = '{}/reports/'.format(DATA_PATH)
+PERF_INSIGHT_REPO =  keys_data['flask']['perf_insight_repo']
 
 TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/generate_2way_benchmark.yaml'
 TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/generate_2way_metadata.yaml'
@@ -120,12 +121,41 @@ class YamlFormView(SimpleFormView):
         self.result =baserun + ' vs ' + testrun
         self.message = Markup('Benchmark report is available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, new_dir, self.result))
         jupiter_prepare(baserun,testrun, tmpdir)
-        flash(self.message, 'success')
-        cmd = 'podman run -v {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro --volume {}:/workspace:rw jupyter_reporting &'.format(os.getenv('HOME'), tmpdir)
-        subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, encoding='utf-8')
+        cmd = 'podman run -v {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro --volume {}:/workspace:rw jupyter_reporting '.format(os.getenv('HOME'), tmpdir)
+        ret = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, encoding='utf-8')
+        ret_code = ret.returncode
+        if ret_code > 0:
+            flash('Error! {}'.format(ret.stdout), 'danger')
+        else:
+            flash(self.message, 'success')
         #session['yaml1'] = form.yaml1.data
         #session['yaml2'] = form.yaml2.data
         return redirect(url_for('YamlFormView.this_form_get',baserun=baserun, testrun=testrun))
+
+class NewTestrunFormWidget(FormWidget):
+    template = 'widgets/testrun_new.html'
+
+class NewTestrunFormView(SimpleFormView):
+    edit_widget = NewTestrunFormWidget
+    form = NewTestrunForm
+    form_title = 'New Testrun'
+
+    def form_get(self, form):
+        form.testrun.data = ''
+
+    def form_post(self, form):
+        # post process form
+        testrun = form.testrun.data.strip(' ')
+        cmd = "{}/data_process/process_testrun.sh -t {} -s -p -d".format(PERF_INSIGHT_REPO, testrun )
+        print('cmd {}'.format(cmd))
+        ret = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, encoding='utf-8')
+        ret_code = ret.returncode
+        if ret_code > 0:
+            flash('Error! {}'.format(ret.stdout), 'danger')
+            return redirect(request.url)
+        else:
+            flash('Uploaded!', 'success')
+            return redirect(url_for('StorageRunPubView.list', _flt_0_testrun=str(testrun)))
 
 class MyListWidget(ListWidget):
      template = 'widgets/my_list.html'
@@ -372,100 +402,104 @@ def pretty_month_year(value):
 db.create_all()
 appbuilder.add_view(StorageRunPubView,
                     "All Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(EC2StorageRunPubView,
                     "EC2 Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(AzureStorageRunPubView,
                     "Azure Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(EsxiStorageRunPubView,
                     "Esxi Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(HypervStorageRunPubView,
                     "Hyperv Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(StorageResultPubView,
                     "All Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestResult")
 appbuilder.add_view(EC2StorageResultPubView,
                     "EC2 Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestResult")
 appbuilder.add_view(AzureStorageResultPubView,
                     "Azure Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestResult")
 appbuilder.add_view(EsxiStorageResultPubView,
                     "Esxi Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestResult")
 appbuilder.add_view(HypervStorageResultPubView,
                     "Hyperv Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="StorageTestResult")
 
 appbuilder.add_view(StorageRunEditView,
                     "Edit All Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EC2StorageRunEditView,
                     "Edit EC2 Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(AzureStorageRunEditView,
                     "Edit Azure Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageRunEditView,
                     "Edit Esxi Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageRunEditView,
                     "Edit Hyperv Test Runs",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(StorageResultEditView,
                     "Edit All Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EC2StorageResultEditView,
                     "Edit EC2 Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(AzureStorageResultEditView,
                     "Edit Azure Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageResultEditView,
                     "Edit Esxi Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageResultEditView,
                     "Edit Hyperv Test Results",
-                    icon="fa-folder-open-o",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(BugsPubView,
                     "List Know Failures",
-                    icon="fa-folder-open-o",
+                    icon="fa-angle-double-right",
                     category="TestBugs")
 appbuilder.add_view(BugsView,
                     "Edit Know Failures",
-                    icon="fa-envelope",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(FailureTypeView,
                     "Edit Know Failures Types",
-                    icon="fa-envelope",
+                    icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(FailureStatusView,
                     "Edit Failures Status List",
-                    icon="fa-envelope",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(NewTestrunFormView,
+                    "New Testrun",
+                    icon="fa-upload",
                     category="Management")
 appbuilder.add_separator("Management")
 

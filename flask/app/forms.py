@@ -39,3 +39,8 @@ class YamlForm(DynamicForm):
         description=(''),
         validators = [DataRequired()], widget=BS3TextAreaFieldWidget_1())
     #reset = SubmitField("Reset",widget=BS3ButtonFieldWidget())
+
+class NewTestrunForm(DynamicForm):
+    testrun = StringField(('testrun'),
+        description=('Note: duplicate testruns are not allowed'),
+        validators = [DataRequired()], widget=BS3TextFieldWidget())
