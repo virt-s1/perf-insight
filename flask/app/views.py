@@ -79,7 +79,7 @@ class YamlFormView(SimpleFormView):
         try:
             form.baserun.data = request.args['baserun']
             form.testrun.data = request.args['testrun']
-            self.result = form.baserun.data + '_' + form.testrun.data
+            self.result = form.baserun.data + ' vs ' + form.testrun.data
         except Exception as err:
             flash("Please specify baserun and testrun", 'danger')
             self.update_redirect()
@@ -114,17 +114,18 @@ class YamlFormView(SimpleFormView):
             fh.write(form.yaml1.data)
             fh.write(form.yaml2.data)
             fh.write(form.yaml3.data)
-        self.message = Markup('Benchmark report is available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, new_dir, self.result))
         # to do: prepare data for jupiter here.
-        baserun = form.baserun.data = request.args['baserun']
-        testrun = request.args['testrun']
+        baserun = form.baserun.data
+        testrun = form.testrun.data
+        self.result =baserun + ' vs ' + testrun
+        self.message = Markup('Benchmark report is available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '.format(APACHE_SERVER, new_dir, self.result))
         jupiter_prepare(baserun,testrun, tmpdir)
         flash(self.message, 'success')
         cmd = 'podman run -v {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro --volume {}:/workspace:rw jupyter_reporting &'.format(os.getenv('HOME'), tmpdir)
         subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, encoding='utf-8')
         #session['yaml1'] = form.yaml1.data
         #session['yaml2'] = form.yaml2.data
-        return redirect(request.url)
+        return redirect(url_for('YamlFormView.this_form_get',baserun=baserun, testrun=testrun))
 
 class MyListWidget(ListWidget):
      template = 'widgets/my_list.html'
