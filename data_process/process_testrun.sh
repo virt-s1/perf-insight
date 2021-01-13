@@ -72,6 +72,12 @@ db=$(cat $config | shyaml get-value -q flask.db_file)
 utils=$repo/data_process
 templates=$repo/data_process/templates
 
+# Verify TestRunID
+if [ ! -e $basepath/testruns/$testrun ]; then
+    echo "$(basename $0): TestRun ($testrun) cannot be found in $basepath/testruns/" >&2
+    exit 1
+fi
+
 PATH=$utils:$PATH
 cd $basepath/testruns/$testrun
 
@@ -84,6 +90,7 @@ fi
 # Create datastore as requested
 if [ "$gather_datastore" = "yes" ]; then
     gather_testrun_datastore.py
+    [ $? != 0 ] && wait && exit 1
 fi
 
 # Update database as requested
@@ -91,6 +98,7 @@ if [ "$update_db" = "yes" ]; then
     generate_testrun_results.py --config $templates/generate_testrun_results-flask_fio.yaml &&
         flask_load_db.py --db_file $db --delete $testrun &&
         flask_load_db.py --db_file $db --csv_file ./testrun_results.csv
+    [ $? != 0 ] && wait && exit 1
 fi
 
 wait
