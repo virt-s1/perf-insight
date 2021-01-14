@@ -130,4 +130,3 @@ plot "I/O Operations Per Second" iops "IOPS" 1
 plot "I/O Submission Latency" slat "Time (μsec)" 1
 plot "I/O Completion Latency" clat "Time (msec)" 1000
 plot "I/O Bandwidth" bw "Throughput (KB/s)" 1
-
