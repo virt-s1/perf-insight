@@ -146,7 +146,7 @@ class NewTestrunFormView(SimpleFormView):
     def form_post(self, form):
         # post process form
         testrun = form.testrun.data.strip(' ')
-        cmd = "{}/data_process/process_testrun.sh -t {} -s -p -d".format(PERF_INSIGHT_REPO, testrun )
+        cmd = "{}/data_process/process_testrun.sh -t {} -s -d -P".format(PERF_INSIGHT_REPO, testrun )
         print('cmd {}'.format(cmd))
         ret = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, encoding='utf-8')
         ret_code = ret.returncode
