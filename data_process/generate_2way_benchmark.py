@@ -318,7 +318,8 @@ class benchmark_comparison_generator():
                 else:
                     conclusion = 'Dramatically '
 
-                if higher_is_better and pctdiff > 0:
+                if (higher_is_better and pctdiff > 0) or (not higher_is_better
+                                                          and pctdiff < 0):
                     conclusion += 'Improved'
                 else:
                     conclusion += 'Regressed'
