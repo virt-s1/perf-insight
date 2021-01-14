@@ -22,16 +22,16 @@ KPI is the abbreviation of "Key Performance Indicator", it measures the performa
 
 An algorithm helps reaching a preliminary conclusion for each KPI. It could be any of the following ones:
 
-| Abbr | Conclusion             | Reaching Condition (priority decreasing)                 |
-| :--- | :--------------------- | :------------------------------------------------------- |
-| ID   | Invalid Data           | Any of the input data is invalid.                        |
-| HV   | High Variance          | %SD > MAX_PCTDEV_THRESHOLD                               |
-| NS   | No Significance        | SGN < CONFIDENCE_THRESHOLD                               |
-| NC   | Negligible Changes     | abs(%DF) <= NEGLIGIBLE_THRESHOLD                         |
-| MI   | Moderately Improved    | NEGLIGIBLE_THRESHOLD < abs(%DF) <= REGRESSION_THRESHOLD. |
-| MR   | Moderately Regressed   | Same as above, but in the negative direction.            |
-| DI   | Dramatically Improved  | abs(%DF) > REGRESSION_THRESHOLD                          |
-| DR   | Dramatically Regressed | Same as above, but in the negative direction.            |
+| Abbr | Conclusion           | Reaching Condition (priority decreasing)                 |
+| :--- | :------------------- | :------------------------------------------------------- |
+| ID   | Invalid Data         | Any of the input data is invalid.                        |
+| HV   | High Variance        | %SD > MAX_PCTDEV_THRESHOLD                               |
+| NS   | No Significance      | SGN < CONFIDENCE_THRESHOLD                               |
+| NC   | Negligible Changes   | abs(%DF) <= NEGLIGIBLE_THRESHOLD                         |
+| MI   | Moderate Improvement | NEGLIGIBLE_THRESHOLD < abs(%DF) <= REGRESSION_THRESHOLD. |
+| MR   | Moderate Regression  | Same as above, but in the negative direction.            |
+| DI   | Dramatic Improvement | abs(%DF) > REGRESSION_THRESHOLD                          |
+| DR   | Dramatic Regression  | Same as above, but in the negative direction.            |
 
 The following parameters can be specified by users.
 
@@ -41,4 +41,4 @@ The following parameters can be specified by users.
 | MAX_PCTDEV_THRESHOLD | Max %SD can be accepted (0 = disable) | 0.10    |
 | CONFIDENCE_THRESHOLD | Min SIG to be considered reproducible | 0.95    |
 | NEGLIGIBLE_THRESHOLD | Max %DF can be ignored (0 = disable)  | 0.05    |
-| REGRESSION_THRESHOLD | Min %DF to be considered dramatically | 0.10    |
+| REGRESSION_THRESHOLD | Min %DF to be considered as dramatic  | 0.10    |

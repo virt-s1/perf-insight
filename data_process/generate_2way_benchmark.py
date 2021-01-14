@@ -244,12 +244,12 @@ class benchmark_comparison_generator():
             HV - High Variance          %SD > MAX_PCTDEV_THRESHOLD
             NS - No Significance        SGN < CONFIDENCE_THRESHOLD
             NC - Negligible Changes     abs(%DF) <= NEGLIGIBLE_THRESHOLD
-            MI - Moderately Improved    NEGLIGIBLE_THRESHOLD < abs(%DF) <=
+            MI - Moderate Improvement   NEGLIGIBLE_THRESHOLD < abs(%DF) <=
                                         REGRESSION_THRESHOLD.
-            MR - Moderately Regressed   Same as above, but in the negative
+            MR - Moderate Regression    Same as above, but in the negative
                                         direction.
-            DI - Dramatically Improved  abs(%DF) > REGRESSION_THRESHOLD
-            DR - Dramatically Regressed Same as above, but in the negative
+            DI - Dramatic Improvement   abs(%DF) > REGRESSION_THRESHOLD
+            DR - Dramatic Regression    Same as above, but in the negative
                                         direction.
 
             Returns: any of the conclusion mentioned above or "np.nan".
@@ -260,10 +260,10 @@ class benchmark_comparison_generator():
                 'High Variance': 'HV',
                 'No Significance': 'NS',
                 'Negligible Changes': 'NC',
-                'Moderately Improved': 'MI',
-                'Moderately Regressed': 'MR',
-                'Dramatically Improved': 'DI',
-                'Dramatically Regressed': 'DR'
+                'Moderate Improvement': 'MI',
+                'Moderate Regression': 'MR',
+                'Dramatic Improvement': 'DI',
+                'Dramatic Regression': 'DR'
             }
 
             higher_is_better = kpi_cfg['higher_is_better']
@@ -314,15 +314,15 @@ class benchmark_comparison_generator():
             # check for 'Improvment' and 'Regression'
             if not conclusion:
                 if abs(pctdiff) <= REGRESSION_THRESHOLD:
-                    conclusion = 'Moderately '
+                    conclusion = 'Moderate '
                 else:
-                    conclusion = 'Dramatically '
+                    conclusion = 'Dramatic '
 
                 if (higher_is_better and pctdiff > 0) or (not higher_is_better
                                                           and pctdiff < 0):
-                    conclusion += 'Improved'
+                    conclusion += 'Improvement'
                 else:
-                    conclusion += 'Regressed'
+                    conclusion += 'Regression'
 
             # return conclusion or its abbreviation if asked
             return conclusion if not use_abbr else abbrs.get(
