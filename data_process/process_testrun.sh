@@ -8,13 +8,14 @@
 
 function show_usage() {
     echo "Process the pbench TestRun."
-    echo "$(basename $0) <-t TESTRUNID> [-s] [-p] [-d]"
+    echo "$(basename $0) <-t TESTRUNID> [-s] [-d] [-p|-P] "
     echo "  -s: Gather datastore JSON file."
-    echo "  -p: Generate Plots as SVG files."
     echo "  -d: Update the Flask DB"
+    echo "  -p: Generate Plots as SVG files."
+    echo "  -P: Same as '-p', but running in backgroud."
 }
 
-while getopts :ht:spd ARGS; do
+while getopts :ht:sdpP ARGS; do
     case $ARGS in
     h)
         # Help option
@@ -27,15 +28,21 @@ while getopts :ht:spd ARGS; do
         ;;
     s)
         # GatherDatastore option
-        gather_datastore=yes
-        ;;
-    p)
-        # GeneratePlots option
-        generate_plots=yes
+        gather_datastore=1
         ;;
     d)
         # UpdateDB option
-        update_db=yes
+        update_db=1
+        ;;
+    p)
+        # GeneratePlots option
+        generate_plots=1
+        put_background=0
+        ;;
+    P)
+        # GeneratePlots(bg) option
+        generate_plots=1
+        put_background=1
         ;;
     "?")
         echo "$(basename $0): unknown option: $OPTARG" >&2
@@ -72,25 +79,39 @@ db=$(cat $config | shyaml get-value -q flask.db_file)
 utils=$repo/data_process
 templates=$repo/data_process/templates
 
+# Verify TestRunID
+if [ ! -e $basepath/testruns/$testrun ]; then
+    echo "$(basename $0): TestRun ($testrun) cannot be found in $basepath/testruns/" >&2
+    exit 1
+fi
+
+# Set environment
 PATH=$utils:$PATH
 cd $basepath/testruns/$testrun
 
-# Generate plots as requested (background)
-if [ "$generate_plots" = "yes" ]; then
+# Generate plots as requested
+if [ "$generate_plots" = "1" ]; then
     echo "Generating Plots..."
-    generate_pbench_fio_plots.sh &>./generate_plots.log &
+    if [ "$put_background" = "1" ]; then
+        (nohup generate_pbench_fio_plots.sh &>./generate_plots.log &)
+        echo "Running in the background..."
+    else
+        generate_pbench_fio_plots.sh &>./generate_plots.log &
+    fi
 fi
 
 # Create datastore as requested
-if [ "$gather_datastore" = "yes" ]; then
+if [ "$gather_datastore" = "1" ]; then
     gather_testrun_datastore.py
+    [ $? != 0 ] && wait && exit 1
 fi
 
 # Update database as requested
-if [ "$update_db" = "yes" ]; then
+if [ "$update_db" = "1" ]; then
     generate_testrun_results.py --config $templates/generate_testrun_results-flask_fio.yaml &&
         flask_load_db.py --db_file $db --delete $testrun &&
         flask_load_db.py --db_file $db --csv_file ./testrun_results.csv
+    [ $? != 0 ] && wait && exit 1
 fi
 
 wait
