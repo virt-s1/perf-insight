@@ -62,8 +62,11 @@ class testrun_results_generator():
             self.datastore = json.load(f)
 
         # load metadata
-        with open(ARGS.metadata, 'r') as f:
-            self.metadata = json.load(f)
+        try:
+            with open(ARGS.metadata, 'r') as f:
+                self.metadata = json.load(f)
+        except (Exception):
+            self.metadata = {}
 
         # parse parameters
         self.output = ARGS.output
@@ -111,7 +114,7 @@ class testrun_results_generator():
         def _get_value_auto(cfg, data=None):
             """Get value by calculating."""
             if cfg['name'] == 'Sample':
-                return 0
+                return 'all'
             if cfg['name'] == 'Path':
                 value = os.path.join(data['path_lv_1'], data['path_lv_2'])
                 return value
@@ -167,9 +170,11 @@ class testrun_results_generator():
                             sample_data[name] = value
 
                     # update related columns
-                    sample_data['Sample'] = index
-                    sample_data['Path'] = os.path.join(data['Path'],
-                                                       'sample%s' % index)
+                    if 'Sample' in data:
+                        sample_data['Sample'] = index
+                    if 'Path' in data:
+                        sample_data['Path'] = os.path.join(
+                            data['Path'], 'sample%s' % index)
 
                     # save this row (sample) to datatable
                     self.datatable.append(sample_data.copy())

@@ -108,9 +108,13 @@ fi
 
 # Update database as requested
 if [ "$update_db" = "1" ]; then
-    generate_testrun_results.py --config $templates/generate_testrun_results-flask_fio.yaml &&
+    csv_file=/tmp/flask_testrun_results.$$.csv
+    generate_testrun_results.py \
+        --config $templates/generate_testrun_results-flask_fio.yaml \
+        --output $csv_file &&
         flask_load_db.py --db_file $db --delete $testrun &&
-        flask_load_db.py --db_file $db --csv_file ./testrun_results.csv
+        flask_load_db.py --db_file $db --csv_file $csv_file &&
+        rm -rf $csv_file
     [ $? != 0 ] && wait && exit 1
 fi
 
