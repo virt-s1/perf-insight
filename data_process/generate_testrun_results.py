@@ -62,8 +62,11 @@ class testrun_results_generator():
             self.datastore = json.load(f)
 
         # load metadata
-        with open(ARGS.metadata, 'r') as f:
-            self.metadata = json.load(f)
+        try:
+            with open(ARGS.metadata, 'r') as f:
+                self.metadata = json.load(f)
+        except (Exception):
+            self.metadata = {}
 
         # parse parameters
         self.output = ARGS.output
