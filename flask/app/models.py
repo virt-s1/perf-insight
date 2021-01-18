@@ -4,10 +4,12 @@ from flask_appbuilder.filemanager import ImageManager
 from flask_appbuilder.models.mixins import ImageColumn, BaseMixin
 from flask_appbuilder.security.sqla.models import User
 from sqlalchemy import (Column, ForeignKey, Integer, String, Text, Date, Float,
-                        MetaData)
+                        MetaData, DateTime)
 from sqlalchemy.orm import relationship
 from flask import request
 import os
+
+from flask_appbuilder.models.mixins import ImageColumn
 
 from yaml import load, dump
 try:
@@ -81,7 +83,6 @@ class StorageResult(Model):
     date = Column(Date)
     comments = Column(String, nullable=True)
     sample = Column(String, nullable=True)
-    #path = Column(String, nullable=True)
     rawdata = Column(String, nullable=True)
     def rawdata_url(self):
         if self.rawdata:
@@ -89,6 +90,27 @@ class StorageResult(Model):
                 '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.testrun) + '/' + str(self.rawdata) + '> rawdata </a>')
         else:
             return self.raw
+
+class ComparedResult(Model):
+    '''
+    table for storing compared result
+    '''
+    id = Column(Integer, primary_key=True)
+    baseid = Column(String(200))
+    testid = Column(String(200))
+    createtime = Column(DateTime)
+    reportlink = Column(String(300))
+    comments = Column(String, nullable=True)
+    testrun_results_yaml = Column(Text)
+    two_way_benchmark_yaml = Column(Text)
+    two_way_metadata_yaml = Column(Text)
+
+    def report_url(self):
+        if self.reportlink:
+            return Markup(
+                '<a href=http://' + APACHE_SERVER + '/perf-insight/reports/{}/report.html '.format(self.reportlink) + '> Report </a>')
+        else:
+            return self.reportlink
 
 class FailureType(Model):
     '''

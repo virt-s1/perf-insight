@@ -13,9 +13,10 @@ from . import appbuilder, db
 import subprocess
 from .forms import YamlForm, NewTestrunForm
 import tempfile
+import datetime
 
 from .models import (StorageRun, StorageResult, Bugs, FailureType,
-                     FailureStatus)
+                     FailureStatus, ComparedResult)
 
 # Below import is for charts
 import calendar
@@ -128,6 +129,17 @@ class YamlFormView(SimpleFormView):
             flash('Error! {}'.format(ret.stdout), 'danger')
         else:
             flash(self.message, 'success')
+            result_record = ComparedResult()
+            result_record.baseid = baserun
+            result_record.testid = testrun
+            result_record.reportlink = new_dir
+            result_record.createtime = datetime.datetime.now()
+            result_record.testrun_results_yaml = form.yaml1.data
+            result_record.two_way_benchmark_yaml = form.yaml2.data
+            result_record.two_way_metadata_yaml = form.yaml2.data
+            result_record.comments = ''
+            db.session.add(result_record)
+            db.session.commit()
         #session['yaml1'] = form.yaml1.data
         #session['yaml2'] = form.yaml2.data
         return redirect(url_for('YamlFormView.this_form_get',baserun=baserun, testrun=testrun))
@@ -342,6 +354,42 @@ class HypervStorageResultEditView(HypervStorageResultPubView):
         "can_delete"
     ]
 
+class ComparedResultPubView(ModelView):
+    datamodel = SQLAInterface(ComparedResult)
+    base_permissions = ["can_list", "can_show", "menu_access"]
+    #show_widget = MyShowWidget
+    #list_widget = MyListWidget
+
+    label_columns = {"baseid": "BaseID","testid": "TestID", "createtime": "Create Time", "report_url": "Report Link"}
+
+    list_columns = [
+        "id","baseid","testid","createtime","report_url","comments"
+    ]
+    search_columns = [
+        "id","baseid","testid","createtime","reportlink","comments","testrun_results_yaml",
+                "two_way_benchmark_yaml","two_way_metadata_yaml"
+    ]
+
+    show_fieldsets = [
+        ("Summary", {
+            "fields": [
+                "id","baseid","testid","createtime","report_url","comments","testrun_results_yaml",
+                "two_way_benchmark_yaml","two_way_metadata_yaml"
+            ]
+        }),
+        ("Description", {
+            "fields": ["description"],
+            "expanded": True
+        }),
+    ]
+    base_order = ("id", "desc")
+
+class ComparedResultEditView(ComparedResultPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
 
 class BugsPubView(ModelView):
     datamodel = SQLAInterface(Bugs)
@@ -440,7 +488,10 @@ appbuilder.add_view(HypervStorageResultPubView,
                     "Hyperv Test Results",
                     icon="fa-angle-double-right",
                     category="StorageTestResult")
-
+appbuilder.add_view(ComparedResultPubView,
+                    "ComparedResult",
+                    icon="fa-angle-double-right",
+                    category="ComparedResult")
 appbuilder.add_view(StorageRunEditView,
                     "Edit All Test Runs",
                     icon="fa-pencil-square-o",
@@ -479,6 +530,10 @@ appbuilder.add_view(EsxiStorageResultEditView,
                     category="Management")
 appbuilder.add_view(HypervStorageResultEditView,
                     "Edit Hyperv Test Results",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(ComparedResultEditView,
+                    "Edit Compared Result List",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(BugsPubView,
