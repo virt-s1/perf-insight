@@ -461,7 +461,7 @@ appbuilder.add_view(AzureStorageRunPubView,
                     icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(EsxiStorageRunPubView,
-                    "Esxi Test Runs",
+                    "ESXi Test Runs",
                     icon="fa-angle-double-right",
                     category="StorageTestRun")
 appbuilder.add_view(HypervStorageRunPubView,
@@ -481,7 +481,7 @@ appbuilder.add_view(AzureStorageResultPubView,
                     icon="fa-angle-double-right",
                     category="StorageTestResult")
 appbuilder.add_view(EsxiStorageResultPubView,
-                    "Esxi Test Results",
+                    "ESXi Test Results",
                     icon="fa-angle-double-right",
                     category="StorageTestResult")
 appbuilder.add_view(HypervStorageResultPubView,
@@ -505,7 +505,7 @@ appbuilder.add_view(AzureStorageRunEditView,
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageRunEditView,
-                    "Edit Esxi Test Runs",
+                    "Edit ESXi Test Runs",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageRunEditView,
@@ -525,7 +525,7 @@ appbuilder.add_view(AzureStorageResultEditView,
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageResultEditView,
-                    "Edit Esxi Test Results",
+                    "Edit ESXi Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageResultEditView,

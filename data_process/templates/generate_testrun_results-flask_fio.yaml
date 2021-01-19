@@ -55,7 +55,7 @@ testrun_results_generator:
     - name: numjobs
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
-    - name: sample
+    - name: Sample
       source: auto
     - name: iops
       source: datastore
