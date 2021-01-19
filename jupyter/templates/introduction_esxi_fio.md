@@ -6,8 +6,7 @@ VMware vSphere supports different types of storage architectures, storage types 
 
 #### Contact infomation
 
-Lily Du <ldu@redhat.com>  
-Charles Shih <cheshi@redhat.com>  
+IRC: #virt-pt @irc.devel.redhat.com  
+Mail list: virt-perftest@redhat.com
 
-IRC: #virt-pt  
-Mail list: virt-perftest@redhat.com  
+Project owner: Lily Du <ldu@redhat.com>
