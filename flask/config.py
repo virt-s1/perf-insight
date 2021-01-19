@@ -52,3 +52,4 @@ APP_NAME = "Perf Insight"
 APP_THEME = "spacelab.css"      # NICE
 # APP_THEME = "united.css"
 PUBLIC_ROLE_LIKE_GAMMA = True
+# APP_ICON="/static/img/logo.jpg"
