@@ -33,7 +33,4 @@ RUN mkdir -p /workspace
 VOLUME [ "/workspace" ]
 
 # During debugging, this entry point will be overridden.
-CMD ["jupyter", "nbconvert", "--to", "html", \
-    "--execute", "report_portal.ipynb", "--output-dir", \
-    "/workspace", "--ExecutePreprocessor.timeout=240", \
-    "--TemplateExporter.exclude_input=True","--output", "report.html"]
+CMD ["/bin/bash", "run.sh"]

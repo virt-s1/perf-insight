@@ -19,7 +19,11 @@ workspace/
 Prepare perf_insight.yaml
 
 2. Change folder selinux context, or cannot read file inside container:
+```
 chcon -Rt svirt_sandbox_file_t /workspace
+```
 
-3. podman run -v /workspace:/workspace:rw -v perf_insight.yaml:/root/.perf_insight.yaml:ro jupyter_reporting 
-It will generate report.html in your workspace folder.
+3. Generate report.html in workspace:
+```
+podman run -v /workspace:/workspace:rw -v perf_insight.yaml:/root/.perf_insight.yaml:ro jupyter_reporting
+```
