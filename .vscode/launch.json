@@ -4,20 +4,21 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python: generate_2way_benchmark.py",
             "type": "python",
             "request": "launch",
-            "program": "fetch_scripts/generate_2way_benchmark.py",
+            "program": "data_process/generate_2way_benchmark.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "--config",
-                "generate_2way_benchmark.yaml",
+                "./data_process/generate_2way_benchmark.yaml",
                 "--base",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-20200929.2-x86_64-BIOS_lite_scsi_D201221T164653/testrun_results.csv",
+                "./data_process/data_source/fio_ESXi_RHEL-8.3.0-20200929.2-x86_64-BIOS_lite_scsi_D201221T164653/testrun_results.csv",
                 "--test",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.4.0-20201209.n.0-x86_64-BIOS-A_lite_scsi_D201220T212213/testrun_results.csv",
+                "./data_process/data_source/fio_ESXi_RHEL-8.4.0-20201209.n.0-x86_64-BIOS-A_lite_scsi_D201220T212213/testrun_results.csv",
                 "--output-format",
                 "html",
             ]
@@ -26,32 +27,32 @@
             "name": "Python: generate_2way_metadata.py",
             "type": "python",
             "request": "launch",
-            "program": "fetch_scripts/generate_2way_metadata.py",
+            "program": "data_process/generate_2way_metadata.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "--config",
                 "generate_2way_metadata.yaml",
                 "--base",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-20200929.2-x86_64-BIOS_lite_scsi_D201221T164653/testrun_metadata.json",
+                "./data_process/data_source/fio_ESXi_RHEL-8.3.0-20200929.2-x86_64-BIOS_lite_scsi_D201221T164653/testrun_metadata.json",
                 "--test",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.4.0-20201209.n.0-x86_64-BIOS-A_lite_scsi_D201220T212213/testrun_metadata.json",
+                "./data_process/data_source/fio_ESXi_RHEL-8.4.0-20201209.n.0-x86_64-BIOS-A_lite_scsi_D201220T212213/testrun_metadata.json",
             ]
         },
         {
             "name": "Python: generate_testrun_results.py",
             "type": "python",
             "request": "launch",
-            "program": "fetch_scripts/generate_testrun_results.py",
+            "program": "data_process/generate_testrun_results.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "--config",
                 "generate_testrun_results.yaml",
                 "--datastore",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/datastore.json",
+                "./data_process/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/datastore.json",
                 "--metadata",
-                "./fetch_scripts/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/testrun_metadata.json",
+                "./data_process/data_source/fio_ESXi_RHEL-8.3.0-2020111009.2_lite_scsi_D201203T114029/testrun_metadata.json",
                 "--output-format",
                 "html",
             ]
