@@ -5,23 +5,19 @@ Generate the 2-way benchmark report summary.
 
 import argparse
 import logging
-import yaml
 import json
 import pandas as pd
-import numpy as np
-from scipy.stats import ttest_rel
-from scipy.stats import ttest_ind
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(
     description='Generate the 2-way benchmark report summary.')
-ARG_PARSER.add_argument('--benchmark-csv',
-                        dest='benchmark_csv',
+ARG_PARSER.add_argument('--statistics-json',
+                        dest='statistics_json',
                         action='store',
-                        help='The 2way benchmark comparison.',
-                        default='2way_benchmark.csv',
+                        help='The 2way benchmark statistics.',
+                        default='2way_statistics.json',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
@@ -43,8 +39,9 @@ ARGS = ARG_PARSER.parse_args()
 class benchmark_summary_generator():
     """Generate 2-way benchmark report summary."""
     def __init__(self, ARGS):
-        # load the 2way benchmark comparison
-        self.df_benchmark = pd.read_csv(ARGS.benchmark_csv, index_col=0)
+        # load the 2way benchmark statistics
+        with open(ARGS.statistics_json, 'r') as f:
+            self.statistics = json.load(f)
 
         # parse parameters
         self.output = ARGS.output
@@ -59,51 +56,37 @@ class benchmark_summary_generator():
         self._parse_data()
 
     def _parse_data(self):
-        """Parse data from the 2way benchmark comparison.
+        """Parse data from the 2way benchmark statistics.
 
         Input:
-            - self.df_benchmark: the 2way benchmark comparison.
+            - self.statistics: the 2way benchmark statistics.
         Update:
             - self.datatable: the 2way benchmark summary.
         """
-        # Convert dataframe to json
-        result = self.df_benchmark.to_json(orient="split")
-        parsed = json.loads(result)
-        #print(json.dumps(parsed, indent=4))
+        # build the table from statistics
 
-        columns = parsed['columns']
-        entries = parsed['data']
+        self.datatable.append(
+            ('Test Result', self.statistics.get('test_result')))
+        self.datatable.append(
+            ['Total Cases',
+             self.statistics.get('total_case_num')])
+        self.datatable.append(
+            ['Failed Cases',
+             self.statistics.get('failed_case_num')])
 
-        if 'IOPS-%DF' in columns:
-            benchmark_type = 'fio'
-            indicator_name = 'IOPS'
-            indicator_value = 'n/a'
-            indicator_index = columns.index('IOPS-%DF')
+        self.datatable = [
+            ('Test Result', self.statistics.get('test_result')),
+            ('Total Case', self.statistics.get('total_case_num')),
+            ('Failed Case', self.statistics.get('failed_case_num')),
+            ('Failed Rate', self.statistics.get('failed_case_rate')),
+            ('Overall Indicator', self.statistics.get('overall_indicator')),
+            ('Overall Performance',
+             self.statistics.get('overall_performance')),
+        ]
 
-        # get overall performance
-        values = [x[indicator_index] for x in entries]
-        mean = np.mean(values)
-        sign = '' if mean < 0 else '+'
-        overall_performance = '{}{:.2f}%'.format(sign, mean)
-
-        print('overall_indicator: ', indicator_name)
-        print('overall_performance: ', overall_performance)
-
-        # get case numbers
-        total_case_num = failed_case_num = 0
-        for item in entries:
-            total_case_num += 1
-            if 'DR' in item or 'Dramatic Regression' in item:
-                failed_case_num += 1
-        failed_case_rate = '{:.2%}'.format(failed_case_num / total_case_num)
-
-        print('total_case_num: ', total_case_num)
-        print('failed_case_num: ', failed_case_num)
-        print('failed_case_rate: ', failed_case_rate)
-
-        exit(0)
-
-        self.dataframe = pd.DataFrame(self.datatable)
+        self.dataframe = pd.DataFrame(data=self.datatable,
+                                      index=None,
+                                      columns=('NAME', 'VALUE'))
 
     def dump_to_csv(self):
         """Dump the report dataframe to a CSV file."""
@@ -128,7 +111,7 @@ class benchmark_summary_generator():
             print('\n> _show(%s):\n' % name)
             print(value)
 
-        _show('self.df_benchmark', self.config)
+        _show('self.statistics', self.statistics)
         _show('self.datatable', self.datatable)
         _show('self.dataframe', self.dataframe)
 
