@@ -1,0 +1,123 @@
+#!/usr/bin/env python
+"""
+Generate the 2-way benchmark report summary.
+"""
+
+import argparse
+import logging
+import json
+import pandas as pd
+
+LOG = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
+
+ARG_PARSER = argparse.ArgumentParser(
+    description='Generate the 2-way benchmark report summary.')
+ARG_PARSER.add_argument('--statistics-json',
+                        dest='statistics_json',
+                        action='store',
+                        help='The 2way benchmark statistics.',
+                        default='2way_statistics.json',
+                        required=False)
+ARG_PARSER.add_argument('--output-format',
+                        dest='output_format',
+                        action='store',
+                        choices=('csv', 'html'),
+                        help='The output file format.',
+                        default='csv',
+                        required=False)
+ARG_PARSER.add_argument('--output',
+                        dest='output',
+                        action='store',
+                        help='The file to store 2way benchmark summary.',
+                        default='2way_summary.csv',
+                        required=False)
+
+ARGS = ARG_PARSER.parse_args()
+
+
+class benchmark_summary_generator():
+    """Generate 2-way benchmark report summary."""
+    def __init__(self, ARGS):
+        # load the 2way benchmark statistics
+        with open(ARGS.statistics_json, 'r') as f:
+            self.statistics = json.load(f)
+
+        # parse parameters
+        self.output = ARGS.output
+        self.output_format = ARGS.output_format
+
+        if self.output is None:
+            self.output = '2way_summary.{0}'.format(self.output_format)
+
+        # init
+        self.datatable = []
+        self.dataframe = None
+        self._parse_data()
+
+    def _parse_data(self):
+        """Parse data from the 2way benchmark statistics.
+
+        Input:
+            - self.statistics: the 2way benchmark statistics.
+        Update:
+            - self.datatable: the 2way benchmark summary.
+        """
+        # build the table from statistics
+
+        self.datatable.append(
+            ('Test Result', self.statistics.get('test_result')))
+        self.datatable.append(
+            ['Total Cases',
+             self.statistics.get('total_case_num')])
+        self.datatable.append(
+            ['Failed Cases',
+             self.statistics.get('failed_case_num')])
+
+        self.datatable = [
+            ('Test Result', self.statistics.get('test_result')),
+            ('Total Case', self.statistics.get('total_case_num')),
+            ('Failed Case', self.statistics.get('failed_case_num')),
+            ('Failed Rate', self.statistics.get('failed_case_rate')),
+            ('Overall Indicator', self.statistics.get('overall_indicator')),
+            ('Overall Performance',
+             self.statistics.get('overall_performance')),
+        ]
+
+        self.dataframe = pd.DataFrame(data=self.datatable,
+                                      index=None,
+                                      columns=('NAME', 'VALUE'))
+
+    def dump_to_csv(self):
+        """Dump the report dataframe to a CSV file."""
+        with open(self.output, 'w') as f:
+            f.write(self.dataframe.to_csv())
+
+    def dump_to_html(self):
+        """Dump the report dataframe to a HTML file."""
+        with open(self.output, 'w') as f:
+            f.write(self.dataframe.to_html())
+
+    def dump_to_file(self):
+        """Dump the report dataframe to a file."""
+        if self.output_format == 'csv':
+            self.dump_to_csv()
+        else:
+            self.dump_to_html()
+
+    def show_vars(self):
+        """Print the value of varibles to the stdout."""
+        def _show(name, value):
+            print('\n> _show(%s):\n' % name)
+            print(value)
+
+        _show('self.statistics', self.statistics)
+        _show('self.datatable', self.datatable)
+        _show('self.dataframe', self.dataframe)
+
+
+if __name__ == '__main__':
+    gen = benchmark_summary_generator(ARGS)
+    gen.dump_to_file()
+
+exit(0)
