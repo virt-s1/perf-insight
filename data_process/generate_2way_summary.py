@@ -44,9 +44,7 @@ class benchmark_summary_generator():
     """Generate 2-way benchmark report summary."""
     def __init__(self, ARGS):
         # load the 2way benchmark comparison
-        self.df_benchmark = pd.read_csv(ARGS.benchmark_csv)
-        if 'Unnamed: 0' in self.df_benchmark.columns:
-            self.df_benchmark = self.df_benchmark.drop(columns=['Unnamed: 0'])
+        self.df_benchmark = pd.read_csv(ARGS.benchmark_csv, index_col=0)
 
         # parse parameters
         self.output = ARGS.output
@@ -77,24 +75,31 @@ class benchmark_summary_generator():
         entries = parsed['data']
 
         if 'IOPS-%DF' in columns:
-            test_type = 'fio'
+            benchmark_type = 'fio'
             indicator_name = 'IOPS'
-            indicator_value = '0%'
+            indicator_value = 'n/a'
             indicator_index = columns.index('IOPS-%DF')
 
         # get overall performance
         values = [x[indicator_index] for x in entries]
-        print('overall performance: ', np.mean(values))
+        mean = np.mean(values)
+        sign = '' if mean < 0 else '+'
+        overall_performance = '{}{:.2f}%'.format(sign, mean)
 
-        # get total and regression case number
-        case_num_total = case_num_regression = 0
+        print('overall_indicator: ', indicator_name)
+        print('overall_performance: ', overall_performance)
+
+        # get case numbers
+        total_case_num = failed_case_num = 0
         for item in entries:
-            case_num_total += 1
-            if 'DR' in item:
-                case_num_regression += 1
+            total_case_num += 1
+            if 'DR' in item or 'Dramatic Regression' in item:
+                failed_case_num += 1
+        failed_case_rate = '{:.2%}'.format(failed_case_num / total_case_num)
 
-        print('case_num_total: ', case_num_total)
-        print('case_num_regression: ', case_num_regression)
+        print('total_case_num: ', total_case_num)
+        print('failed_case_num: ', failed_case_num)
+        print('failed_case_rate: ', failed_case_rate)
 
         exit(0)
 
