@@ -65,16 +65,14 @@ class benchmark_statistics_generator():
             overall_indicator = 'IOPS'
 
         # get overall performance
-        indicator_index = columns.index(indicator_name)
-        values = [x[indicator_index] for x in entries]
-        mean = np.mean(values)
-        sign = '' if mean < 0 else '+'
-        overall_performance = '{}{:.2f}%'.format(sign, mean)
+        index = columns.index(indicator_name)
+        indicator_value = np.mean([x[index] for x in entries])
+        sign = '' if indicator_value < 0 else '+'
+        overall_performance = '{}{:.2f}%'.format(sign, indicator_value)
 
-        self.statistics['benchmark_type'] = benchmark_type
-        self.statistics['indicator_name'] = indicator_name
-        self.statistics['overall_indicator'] = overall_indicator
-        self.statistics['overall_performance'] = overall_performance
+        # get test result
+        FAILURE_THRESHOLD = 0.0
+        test_result = 'PASS' if indicator_value > FAILURE_THRESHOLD else 'FAIL'
 
         # get case numbers
         total_case_num = failed_case_num = 0
@@ -84,6 +82,12 @@ class benchmark_statistics_generator():
                 failed_case_num += 1
         failed_case_rate = '{:.2%}'.format(failed_case_num / total_case_num)
 
+        # save statistics
+        self.statistics['test_result'] = test_result
+        self.statistics['benchmark_type'] = benchmark_type
+        self.statistics['indicator_name'] = indicator_name
+        self.statistics['overall_indicator'] = overall_indicator
+        self.statistics['overall_performance'] = overall_performance
         self.statistics['total_case_num'] = total_case_num
         self.statistics['failed_case_num'] = failed_case_num
         self.statistics['failed_case_rate'] = failed_case_rate
