@@ -4,58 +4,58 @@ testrun_results_generator:
     round: 6
     fillna: "NaN"
   columns:
-    - name: testrun
+    - name: Testrun
       source: metadata
       key: testrun-id
-    - name: type
+    - name: Type
       source: metadata
       key: testrun-type
-    - name: platform
+    - name: Platform
       source: metadata
       key: testrun-platform
-    - name: branch
+    - name: Branch
       source: metadata
       key: os-branch
-    - name: compose
+    - name: Compose
       source: metadata
       key: os-compose
-    - name: kernel
+    - name: Kernel
       source: metadata
       key: os-kernel
-    - name: flavor
+    - name: Flavor
       source: metadata
       key: guest-flavor
-    - name: hypervisor
+    - name: Hypervisor
       source: metadata
       key: hypervisor-version
-    - name: net-driver
+    - name: Net-Driver
       source: metadata
       key: hardware-net-driver
-    - name: net-duplex
+    - name: Net-Duplex
       source: metadata
       key: hardware-net-duplex
-    - name: net-speed
+    - name: Net-Speed
       source: metadata
       key: hardware-net-speed
-    - name: cpu_model
+    - name: CPU_Model
       source: metadata
       key: hypervisor-cpu_model
-    - name: cpu
+    - name: CPU
       source: metadata
       key: hypervisor-cpu
-    - name: vcpu
+    - name: vCPU
       source: metadata
       key: guest-cpu
-    - name: memory
+    - name: Memory
       source: metadata
       key: guest-memory
-    - name: tool_version
+    - name: Tool_Version
       source: metadata
       key: tool-uperf_version
-    - name: date
+    - name: Date
       source: metadata
       key: testrun-date
-    - name: comments
+    - name: Comments
       source: metadata
       key: testrun-comments
     - name: Protocol
