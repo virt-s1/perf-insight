@@ -10,6 +10,7 @@ import yaml
 import os
 import pandas as pd
 from jq import jq
+import numpy as np
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
@@ -102,7 +103,16 @@ class testrun_results_generator():
         def _get_value_datastore(cfg, data=None):
             """Get value(s) from datastore."""
             # jq().transform() returns a list of string(s)
-            res = jq(cfg['jqexpr']).transform(data, multiple_output=True)
+            try:
+                res = jq(cfg['jqexpr']).transform(data, multiple_output=True)
+            except Exception as e:
+                if 'Cannot iterate over null' in str(e):
+                    res = [np.nan]
+                else:
+                    print('ERROR: Unable to get value from JSON: %s' % e)
+                    print('ERROR: cfg = %s' % cfg)
+                    print('ERROR: data = %s' % data)
+                    exit(1)
 
             # multiply the factor if available
             if 'factor' in cfg:
