@@ -1,0 +1,39 @@
+testrun_results_generator:
+  defaults:
+    split: yes
+    round: 6
+    fillna: "NaN"
+  columns:
+    - name: Protocol
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].protocol"
+    - name: TestType
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].test_type"
+    - name: MSize
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].message_size_bytes"
+    - name: Instance
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].instances"
+    - name: Sample
+      source: auto
+    - name: Throughput
+      source: datastore
+      jqexpr: '.iteration_data.throughput.Gb_sec[] | select(.client_hostname=="all") | .samples[].value'
+      unit: Mb/s
+      factor: 1024
+      round: 3
+    - name: Trans
+      source: datastore
+      jqexpr: '.iteration_data.throughput.trans_sec[] | select(.client_hostname=="all") | .samples[].value'
+      unit: t/s
+      round: 1
+    - name: Latency
+      source: datastore
+      jqexpr: '.iteration_data.latency.usec[] | select(.client_hostname=="all") | .samples[].value'
+      unit: us
+      factor: 1
+      round: 1
+    - name: Path
+      source: auto

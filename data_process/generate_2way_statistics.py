@@ -61,8 +61,8 @@ class benchmark_statistics_generator():
         # get benchmark type
         if 'IOPS-%DF' in columns:
             benchmark_type = 'fio'
+            primary_metric = 'IOPS'
             indicator_name = 'IOPS-%DF'
-            overall_indicator = 'IOPS'
 
         # get overall performance
         index = columns.index(indicator_name)
@@ -86,7 +86,7 @@ class benchmark_statistics_generator():
         self.statistics['test_result'] = test_result
         self.statistics['benchmark_type'] = benchmark_type
         self.statistics['indicator_name'] = indicator_name
-        self.statistics['overall_indicator'] = overall_indicator
+        self.statistics['primary_metric'] = primary_metric
         self.statistics['overall_performance'] = overall_performance
         self.statistics['total_case_num'] = total_case_num
         self.statistics['failed_case_num'] = failed_case_num

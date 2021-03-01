@@ -79,7 +79,7 @@ class benchmark_summary_generator():
             ('Total Case', self.statistics.get('total_case_num')),
             ('Failed Case', self.statistics.get('failed_case_num')),
             ('Failed Rate', self.statistics.get('failed_case_rate')),
-            ('Overall Indicator', self.statistics.get('overall_indicator')),
+            ('Primary Metric', self.statistics.get('primary_metric')),
             ('Overall Performance',
              self.statistics.get('overall_performance')),
         ]
