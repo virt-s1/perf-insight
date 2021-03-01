@@ -1,0 +1,93 @@
+testrun_results_generator:
+  defaults:
+    split: yes
+    round: 6
+    fillna: "NaN"
+  columns:
+    - name: testrun
+      source: metadata
+      key: testrun-id
+    - name: type
+      source: metadata
+      key: testrun-type
+    - name: platform
+      source: metadata
+      key: testrun-platform
+    - name: branch
+      source: metadata
+      key: os-branch
+    - name: compose
+      source: metadata
+      key: os-compose
+    - name: kernel
+      source: metadata
+      key: os-kernel
+    - name: flavor
+      source: metadata
+      key: guest-flavor
+    - name: hypervisor
+      source: metadata
+      key: hypervisor-version
+    - name: net-driver
+      source: metadata
+      key: hardware-net-driver
+    - name: net-duplex
+      source: metadata
+      key: hardware-net-duplex
+    - name: net-speed
+      source: metadata
+      key: hardware-net-speed
+    - name: cpu_model
+      source: metadata
+      key: hypervisor-cpu_model
+    - name: cpu
+      source: metadata
+      key: hypervisor-cpu
+    - name: vcpu
+      source: metadata
+      key: guest-cpu
+    - name: memory
+      source: metadata
+      key: guest-memory
+    - name: tool_version
+      source: metadata
+      key: tool-uperf_version
+    - name: date
+      source: metadata
+      key: testrun-date
+    - name: comments
+      source: metadata
+      key: testrun-comments
+    - name: Protocol
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].protocol"
+    - name: TestType
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].test_type"
+    - name: MSize
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].message_size_bytes"
+    - name: Instance
+      source: datastore
+      jqexpr: ".iteration_data.parameters.benchmark[].instances"
+    - name: Sample
+      source: auto
+    - name: Throughput
+      source: datastore
+      jqexpr: '.iteration_data.throughput.Gb_sec[] | select(.client_hostname=="all") | .samples[].value'
+      unit: Mb/s
+      factor: 1024
+      round: 3
+    - name: Trans
+      source: datastore
+      jqexpr: '.iteration_data.throughput.trans_sec[] | select(.client_hostname=="all") | .samples[].value'
+      unit: t/s
+      round: 1
+    - name: Latency
+      source: datastore
+      jqexpr: '.iteration_data.latency.usec[] | select(.client_hostname=="all") | .samples[].value'
+      unit: us
+      factor: 1
+      round: 1
+    - name: Path
+      source: auto
