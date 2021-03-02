@@ -7,7 +7,6 @@ import argparse
 import logging
 import json
 import yaml
-import os
 import pandas as pd
 
 LOG = logging.getLogger(__name__)
@@ -43,7 +42,7 @@ ARG_PARSER.add_argument('--output',
                         dest='output',
                         action='store',
                         help='The file to store metadata comparison.',
-                        default=None,
+                        default='2way_benchmark_metadata.csv',
                         required=False)
 
 ARGS = ARG_PARSER.parse_args()
@@ -66,10 +65,6 @@ class metadata_comparison_generator():
         # parse parameters
         self.output = ARGS.output
         self.output_format = ARGS.output_format
-
-        if self.output is None:
-            self.output = '2way_benchmark_configuration.{0}'.format(
-                self.output_format)
 
         # init
         self.datatable = []
