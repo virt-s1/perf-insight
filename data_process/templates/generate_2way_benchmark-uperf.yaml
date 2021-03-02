@@ -1,0 +1,31 @@
+benchmark_comparison_generator:
+  defaults:
+    round: 6
+    round_pct: 2
+    use_abbr: yes
+    fillna: "NaN"
+  kpi_defaults:
+    higher_is_better: yes
+    max_pctdev_threshold: 0.10
+    confidence_threshold: 0.95
+    negligible_threshold: 0.05
+    regression_threshold: 0.10
+  keys:
+    - name: Protocol
+    - name: TestType
+    - name: MSize
+    - name: Instance
+  kpis:
+    - name: Throughput
+      unit: Mb/s
+      from: Throughput(Mb/s)
+      round: 3
+    - name: Trans
+      unit: t/s
+      from: Trans(t/s)
+      round: 1
+    - name: Latency
+      unit: us
+      from: Latency(us)
+      higher_is_better: no
+      round: 1
