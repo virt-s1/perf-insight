@@ -64,9 +64,15 @@ class benchmark_statistics_generator():
             primary_metric = 'IOPS'
             indicator_name = 'IOPS-%DF'
 
+        if 'Throughput-%DF' in columns:
+            benchmark_type = 'uperf'
+            primary_metric = 'Throughput'
+            indicator_name = 'Throughput-%DF'
+
         # get overall performance
         index = columns.index(indicator_name)
-        indicator_value = np.mean([x[index] for x in entries])
+        indicator_value = np.mean(
+            [x[index] for x in entries if x[index] is not None])
         sign = '' if indicator_value < 0 else '+'
         overall_performance = '{}{:.2f}%'.format(sign, indicator_value)
 
