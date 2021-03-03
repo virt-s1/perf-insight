@@ -16,7 +16,7 @@ import tempfile
 import datetime
 
 from .models import (StorageRun, StorageResult, Bugs, FailureType,
-                     FailureStatus, ComparedResult)
+                     FailureStatus, ComparedResult, NetworkRun,NetworkResult)
 
 # Below import is for charts
 import calendar
@@ -174,6 +174,158 @@ class MyListWidget(ListWidget):
 
 class MyShowWidget(ShowWidget):
      template = 'widgets/my_show.html'
+
+
+class NetworkRunPubView(ModelView):
+    datamodel = SQLAInterface(NetworkRun)
+    base_permissions = ["can_list", "can_show", "menu_access"]
+
+    label_columns = {"result_url": "Result","rawdata_url": "RawData"}
+
+    list_columns = [
+        "id","testrun","platform","flavor","branch","compose",
+                "kernel","casenum","result_url","rawdata_url"
+    ]
+    search_columns = [
+        "id","testrun","platform","flavor","branch","compose",
+                "kernel","casenum","result","rawdata"
+    ]
+
+    show_fieldsets = [
+        ("Summary", {
+            "fields": [
+                "id","testrun","platform","flavor","branch","compose",
+                "kernel","casenum","result_url","rawdata_url"
+            ]
+        }),
+        ("Description", {
+            "fields": ["description"],
+            "expanded": True
+        }),
+    ]
+    base_order = ("id", "desc")
+
+class EC2NetworkRunPubView(NetworkRunPubView):
+    base_filters = [["platform", FilterContains, 'ec2']]
+
+class AzureNetworkRunPubView(NetworkRunPubView):
+    base_filters = [["platform", FilterContains, 'azure']]
+
+class EsxiNetworkRunPubView(NetworkRunPubView):
+    base_filters = [["platform", FilterContains, 'esxi']]
+
+class HypervNetworkRunPubView(NetworkRunPubView):
+    base_filters = [["platform", FilterContains, 'hyperv']]
+
+class NetworkRunEditView(NetworkRunPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class EC2NetworkRunEditView(EC2NetworkRunPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class AzureNetworkRunEditView(AzureNetworkRunPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class EsxiNetworkRunEditView(EsxiNetworkRunPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class HypervNetworkRunEditView(HypervNetworkRunPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class NetworkResultPubView(ModelView):
+    datamodel = SQLAInterface(NetworkResult)
+    base_permissions = ["can_list", "can_show", "menu_access"]
+
+    label_columns = {"debug_url": "Result","rawdata_url": "RawData", "": "Type",
+        "cpu":"CPU", "cpu_model":"CPU_Model","net_driver":"Net-Driver",
+        "net_duplex":"Net-Duplex","net_speed":"Net-Speed", "throughput":"Throughput(Mb/s)",
+        "trans":"Trans(t/s)", "latency":"Latency(us)"}
+
+    list_columns = [
+        "testrun","compose","vcpu","memory","net_driver","net_speed","protocol","testtype","msize",
+        "instance","sample","throughput","trans","latency","rawdata_url"
+    ]
+    search_columns = [
+        "id","testrun","run_type","platform","flavor","cpu_model","cpu","hypervisor","branch",
+        "compose","kernel","vcpu","memory","net_driver","net_duplex","net_speed","protocol",
+        "testtype","msize","instance","sample","throughput","trans","latency","tool_version",
+        "date","rawdata","comments"
+    ]
+
+    show_fieldsets = [
+        ("Summary", {
+            "fields": [
+                "testrun","run_type","platform","flavor","cpu_model","cpu","hypervisor","branch",
+                "compose","kernel","vcpu","memory","net_driver","net_duplex","net_speed","protocol",
+                "testtype","msize","instance","sample","throughput","trans","latency","tool_version",
+                "date","rawdata","comments"
+            ]
+        }),
+        ("Description", {
+            "fields": ["description"],
+            "expanded": True
+        }),
+    ]
+    # base_order = ("log_id", "asc")
+    base_order = ("id", "desc")
+    # base_filters = [["created_by", FilterEqualFunction, get_user]]
+
+class EC2NetworkResultPubView(NetworkResultPubView):
+    base_filters = [["platform", FilterContains, 'ec2']]
+
+class AzureNetworkResultPubView(NetworkResultPubView):
+    base_filters = [["platform", FilterContains, 'azure']]
+
+class EsxiNetworkResultPubView(NetworkResultPubView):
+    base_filters = [["platform", FilterContains, 'esxi']]
+
+class HypervNetworkResultPubView(NetworkResultPubView):
+    base_filters = [["platform", FilterContains, 'hyperv']]
+
+class NetworkResultEditView(NetworkResultPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class EC2NetworkResultEditView(EC2NetworkResultPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class AzureNetworkResultEditView(AzureNetworkResultPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class EsxiNetworkResultEditView(EsxiNetworkResultPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
+
+class HypervNetworkResultEditView(HypervNetworkResultPubView):
+    base_permissions = [
+        "can_list", "can_show", "menu_access", "can_add", "can_edit",
+        "can_delete"
+    ]
 
 class StorageRunPubView(ModelView):
     datamodel = SQLAInterface(StorageRun)
@@ -451,89 +603,169 @@ db.create_all()
 appbuilder.add_view(StorageRunPubView,
                     "All Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageTestRun")
+                    category="StorageRuns")
 appbuilder.add_view(EC2StorageRunPubView,
                     "EC2 Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageTestRun")
+                    category="StorageRuns")
 appbuilder.add_view(AzureStorageRunPubView,
                     "Azure Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageTestRun")
+                    category="StorageRuns")
 appbuilder.add_view(EsxiStorageRunPubView,
                     "ESXi Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageTestRun")
+                    category="StorageRuns")
 appbuilder.add_view(HypervStorageRunPubView,
                     "Hyperv Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageTestRun")
+                    category="StorageRuns")
 appbuilder.add_view(StorageResultPubView,
                     "All Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageTestResult")
+                    category="StorageResults")
 appbuilder.add_view(EC2StorageResultPubView,
                     "EC2 Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageTestResult")
+                    category="StorageResults")
 appbuilder.add_view(AzureStorageResultPubView,
                     "Azure Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageTestResult")
+                    category="StorageResults")
 appbuilder.add_view(EsxiStorageResultPubView,
                     "ESXi Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageTestResult")
+                    category="StorageResults")
 appbuilder.add_view(HypervStorageResultPubView,
                     "Hyperv Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageTestResult")
+                    category="StorageResults")
+appbuilder.add_view(NetworkRunPubView,
+                    "All Network Test Runs",
+                    icon="fa-angle-double-right",
+                    category="NetRuns")
+appbuilder.add_view(EC2NetworkRunPubView,
+                    "EC2 Network Test Runs",
+                    icon="fa-angle-double-right",
+                    category="NetRuns")
+appbuilder.add_view(AzureNetworkRunPubView,
+                    "Azure Network Test Runs",
+                    icon="fa-angle-double-right",
+                    category="NetRuns")
+appbuilder.add_view(EsxiNetworkRunPubView,
+                    "ESXi Network Test Runs",
+                    icon="fa-angle-double-right",
+                    category="NetRuns")
+appbuilder.add_view(HypervNetworkRunPubView,
+                    "Hyperv Network Test Runs",
+                    icon="fa-angle-double-right",
+                    category="NetRuns")
+appbuilder.add_view(NetworkResultPubView,
+                    "All Network Test Results",
+                    icon="fa-angle-double-right",
+                    category="NetResults")
+appbuilder.add_view(EC2NetworkResultPubView,
+                    "EC2 Network Test Results",
+                    icon="fa-angle-double-right",
+                    category="NetResults")
+appbuilder.add_view(AzureNetworkResultPubView,
+                    "Azure Network Test Results",
+                    icon="fa-angle-double-right",
+                    category="NetResults")
+appbuilder.add_view(EsxiNetworkResultPubView,
+                    "ESXi Network Test Results",
+                    icon="fa-angle-double-right",
+                    category="NetResults")
+appbuilder.add_view(HypervNetworkResultPubView,
+                    "Hyperv Network Test Results",
+                    icon="fa-angle-double-right",
+                    category="NetResults")
 appbuilder.add_view(ComparedResultPubView,
                     "ComparedResult",
                     icon="fa-angle-double-right",
                     category="ComparedResult")
 appbuilder.add_view(StorageRunEditView,
-                    "Edit All Test Runs",
+                    "Edit All Storage Test Runs",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EC2StorageRunEditView,
-                    "Edit EC2 Test Runs",
+                    "Edit EC2 Storage Test Runs",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(AzureStorageRunEditView,
-                    "Edit Azure Test Runs",
+                    "Edit Azure Storage Test Runs",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageRunEditView,
-                    "Edit ESXi Test Runs",
+                    "Edit ESXi Storage Test Runs",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageRunEditView,
-                    "Edit Hyperv Test Runs",
+                    "Edit Hyperv Storage Test Runs",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(StorageResultEditView,
-                    "Edit All Test Results",
+                    "Edit All Storage Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EC2StorageResultEditView,
-                    "Edit EC2 Test Results",
+                    "Edit EC2 Storage Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(AzureStorageResultEditView,
-                    "Edit Azure Test Results",
+                    "Edit Azure Storage Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageResultEditView,
-                    "Edit ESXi Test Results",
+                    "Edit ESXi Storage Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageResultEditView,
-                    "Edit Hyperv Test Results",
+                    "Edit Hyperv Storage Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(ComparedResultEditView,
                     "Edit Compared Result List",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(NetworkRunEditView,
+                    "Edit All Network Test Runs",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EC2NetworkRunEditView,
+                    "Edit EC2 Network Test Runs",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(AzureNetworkRunEditView,
+                    "Edit Azure Network Test Runs",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EsxiNetworkRunEditView,
+                    "Edit ESXi Network Test Runs",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(HypervNetworkRunEditView,
+                    "Edit Hyperv Network Test Runs",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(NetworkResultEditView,
+                    "Edit All Network Test Results",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EC2NetworkResultEditView,
+                    "Edit EC2 Network Test Results",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(AzureNetworkResultEditView,
+                    "Edit Azure Network Test Results",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EsxiNetworkResultEditView,
+                    "Edit ESXi Network Test Results",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(HypervNetworkResultEditView,
+                    "Edit Hyperv Network Test Results",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(BugsPubView,

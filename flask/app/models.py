@@ -23,6 +23,78 @@ with open(os.getenv('HOME')+'/.perf-insight.yaml','r') as fh:
 
 APACHE_SERVER = keys_data['flask']['apache_server']
 
+
+class NetworkRun(Model):
+    '''
+    table for storing network test result
+    '''
+    id = Column(Integer, primary_key=True)
+    testrun = Column(String(100))
+    platform = Column(String(50))
+    flavor = Column(String(50))
+    branch = Column(String(50))
+    compose = Column(String(50), nullable=True)
+    kernel = Column(String(50))
+    casenum = Column(Integer)
+    result = Column(String(50))
+    # metadata location in the file system
+    rawdata = Column(String, nullable=True)
+    def rawdata_url(self):
+        if self.rawdata:
+            return Markup(
+                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.rawdata) + '> rawdata </a>')
+        else:
+            return self.rawdata
+
+    def __repr__(self):
+        return self.id
+
+    def result_url(self):
+        print("testrun is {}".format(self.testrun))
+        if self.testrun is not None and self.testrun != '' and "None" not in self.testrun:
+            self.result = url_for('NetworkResultPubView.list',_flt_0_testrun=str(self.testrun), _flt_0_platform=str(self.platform))
+            print("testrun is {}".format(self.testrun))
+        return Markup('<a href="' + self.result + '">result</a>')
+
+class NetworkResult(Model):
+    '''
+    table for storing network test result
+    '''
+    id = Column(Integer, primary_key=True)
+    testrun = Column(String(200))
+    run_type = Column(String(50))
+    platform = Column(String(50))
+    flavor = Column(String(50), nullable=True)
+    cpu_model = Column(String(100), nullable=True)
+    cpu = Column(String(100), nullable=True)
+    hypervisor = Column(String(100), nullable=True)
+    branch = Column(String(50))
+    compose = Column(String(100), nullable=True)
+    kernel = Column(String(100))
+    vcpu = Column(Integer)
+    memory = Column(String(100), nullable=True)
+    net_driver = Column(String(100))
+    net_duplex = Column(String(100))
+    net_speed = Column(String(100))
+    protocol = Column(String(100))
+    testtype = Column(String(100))
+    msize = Column(Integer)
+    instance = Column(Integer)
+    sample = Column(Integer)
+    throughput = Column(String(50))
+    trans = Column(String(50))
+    latency = Column(Integer)
+    tool_version = Column(String(50))
+    date = Column(Date)
+    rawdata = Column(String, nullable=True)
+    comments = Column(String, nullable=True)
+    def rawdata_url(self):
+        if self.rawdata:
+            return Markup(
+                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.testrun) + '/' + str(self.rawdata) + '> rawdata </a>')
+        else:
+            return self.raw
+
 class StorageRun(Model):
     '''
     table for storing storage test result
