@@ -37,9 +37,9 @@ ARG_PARSER.add_argument('--delete', dest='testrun_delete', action='store',
                         help="delete testrun if you want", default=None, required=False)
 ARG_PARSER.add_argument('-d', dest='is_debug', action='store_true',
                             help='enable sqlalchemy output for debug purpose', required=False)
-ARG_GROUP.add_argument('-network', dest='is_network', action='store_true',
+ARG_GROUP.add_argument('--network', dest='is_network', action='store_true',
                             help='write net test result', required=False)
-ARG_GROUP.add_argument('-storage', dest='is_storage', action='store_true',
+ARG_GROUP.add_argument('--storage', dest='is_storage', action='store_true',
                             help='write storage test result', required=False)
 ARGS = ARG_PARSER.parse_args()
 
