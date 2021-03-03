@@ -750,83 +750,85 @@ db.create_all()
 appbuilder.add_view(StorageRunPubView,
                     "All Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageRuns")
+                    category="StoragePerformance")
 appbuilder.add_view(EC2StorageRunPubView,
                     "EC2 Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageRuns")
+                    category="StoragePerformance")
 appbuilder.add_view(AzureStorageRunPubView,
                     "Azure Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageRuns")
+                    category="StoragePerformance")
 appbuilder.add_view(EsxiStorageRunPubView,
                     "ESXi Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageRuns")
+                    category="StoragePerformance")
 appbuilder.add_view(HypervStorageRunPubView,
                     "Hyperv Test Runs",
                     icon="fa-angle-double-right",
-                    category="StorageRuns")
+                    category="StoragePerformance")
+appbuilder.add_separator("StoragePerformance")
 appbuilder.add_view(StorageResultPubView,
                     "All Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageResults")
+                    category="StoragePerformance")
 appbuilder.add_view(EC2StorageResultPubView,
                     "EC2 Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageResults")
+                    category="StoragePerformance")
 appbuilder.add_view(AzureStorageResultPubView,
                     "Azure Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageResults")
+                    category="StoragePerformance")
 appbuilder.add_view(EsxiStorageResultPubView,
                     "ESXi Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageResults")
+                    category="StoragePerformance")
 appbuilder.add_view(HypervStorageResultPubView,
                     "Hyperv Test Results",
                     icon="fa-angle-double-right",
-                    category="StorageResults")
+                    category="StoragePerformance")
 appbuilder.add_view(NetworkRunPubView,
                     "All Network Test Runs",
                     icon="fa-angle-double-right",
-                    category="NetRuns")
+                    category="NetworkPerformance")
 appbuilder.add_view(EC2NetworkRunPubView,
                     "EC2 Network Test Runs",
                     icon="fa-angle-double-right",
-                    category="NetRuns")
+                    category="NetworkPerformance")
 appbuilder.add_view(AzureNetworkRunPubView,
                     "Azure Network Test Runs",
                     icon="fa-angle-double-right",
-                    category="NetRuns")
+                    category="NetworkPerformance")
 appbuilder.add_view(EsxiNetworkRunPubView,
                     "ESXi Network Test Runs",
                     icon="fa-angle-double-right",
-                    category="NetRuns")
+                    category="NetworkPerformance")
 appbuilder.add_view(HypervNetworkRunPubView,
                     "Hyperv Network Test Runs",
                     icon="fa-angle-double-right",
-                    category="NetRuns")
+                    category="NetworkPerformance")
+appbuilder.add_separator("NetworkPerformance")
 appbuilder.add_view(NetworkResultPubView,
                     "All Network Test Results",
                     icon="fa-angle-double-right",
-                    category="NetResults")
+                    category="NetworkPerformance")
 appbuilder.add_view(EC2NetworkResultPubView,
                     "EC2 Network Test Results",
                     icon="fa-angle-double-right",
-                    category="NetResults")
+                    category="NetworkPerformance")
 appbuilder.add_view(AzureNetworkResultPubView,
                     "Azure Network Test Results",
                     icon="fa-angle-double-right",
-                    category="NetResults")
+                    category="NetworkPerformance")
 appbuilder.add_view(EsxiNetworkResultPubView,
                     "ESXi Network Test Results",
                     icon="fa-angle-double-right",
-                    category="NetResults")
+                    category="NetworkPerformance")
 appbuilder.add_view(HypervNetworkResultPubView,
                     "Hyperv Network Test Results",
                     icon="fa-angle-double-right",
-                    category="NetResults")
+                    category="NetworkPerformance")
 appbuilder.add_view(ComparedResultPubView,
                     "ComparedResult",
                     icon="fa-angle-double-right",
