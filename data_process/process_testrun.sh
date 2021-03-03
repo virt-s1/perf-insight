@@ -85,11 +85,18 @@ if [ ! -e $basepath/testruns/$testrun ]; then
     exit 1
 fi
 
+# Get TestRunType
+testrun_type=${testrun%%_*}
+
 # Set environment
 PATH=$utils:$PATH
 cd $basepath/testruns/$testrun
 
 # Generate plots as requested
+if [ "$testrun_type" != 'fio' ]; then
+    echo "Only fio tests support generating plots."
+    generate_plots=0
+fi
 if [ "$generate_plots" = "1" ]; then
     echo "Generating Plots..."
     if [ "$put_background" = "1" ]; then
@@ -109,11 +116,14 @@ fi
 # Update database as requested
 if [ "$update_db" = "1" ]; then
     csv_file=/tmp/flask_testrun_results.$$.csv
+    [ "$testrun_type" = "fio" ] && flag="--storage"
+    [ "$testrun_type" = "uperf" ] && flag="--network"
+
     generate_testrun_results.py \
-        --config $templates/generate_testrun_results-flask_fio.yaml \
+        --config $templates/generate_testrun_results-${testrun_type}-dbloader.yaml \
         --output $csv_file &&
-        flask_load_db.py --db_file $db --delete $testrun &&
-        flask_load_db.py --db_file $db --csv_file $csv_file &&
+        flask_load_db.py --db_file $db --delete $testrun $flag &&
+        flask_load_db.py --db_file $db --csv_file $csv_file $flag &&
         rm -rf $csv_file
     [ $? != 0 ] && wait && exit 1
 fi
