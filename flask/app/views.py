@@ -226,6 +226,27 @@ class MyShowWidget(ShowWidget):
 class NetworkRunPubView(ModelView):
     datamodel = SQLAInterface(NetworkRun)
     base_permissions = ["can_list", "can_show", "menu_access"]
+    @action("compareruns",
+            "Compare2runs",
+            "Compare 2 test runs?",
+            "fa-rocket",
+            single=False)
+    def compareruns(self, items):
+        testruns = ''
+
+        if len(items) != 2:
+            flash("Please choose 2 testruns to compare!", 'danger')
+            self.update_redirect()
+            return redirect(self.get_redirect())
+        else:
+            for item in items:
+                testruns += item.testrun + '_'
+            testruns = testruns.rstrip('_')
+        #form = YamlForm
+        baserun, testrun = items[0].testrun, items[1].testrun
+        #return self.render_template(self.yaml_template, form=form, appbuilder=self.appbuilder)
+        return redirect("/yamlformview/form?baserun={}&testrun={}".format(
+            testrun, baserun))
 
     label_columns = {"result_url": "Result", "rawdata_url": "RawData"}
 
