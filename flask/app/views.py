@@ -92,21 +92,40 @@ class YamlFormView(SimpleFormView):
             flash("Please specify baserun and testrun", 'danger')
             self.update_redirect()
             return redirect(self.get_redirect())
-        if session.get('yaml2') is not None:
-            form.yaml2.data = session['yaml2']
-        elif session.get('yaml2') is None or len(session['yaml2']) < 10:
-            with open(TWO_WAY_BENCHMARK_YAML, 'r') as fh:
-                form.yaml2.data = fh.read()
-        if session.get('yaml1') is not None:
-            form.yaml1.data = session['yaml1']
-        elif session.get('yaml1') is None or len(session['yaml1']) < 10:
+
+        # get testrun type
+        if form.baserun.data.startswith('fio_'):
+            testrun_type = 'fio'
+        elif form.baserun.data.startswith('uperf_'):
+            testrun_type = 'uperf'
+        else:
+            flash('Unsupported TestRun Type!', 'danger')
+            self.update_redirect()
+            return redirect(self.get_redirect())
+
+        if session.get('yaml1') is None:
+            TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/\
+templates/generate_testrun_results-{}.yaml'.format(testrun_type)
             with open(TESTRUN_RESULTS_YAML, 'r') as fh:
                 form.yaml1.data = fh.read()
-        if session.get('yaml3') is not None:
-            form.yaml3.data = session['yaml3']
-        elif session.get('yaml3') is None or len(session['yaml3']) < 10:
+        else:
+            form.yaml1.data = session['yaml1']
+
+        if session.get('yaml2') is None:
+            TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/\
+templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
+            with open(TWO_WAY_BENCHMARK_YAML, 'r') as fh:
+                form.yaml2.data = fh.read()
+        else:
+            form.yaml2.data = session['yaml2']
+
+        if session.get('yaml3') is None:
+            TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/\
+templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_METADATA_YAML, 'r') as fh:
                 form.yaml3.data = fh.read()
+        else:
+            form.yaml3.data = session['yaml3']
 
     def form_post(self, form):
         # post process form
