@@ -149,8 +149,9 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             'Benchmark report is available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '
             .format(APACHE_SERVER, new_dir, self.result))
         jupiter_prepare(baserun, testrun, tmpdir)
-        cmd = 'podman run -v {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro --volume {}:/workspace:rw jupyter_reporting '.format(
-            os.getenv('HOME'), tmpdir)
+        cmd = 'podman run --rm \
+--volume {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro \
+--volume {}:/workspace:rw jupyter_reporting '.format(os.getenv('HOME'), tmpdir)
         ret = subprocess.run(cmd,
                              shell=True,
                              stdout=subprocess.PIPE,
