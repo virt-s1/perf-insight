@@ -249,7 +249,10 @@ class NetworkRunPubView(ModelView):
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
-    label_columns = {"result_url": "Result", "rawdata_url": "RawData"}
+    label_columns = {
+        "result_url": "Result",
+        "rawdata_url": "RawData",
+    }
 
     list_columns = [
         "id", "testrun", "platform", "flavor", "branch", "compose", "kernel",
@@ -333,21 +336,22 @@ class NetworkResultPubView(ModelView):
     label_columns = {
         "debug_url": "Result",
         "rawdata_url": "RawData",
-        "": "Type",
+        "testtype": "TestType",
         "cpu": "CPU",
         "cpu_model": "CPU_Model",
+        "vcpu": "vCPU",
         "net_driver": "Net-Driver",
         "net_duplex": "Net-Duplex",
         "net_speed": "Net-Speed",
+        "msize": "MSize",
         "throughput": "Throughput(Mb/s)",
         "trans": "Trans(t/s)",
         "latency": "Latency(us)"
     }
 
     list_columns = [
-        "testrun", "compose", "vcpu", "memory", "net_driver", "net_speed",
-        "protocol", "testtype", "msize", "instance", "sample", "throughput",
-        "trans", "latency", "rawdata_url"
+        "testrun", "flavor", "protocol", "testtype", "msize", "instance",
+        "sample", "throughput", "trans", "latency", "rawdata_url"
     ]
     search_columns = [
         "id", "testrun", "run_type", "platform", "flavor", "cpu_model", "cpu",
@@ -364,7 +368,7 @@ class NetworkResultPubView(ModelView):
                 "cpu", "hypervisor", "branch", "compose", "kernel", "vcpu",
                 "memory", "net_driver", "net_duplex", "net_speed", "protocol",
                 "testtype", "msize", "instance", "sample", "throughput",
-                "trans", "latency", "tool_version", "date", "rawdata",
+                "trans", "latency", "tool_version", "date", "rawdata_url",
                 "comments"
             ]
         }),
@@ -456,7 +460,10 @@ class StorageRunPubView(ModelView):
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
-    label_columns = {"debug_url": "Result", "rawdata_url": "RawData"}
+    label_columns = {
+        "rawdata_url": "RawData",
+        "result_url": "Result"
+    }
 
     list_columns = [
         "id", "testrun", "platform", "flavor", "branch", "compose", "kernel",
@@ -561,7 +568,8 @@ class StorageResultPubView(ModelView):
 
     list_columns = [
         "testrun", "flavor", "backend", "driver", "format", "rw", "bs",
-        "iodepth", "numjobs", "sample", "iops", "latency", "clat"
+        "iodepth", "numjobs", "sample", "iops", "latency", "clat",
+        "rawdata_url"
     ]
     search_columns = [
         'id', 'testrun', 'kernel', 'branch', 'backend', 'driver', 'format',
