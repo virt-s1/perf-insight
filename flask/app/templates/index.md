@@ -1,12 +1,12 @@
-# About Us
+## About Us
 
 Beijing VirtQE S1 team and forcusing on RHEL Performance Testing on Virtualization Platforms.
 
-## Our mission
+### Our mission
 
 Make RHEL performance competitive.
 
-## Contact Information
+### Contact Information
 
 - IRC channel: #virt-pt @irc.devel.redhat.com
 - Mailing list: virt-perftest@redhat.com
@@ -14,7 +14,7 @@ Make RHEL performance competitive.
 - Project Lead: Charles Shih <cheshi@redhat.com>
 - Manager: Tina Mao <ymao@redhat.com> / Lei Wang <leiwang@redhat.com>
 
-## Product Owners
+### Product Owners
 
 | Product | Function | Name                       | Email                                  |
 | :------ | :------- | :------------------------- | :------------------------------------- |
@@ -30,17 +30,16 @@ Make RHEL performance competitive.
 | Aliyun  | network  | Charles Shih               | cheshi@redhat.com                      |
 
 
-# About the site
+## About this site
 
-This site is a part of Perf-insight which is used to collect, display, query, and analyze performance results. We hope that historical records can better guide our testing and share testing status more friendly.  
-User-friendliness is our top priority, if you encounter any difficulties in obtaining data, please give us feedback.
+This site is a part of Perf-insight which is used to collect, display, query, and analyze performance results. We hope that historical records can better guide our testing and share testing status more friendly.
 
-## Perf-insight and Perf-agent
+### Perf-insight and Perf-agent
 
-Perf-insight (as known as a reporting system for performance testing) is a data visualization based on enhanced pbench data model and fully compatible with pbench test results. So that the raw data, test logs, KPI reports, and even ideas and insights can be easily shared with other stakeholders.
+Perf-insight (as known as the reporting system for performance testing) is a data visualization based on enhanced pbench data model and fully compatible with pbench test results. So that the raw data, test logs, KPI reports, and even ideas and insights can be easily shared with other stakeholders.
 
-Learn more from https://github.com/virt-s1/perf-insight
+Source code: https://github.com/virt-s1/perf-insight
 
-Perf-agent is a complete toolkit that can help set up the pbench test environment on various platforms, conduct pbench tests and collect the logs. It provides input data used by Perf-insight.
+Perf-agent is a toolkit helps set up the pbench test environment on various platforms, conduct pbench tests and collect test logs. It provides input data used by Perf-insight.
 
-Learn more from https://github.com/virt-s1/perf-agent
+Source code: https://github.com/virt-s1/perf-agent
