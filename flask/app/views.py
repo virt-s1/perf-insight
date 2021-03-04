@@ -787,19 +787,19 @@ appbuilder.add_view(HypervStorageRunPubView,
                     category="StorageTest")
 appbuilder.add_separator("StorageTest")
 appbuilder.add_view(StorageResultPubView,
-                    "Test Results -All",
+                    "Test Results - All",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(EC2StorageResultPubView,
-                    "Test Results -EC2",
+                    "Test Results - EC2",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(AzureStorageResultPubView,
-                    "Test Results -Azure",
+                    "Test Results - Azure",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(EsxiStorageResultPubView,
-                    "Test Results -ESXi",
+                    "Test Results - ESXi",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(HypervStorageResultPubView,
