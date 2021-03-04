@@ -149,8 +149,9 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             'Benchmark report is available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '
             .format(APACHE_SERVER, new_dir, self.result))
         jupiter_prepare(baserun, testrun, tmpdir)
-        cmd = 'podman run -v {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro --volume {}:/workspace:rw jupyter_reporting '.format(
-            os.getenv('HOME'), tmpdir)
+        cmd = 'podman run --rm \
+--volume {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro \
+--volume {}:/workspace:rw jupyter_reporting '.format(os.getenv('HOME'), tmpdir)
         ret = subprocess.run(cmd,
                              shell=True,
                              stdout=subprocess.PIPE,
@@ -196,6 +197,7 @@ class NewTestrunFormView(SimpleFormView):
     def form_post(self, form):
         # post process form
         testrun = form.testrun.data.strip(' ')
+
         cmd = "{}/data_process/process_testrun.sh -t {} -s -d -P".format(
             PERF_INSIGHT_REPO, testrun)
         print('cmd {}'.format(cmd))
@@ -206,13 +208,22 @@ class NewTestrunFormView(SimpleFormView):
                              timeout=120,
                              encoding='utf-8')
         ret_code = ret.returncode
+
         if ret_code > 0:
             flash('Error! {}'.format(ret.stdout), 'danger')
-            return redirect(request.url)
+            redirect_url = request.url
         else:
             flash('Uploaded!', 'success')
-            return redirect(
-                url_for('StorageRunPubView.list', _flt_0_testrun=str(testrun)))
+            if testrun.startswith('fio_'):
+                redirect_url = url_for('StorageRunPubView.list',
+                                       _flt_0_testrun=str(testrun))
+            elif testrun.startswith('uperf_'):
+                redirect_url = url_for('NetworkRunPubView.list',
+                                       _flt_0_testrun=str(testrun))
+            else:
+                redirect_url = request.url
+
+        return redirect(redirect_url)
 
 
 class MyListWidget(ListWidget):
@@ -226,6 +237,7 @@ class MyShowWidget(ShowWidget):
 class NetworkRunPubView(ModelView):
     datamodel = SQLAInterface(NetworkRun)
     base_permissions = ["can_list", "can_show", "menu_access"]
+
     @action("compareruns",
             "Compare2runs",
             "Compare 2 test runs?",
@@ -248,7 +260,10 @@ class NetworkRunPubView(ModelView):
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
-    label_columns = {"result_url": "Result", "rawdata_url": "RawData"}
+    label_columns = {
+        "result_url": "Result",
+        "rawdata_url": "RawData",
+    }
 
     list_columns = [
         "id", "testrun", "platform", "flavor", "branch", "compose", "kernel",
@@ -332,21 +347,22 @@ class NetworkResultPubView(ModelView):
     label_columns = {
         "debug_url": "Result",
         "rawdata_url": "RawData",
-        "": "Type",
+        "testtype": "TestType",
         "cpu": "CPU",
         "cpu_model": "CPU_Model",
+        "vcpu": "vCPU",
         "net_driver": "Net-Driver",
         "net_duplex": "Net-Duplex",
         "net_speed": "Net-Speed",
+        "msize": "MSize",
         "throughput": "Throughput(Mb/s)",
         "trans": "Trans(t/s)",
         "latency": "Latency(us)"
     }
 
     list_columns = [
-        "testrun", "compose", "vcpu", "memory", "net_driver", "net_speed",
-        "protocol", "testtype", "msize", "instance", "sample", "throughput",
-        "trans", "latency", "rawdata_url"
+        "testrun", "flavor", "protocol", "testtype", "msize", "instance",
+        "sample", "throughput", "trans", "latency", "rawdata_url"
     ]
     search_columns = [
         "id", "testrun", "run_type", "platform", "flavor", "cpu_model", "cpu",
@@ -363,7 +379,7 @@ class NetworkResultPubView(ModelView):
                 "cpu", "hypervisor", "branch", "compose", "kernel", "vcpu",
                 "memory", "net_driver", "net_duplex", "net_speed", "protocol",
                 "testtype", "msize", "instance", "sample", "throughput",
-                "trans", "latency", "tool_version", "date", "rawdata",
+                "trans", "latency", "tool_version", "date", "rawdata_url",
                 "comments"
             ]
         }),
@@ -455,7 +471,7 @@ class StorageRunPubView(ModelView):
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
-    label_columns = {"debug_url": "Result", "rawdata_url": "RawData"}
+    label_columns = {"rawdata_url": "RawData", "result_url": "Result"}
 
     list_columns = [
         "id", "testrun", "platform", "flavor", "branch", "compose", "kernel",
@@ -560,7 +576,8 @@ class StorageResultPubView(ModelView):
 
     list_columns = [
         "testrun", "flavor", "backend", "driver", "format", "rw", "bs",
-        "iodepth", "numjobs", "sample", "iops", "latency", "clat"
+        "iodepth", "numjobs", "sample", "iops", "latency", "clat",
+        "rawdata_url"
     ]
     search_columns = [
         'id', 'testrun', 'kernel', 'branch', 'backend', 'driver', 'format',
@@ -747,180 +764,180 @@ def pretty_month_year(value):
 
 
 db.create_all()
+
 appbuilder.add_view(StorageRunPubView,
-                    "All Test Runs",
+                    "Test Runs - All",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(EC2StorageRunPubView,
-                    "EC2 Test Runs",
+                    "Test Runs - EC2",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(AzureStorageRunPubView,
-                    "Azure Test Runs",
+                    "Test Runs - Azure",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(EsxiStorageRunPubView,
-                    "ESXi Test Runs",
+                    "Test Runs - ESXi",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(HypervStorageRunPubView,
-                    "Hyperv Test Runs",
+                    "Test Runs - HyperV",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
-appbuilder.add_separator("StoragePerformance")
+                    category="StorageTest")
+appbuilder.add_separator("StorageTest")
 appbuilder.add_view(StorageResultPubView,
-                    "All Test Results",
+                    "Test Results -All",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(EC2StorageResultPubView,
-                    "EC2 Test Results",
+                    "Test Results -EC2",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(AzureStorageResultPubView,
-                    "Azure Test Results",
+                    "Test Results -Azure",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(EsxiStorageResultPubView,
-                    "ESXi Test Results",
+                    "Test Results -ESXi",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
 appbuilder.add_view(HypervStorageResultPubView,
-                    "Hyperv Test Results",
+                    "Test Results - HyperV",
                     icon="fa-angle-double-right",
-                    category="StoragePerformance")
+                    category="StorageTest")
+
 appbuilder.add_view(NetworkRunPubView,
-                    "All Network Test Runs",
+                    "Test Runs - All",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(EC2NetworkRunPubView,
-                    "EC2 Network Test Runs",
+                    "Test Runs - EC2",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(AzureNetworkRunPubView,
-                    "Azure Network Test Runs",
+                    "Test Runs - Azure",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(EsxiNetworkRunPubView,
-                    "ESXi Network Test Runs",
+                    "Test Runs - ESXi",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(HypervNetworkRunPubView,
-                    "Hyperv Network Test Runs",
+                    "Test Runs - HyperV",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
-appbuilder.add_separator("NetworkPerformance")
+                    category="NetworkTest")
+appbuilder.add_separator("NetworkTest")
 appbuilder.add_view(NetworkResultPubView,
-                    "All Network Test Results",
+                    "Test Results - All",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(EC2NetworkResultPubView,
-                    "EC2 Network Test Results",
+                    "Test Results - EC2",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(AzureNetworkResultPubView,
-                    "Azure Network Test Results",
+                    "Test Results - Azure",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(EsxiNetworkResultPubView,
-                    "ESXi Network Test Results",
+                    "Test Results - ESXi",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
 appbuilder.add_view(HypervNetworkResultPubView,
-                    "Hyperv Network Test Results",
+                    "Test Results - HyperV",
                     icon="fa-angle-double-right",
-                    category="NetworkPerformance")
+                    category="NetworkTest")
+
 appbuilder.add_view(ComparedResultPubView,
                     "ComparedResult",
                     icon="fa-angle-double-right",
                     category="ComparedResult")
+
 appbuilder.add_view(StorageRunEditView,
-                    "Edit All Storage Test Runs",
+                    "Edit Storage Test Runs - All",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EC2StorageRunEditView,
-                    "Edit EC2 Storage Test Runs",
+                    "Edit Storage Test Runs - EC2",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(AzureStorageRunEditView,
-                    "Edit Azure Storage Test Runs",
+                    "Edit Storage Test Runs - Azure",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageRunEditView,
-                    "Edit ESXi Storage Test Runs",
+                    "Edit Storage Test Runs - ESXi",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageRunEditView,
-                    "Edit Hyperv Storage Test Runs",
+                    "Edit Storage Test Runs - HyperV",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(StorageResultEditView,
-                    "Edit All Storage Test Results",
+                    "Edit Storage Test Results - All",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EC2StorageResultEditView,
-                    "Edit EC2 Storage Test Results",
+                    "Edit Storage Test Results - EC2",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(AzureStorageResultEditView,
-                    "Edit Azure Storage Test Results",
+                    "Edit Storage Test Results - Azure",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(EsxiStorageResultEditView,
-                    "Edit ESXi Storage Test Results",
+                    "Edit Storage Test Results - ESXi",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(HypervStorageResultEditView,
-                    "Edit Hyperv Storage Test Results",
+                    "Edit Storage Test Results - HyperV",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(NetworkRunEditView,
+                    "Edit Network Test Runs - All",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EC2NetworkRunEditView,
+                    "Edit Network Test Runs - EC2",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(AzureNetworkRunEditView,
+                    "Edit Network Test Runs - Azure",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EsxiNetworkRunEditView,
+                    "Edit Network Test Runs - ESXi",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(HypervNetworkRunEditView,
+                    "Edit Network Test Runs - HyperV",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(NetworkResultEditView,
+                    "Edit Network Test Results - All",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EC2NetworkResultEditView,
+                    "Edit Network Test Results - EC2",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(AzureNetworkResultEditView,
+                    "Edit Network Test Results - Azure",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(EsxiNetworkResultEditView,
+                    "Edit Network Test Results - ESXi",
+                    icon="fa-pencil-square-o",
+                    category="Management")
+appbuilder.add_view(HypervNetworkResultEditView,
+                    "Edit Network Test Results - HyperV",
                     icon="fa-pencil-square-o",
                     category="Management")
 appbuilder.add_view(ComparedResultEditView,
                     "Edit Compared Result List",
                     icon="fa-pencil-square-o",
                     category="Management")
-appbuilder.add_view(NetworkRunEditView,
-                    "Edit All Network Test Runs",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(EC2NetworkRunEditView,
-                    "Edit EC2 Network Test Runs",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(AzureNetworkRunEditView,
-                    "Edit Azure Network Test Runs",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(EsxiNetworkRunEditView,
-                    "Edit ESXi Network Test Runs",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(HypervNetworkRunEditView,
-                    "Edit Hyperv Network Test Runs",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(NetworkResultEditView,
-                    "Edit All Network Test Results",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(EC2NetworkResultEditView,
-                    "Edit EC2 Network Test Results",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(AzureNetworkResultEditView,
-                    "Edit Azure Network Test Results",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(EsxiNetworkResultEditView,
-                    "Edit ESXi Network Test Results",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(HypervNetworkResultEditView,
-                    "Edit Hyperv Network Test Results",
-                    icon="fa-pencil-square-o",
-                    category="Management")
-appbuilder.add_view(BugsPubView,
-                    "List Know Failures",
-                    icon="fa-angle-double-right",
-                    category="TestBugs")
 appbuilder.add_view(BugsView,
                     "Edit Know Failures",
                     icon="fa-pencil-square-o",
@@ -933,11 +950,16 @@ appbuilder.add_view(FailureStatusView,
                     "Edit Failures Status List",
                     icon="fa-pencil-square-o",
                     category="Management")
+appbuilder.add_separator("Management")
 appbuilder.add_view(NewTestrunFormView,
                     "New Testrun",
                     icon="fa-upload",
                     category="Management")
-appbuilder.add_separator("Management")
+
+appbuilder.add_view(BugsPubView,
+                    "List Know Failures",
+                    icon="fa-angle-double-right",
+                    category="TestBugs")
 
 #appbuilder.add_view(YamlFormView, "My form View", icon="fa-group", label=_('My form View'),
 #                     category="My Forms", category_icon="fa-cogs")
