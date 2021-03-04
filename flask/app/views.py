@@ -196,6 +196,7 @@ class NewTestrunFormView(SimpleFormView):
     def form_post(self, form):
         # post process form
         testrun = form.testrun.data.strip(' ')
+
         cmd = "{}/data_process/process_testrun.sh -t {} -s -d -P".format(
             PERF_INSIGHT_REPO, testrun)
         print('cmd {}'.format(cmd))
@@ -206,13 +207,22 @@ class NewTestrunFormView(SimpleFormView):
                              timeout=120,
                              encoding='utf-8')
         ret_code = ret.returncode
+
         if ret_code > 0:
             flash('Error! {}'.format(ret.stdout), 'danger')
-            return redirect(request.url)
+            redirect_url = request.url
         else:
             flash('Uploaded!', 'success')
-            return redirect(
-                url_for('StorageRunPubView.list', _flt_0_testrun=str(testrun)))
+            if testrun.startswith('fio_'):
+                redirect_url = url_for('StorageRunPubView.list',
+                                       _flt_0_testrun=str(testrun))
+            elif testrun.startswith('uperf_'):
+                redirect_url = url_for('NetworkRunPubView.list',
+                                       _flt_0_testrun=str(testrun))
+            else:
+                redirect_url = request.url
+
+        return redirect(redirect_url)
 
 
 class MyListWidget(ListWidget):
@@ -460,10 +470,7 @@ class StorageRunPubView(ModelView):
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
-    label_columns = {
-        "rawdata_url": "RawData",
-        "result_url": "Result"
-    }
+    label_columns = {"rawdata_url": "RawData", "result_url": "Result"}
 
     list_columns = [
         "id", "testrun", "platform", "flavor", "branch", "compose", "kernel",
