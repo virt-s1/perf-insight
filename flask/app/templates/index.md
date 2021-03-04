@@ -1,33 +1,34 @@
 # About Us
 
-We are Virtualization QE in Beijing, responsible for ensuring the performance of RHEL on the hypervisors and clouds.
+Beijing VirtQE S1 team and forcusing on RHEL Performance Testing on Virtualization Platforms.
 
 ## Our mission
 
-Make RHEL Performance Best
+Make RHEL performance competitive.
 
 ## Contact Information
 
-### Project Team
+- IRC channel: #virt-pt @irc.devel.redhat.com
+- Mailing list: virt-perftest@redhat.com
+- Confluence Page: https://docs.engineering.redhat.com/display/VIRTPT/Virt+PT+Home
+- Project Lead: Charles Shih <cheshi@redhat.com>
+- Manager: Tina Mao <ymao@redhat.com> / Lei Wang <leiwang@redhat.com>
 
-**IRC:** #virt-pt @irc.devel.redhat.com  
-**Mail list:** virt-perftest@redhat.com
+## Product Owners
 
-### Project Lead
+| Product | Function | Name                       | Email                                  |
+| :------ | :------- | :------------------------- | :------------------------------------- |
+| ESXi    | storage  | Lily Du                    | ldu@redhat.com                         |
+| ESXi    | network  | Bo Yang                    | boyang@redhat.com                      |
+| Hyper-V | storage  | Xuemin Li                  | xuli@redhat.com                        |
+| Hyper-V | network  | Bo Yang / Huijuan Zhao     | boyang@redhat.com / huzhao@redhat.com  |
+| AWS     | storage  | Charles Shih               | cheshi@redhat.com                      |
+| AWS     | network  | Frank Liang / Charles Shih | xiliang@redhat.com / cheshi@redhat.com |
+| Azure   | storage  | Yuxin Sun                  | yuxisun@redhat.com                     |
+| Azure   | network  | Huijuan Zhao               | huzhao@redhat.com                      |
+| Aliyun  | storage  | Charles Shih               | cheshi@redhat.com                      |
+| Aliyun  | network  | Charles Shih               | cheshi@redhat.com                      |
 
-Charles Shih <cheshi@redhat.com>
-
-### Product Owners
-
-| Product               | Name         | Email              |
-| :-------------------- | :----------- | :----------------- |
-| **ESXi (storage)**    | Lily Du      | ldu@redhat.com     |
-| **ESXi (network)**    | Bo Yang      | boyang@redhat.com  |
-| **Hyper-V (storage)** | Xuemin Li    | xuli@redhat.com    |
-| **Hyper-V (network)** | Bo Yang      | boyang@redhat.com  |
-| **AWS**               | Frank Liang  | xiliang@redhat.com |
-| **Azure**             | Yuxin Sun    | yuxisun@redhat.com |
-| **Aliyun**            | Charles Shih | cheshi@redhat.com  |
 
 # About the site
 
