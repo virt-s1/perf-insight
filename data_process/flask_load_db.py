@@ -17,11 +17,9 @@ from sqlalchemy import Column, Integer, String, Float, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-
 LOG = logging.getLogger(__name__)
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 if sys.version.startswith('2'):
     LOG.info("Please do not run it using python2")
@@ -29,24 +27,45 @@ if sys.version.startswith('2'):
 
 ARG_PARSER = argparse.ArgumentParser(description="Write results to local db")
 ARG_GROUP = ARG_PARSER.add_mutually_exclusive_group(required=True)
-ARG_PARSER.add_argument('--csv_file', dest='csv_file', action='store',
-                        help="specify log directory", default=None, required=False)
-ARG_PARSER.add_argument('--db_file', dest='db_file', action='store',
-                        help="specify database location", default=None, required=True)
-ARG_PARSER.add_argument('--delete', dest='testrun_delete', action='store',
-                        help="delete testrun if you want", default=None, required=False)
-ARG_PARSER.add_argument('-d', dest='is_debug', action='store_true',
-                            help='enable sqlalchemy output for debug purpose', required=False)
-ARG_GROUP.add_argument('--network', dest='is_network', action='store_true',
-                            help='write net test result', required=False)
-ARG_GROUP.add_argument('--storage', dest='is_storage', action='store_true',
-                            help='write storage test result', required=False)
+ARG_PARSER.add_argument('--csv_file',
+                        dest='csv_file',
+                        action='store',
+                        help="specify log directory",
+                        default=None,
+                        required=False)
+ARG_PARSER.add_argument('--db_file',
+                        dest='db_file',
+                        action='store',
+                        help="specify database location",
+                        default=None,
+                        required=True)
+ARG_PARSER.add_argument('--delete',
+                        dest='testrun_delete',
+                        action='store',
+                        help="delete testrun if you want",
+                        default=None,
+                        required=False)
+ARG_PARSER.add_argument('-d',
+                        dest='is_debug',
+                        action='store_true',
+                        help='enable sqlalchemy output for debug purpose',
+                        required=False)
+ARG_GROUP.add_argument('--network',
+                       dest='is_network',
+                       action='store_true',
+                       help='write net test result',
+                       required=False)
+ARG_GROUP.add_argument('--storage',
+                       dest='is_storage',
+                       action='store_true',
+                       help='write storage test result',
+                       required=False)
 ARGS = ARG_PARSER.parse_args()
-
 
 DB_ENGINE = create_engine('sqlite:///%s' % ARGS.db_file, echo=ARGS.is_debug)
 DB_SESSION = sessionmaker(bind=DB_ENGINE)
 DB_BASE = declarative_base()
+
 
 # pylint: disable=R0902,R0903
 class NetworkRun(DB_BASE):
@@ -66,6 +85,7 @@ class NetworkRun(DB_BASE):
     # metadata location in the file system
     rawdata = Column(String, nullable=True)
     sqlite_autoincrement = True
+
 
 class NetworkResult(DB_BASE):
     '''
@@ -101,6 +121,7 @@ class NetworkResult(DB_BASE):
     rawdata = Column(String, nullable=True)
     comments = Column(String, nullable=True)
     sqlite_autoincrement = True
+
 
 class StorageTestRun(DB_BASE):
     '''
@@ -154,6 +175,7 @@ class StorageTestResult(DB_BASE):
     rawdata = Column(String, nullable=True)
     sqlite_autoincrement = True
 
+
 def network_testrun_write():
     tmp_raw = {}
     case_count = 0
@@ -162,7 +184,7 @@ def network_testrun_write():
         for r in readers:
             tmp_raw = r
             case_count += 1
-    
+
     if case_count == 0:
         LOG.info("No row found, please check!")
         sys.exit(1)
@@ -178,7 +200,8 @@ def network_testrun_write():
     testrun.rawdata = tmp_raw['Testrun']
 
     session = DB_SESSION()
-    results = session.query(NetworkRun).filter_by(testrun=testrun.testrun).all()
+    results = session.query(NetworkRun).filter_by(
+        testrun=testrun.testrun).all()
     if len(results) >= 1:
         LOG.info("{} already exists!".format(testrun.testrun))
         sys.exit(1)
@@ -191,6 +214,7 @@ def network_testrun_write():
     else:
         session.commit()
 
+
 def network_testresult_write():
     tmp_raw = {}
     case_count = 0
@@ -199,7 +223,7 @@ def network_testresult_write():
         for r in readers:
             tmp_raw = r
             case_count += 1
-            print('.', end='',flush=True)
+            print('.', end='', flush=True)
             testresult = NetworkResult()
             testresult.testrun = tmp_raw['Testrun']
             testresult.run_type = tmp_raw['Type']
@@ -245,6 +269,7 @@ def network_testresult_write():
     else:
         LOG.info("Line wrote: {}".format(case_count))
 
+
 def storage_testrun_write():
     tmp_raw = {}
     case_count = 0
@@ -253,7 +278,7 @@ def storage_testrun_write():
         for r in readers:
             tmp_raw = r
             case_count += 1
-    
+
     if case_count == 0:
         LOG.info("No row found, please check!")
         sys.exit(1)
@@ -269,7 +294,8 @@ def storage_testrun_write():
     testrun.rawdata = tmp_raw['testrun']
 
     session = DB_SESSION()
-    results = session.query(StorageTestRun).filter_by(testrun=testrun.testrun).all()
+    results = session.query(StorageTestRun).filter_by(
+        testrun=testrun.testrun).all()
     if len(results) >= 1:
         LOG.info("{} already exists!".format(testrun.testrun))
         sys.exit(1)
@@ -281,6 +307,7 @@ def storage_testrun_write():
         LOG.info("{}".format(err))
     else:
         session.commit()
+
 
 def storage_testresult_write():
     tmp_raw = {}
@@ -332,8 +359,9 @@ def storage_testresult_write():
     else:
         LOG.info("Line wrote: {}".format(case_count))
 
+
 def testrun_delete(runmode=None):
-    if  ARGS.testrun_delete is None:
+    if ARGS.testrun_delete is None:
         LOG.info("Please specify --delete option to delete test run")
         return False
     testrun = ARGS.testrun_delete
@@ -352,8 +380,9 @@ def testrun_delete(runmode=None):
         else:
             session.commit()
 
+
 def testresult_delete(resultmode=None):
-    if  ARGS.testrun_delete is None:
+    if ARGS.testrun_delete is None:
         LOG.info("Please specify --delete option to delete test run")
         return False
     case_count = 0
@@ -365,7 +394,7 @@ def testresult_delete(resultmode=None):
         return True
     for testresult in results:
         try:
-            print('.', end='',flush=True)
+            print('.', end='', flush=True)
             #LOG.info("Delete test result: id-{} {}".format(testresult.id, testresult.testrun))
             session.delete(testresult)
             case_count += 1
@@ -376,6 +405,7 @@ def testresult_delete(resultmode=None):
             session.commit()
     print('Done')
     LOG.info("Line delete: {}".format(case_count))
+
 
 if __name__ == "__main__":
     if ARGS.csv_file is not None:
