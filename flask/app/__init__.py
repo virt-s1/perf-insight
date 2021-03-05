@@ -28,13 +28,14 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 @app.route('/progress')
 def progress():
-	def generate():
-		x = 100
-		while x >= 0:
-			yield "data:" + str(x) + "\n\n"
-			x = x - 1
-			time.sleep(1)
+    def generate():
+        x = 100
+        while x >= 0:
+            yield "data:" + str(x) + "\n\n"
+            x = x - 1
+            time.sleep(1)
 
-	return Response(generate(), mimetype= 'text/event-stream')
+    return Response(generate(), mimetype='text/event-stream')
+
 
 from . import models, views  # noqa

@@ -6,11 +6,26 @@ CSRF_ENABLED = True
 SECRET_KEY = "\2\1thisismyscretkey\1\2\e\y\y\h"
 
 OPENID_PROVIDERS = [
-    {"name": "Google", "url": "https://www.google.com/accounts/o8/id"},
-    {"name": "Yahoo", "url": "https://me.yahoo.com"},
-    {"name": "AOL", "url": "http://openid.aol.com/<username>"},
-    {"name": "Flickr", "url": "http://www.flickr.com/<username>"},
-    {"name": "MyOpenID", "url": "https://www.myopenid.com"},
+    {
+        "name": "Google",
+        "url": "https://www.google.com/accounts/o8/id"
+    },
+    {
+        "name": "Yahoo",
+        "url": "https://me.yahoo.com"
+    },
+    {
+        "name": "AOL",
+        "url": "http://openid.aol.com/<username>"
+    },
+    {
+        "name": "Flickr",
+        "url": "http://www.flickr.com/<username>"
+    },
+    {
+        "name": "MyOpenID",
+        "url": "https://www.myopenid.com"
+    },
 ]
 
 SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "app.db")
@@ -19,14 +34,31 @@ SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "app.db")
 BABEL_DEFAULT_LOCALE = "en"
 
 LANGUAGES = {
-    "en": {"flag": "gb", "name": "English"},
-    "pt": {"flag": "pt", "name": "Portuguese"},
-    "es": {"flag": "es", "name": "Spanish"},
-    "de": {"flag": "de", "name": "German"},
-    "zh": {"flag": "cn", "name": "Chinese"},
-    "ru": {"flag": "ru", "name": "Russian"},
+    "en": {
+        "flag": "gb",
+        "name": "English"
+    },
+    "pt": {
+        "flag": "pt",
+        "name": "Portuguese"
+    },
+    "es": {
+        "flag": "es",
+        "name": "Spanish"
+    },
+    "de": {
+        "flag": "de",
+        "name": "German"
+    },
+    "zh": {
+        "flag": "cn",
+        "name": "Chinese"
+    },
+    "ru": {
+        "flag": "ru",
+        "name": "Russian"
+    },
 }
-
 
 # ------------------------------
 # GLOBALS FOR GENERAL APP's
@@ -49,7 +81,7 @@ APP_NAME = "Perf Insight"
 # APP_THEME = "readable.css"
 # APP_THEME = "simplex.css"
 # APP_THEME = "slate.css"          # COOL
-APP_THEME = "spacelab.css"      # NICE
+APP_THEME = "spacelab.css"  # NICE
 # APP_THEME = "united.css"
 PUBLIC_ROLE_LIKE_GAMMA = True
 # APP_ICON="/static/img/logo.jpg"
