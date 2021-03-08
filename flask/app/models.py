@@ -17,9 +17,8 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-
-with open(os.getenv('HOME')+'/.perf-insight.yaml','r') as fh:
-     keys_data = load(fh, Loader=Loader)
+with open(os.getenv('HOME') + '/.perf-insight.yaml', 'r') as fh:
+    keys_data = load(fh, Loader=Loader)
 
 APACHE_SERVER = keys_data['flask']['apache_server']
 
@@ -39,10 +38,12 @@ class NetworkRun(Model):
     result = Column(String(50))
     # metadata location in the file system
     rawdata = Column(String, nullable=True)
+
     def rawdata_url(self):
         if self.rawdata:
-            return Markup(
-                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.rawdata) + '> rawdata </a>')
+            return Markup('<a href=http://' + APACHE_SERVER +
+                          '/perf-insight/testruns/' + str(self.rawdata) +
+                          '> rawdata </a>')
         else:
             return self.rawdata
 
@@ -52,9 +53,12 @@ class NetworkRun(Model):
     def result_url(self):
         print("testrun is {}".format(self.testrun))
         if self.testrun is not None and self.testrun != '' and "None" not in self.testrun:
-            self.result = url_for('NetworkResultPubView.list',_flt_0_testrun=str(self.testrun), _flt_0_platform=str(self.platform))
+            self.result = url_for('NetworkResultPubView.list',
+                                  _flt_0_testrun=str(self.testrun),
+                                  _flt_0_platform=str(self.platform))
             print("testrun is {}".format(self.testrun))
         return Markup('<a href="' + self.result + '">result</a>')
+
 
 class NetworkResult(Model):
     '''
@@ -88,12 +92,15 @@ class NetworkResult(Model):
     date = Column(Date)
     rawdata = Column(String, nullable=True)
     comments = Column(String, nullable=True)
+
     def rawdata_url(self):
         if self.rawdata:
-            return Markup(
-                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.testrun) + '/' + str(self.rawdata) + '> rawdata </a>')
+            return Markup('<a href=http://' + APACHE_SERVER +
+                          '/perf-insight/testruns/' + str(self.testrun) + '/' +
+                          str(self.rawdata) + '> rawdata </a>')
         else:
             return self.raw
+
 
 class StorageRun(Model):
     '''
@@ -110,10 +117,12 @@ class StorageRun(Model):
     result = Column(String(50))
     # metadata location in the file system
     rawdata = Column(String, nullable=True)
+
     def rawdata_url(self):
         if self.rawdata:
-            return Markup(
-                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.rawdata) + '> rawdata </a>')
+            return Markup('<a href=http://' + APACHE_SERVER +
+                          '/perf-insight/testruns/' + str(self.rawdata) +
+                          '> rawdata </a>')
         else:
             return self.rawdata
 
@@ -123,9 +132,12 @@ class StorageRun(Model):
     def result_url(self):
         print("testrun is {}".format(self.testrun))
         if self.testrun is not None and self.testrun != '' and "None" not in self.testrun:
-            self.result = url_for('StorageResultPubView.list',_flt_0_testrun=str(self.testrun), _flt_0_platform=str(self.platform))
+            self.result = url_for('StorageResultPubView.list',
+                                  _flt_0_testrun=str(self.testrun),
+                                  _flt_0_platform=str(self.platform))
             print("testrun is {}".format(self.testrun))
         return Markup('<a href="' + self.result + '">result</a>')
+
 
 class StorageResult(Model):
     '''
@@ -156,12 +168,15 @@ class StorageResult(Model):
     comments = Column(String, nullable=True)
     sample = Column(String, nullable=True)
     rawdata = Column(String, nullable=True)
+
     def rawdata_url(self):
         if self.rawdata:
-            return Markup(
-                '<a href=http://' + APACHE_SERVER + '/perf-insight/testruns/' + str(self.testrun) + '/' + str(self.rawdata) + '> rawdata </a>')
+            return Markup('<a href=http://' + APACHE_SERVER +
+                          '/perf-insight/testruns/' + str(self.testrun) + '/' +
+                          str(self.rawdata) + '> rawdata </a>')
         else:
             return self.raw
+
 
 class ComparedResult(Model):
     '''
@@ -179,10 +194,12 @@ class ComparedResult(Model):
 
     def report_url(self):
         if self.reportlink:
-            return Markup(
-                '<a href=http://' + APACHE_SERVER + '/perf-insight/reports/{}/report.html '.format(self.reportlink) + '> Report </a>')
+            return Markup('<a href=http://' + APACHE_SERVER +
+                          '/perf-insight/reports/{}/report.html '.format(
+                              self.reportlink) + '> Report </a>')
         else:
             return self.reportlink
+
 
 class FailureType(Model):
     '''
@@ -245,6 +262,7 @@ class Bugs(Model):
                 str(self.bug_id) + '">' + str(self.bug_id) + '</a>')
         else:
             return self.bug_id
+
 
 class Client(User):
     __tablename__ = "ab_user"

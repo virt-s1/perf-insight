@@ -149,8 +149,12 @@ class benchmark_comparison_generator():
         keys_name = [x['name'] for x in self.keys_cfg]
         keys_from = [x['from'] for x in self.keys_cfg]
 
-        # tailer the report dataframe from the test dataframe
+        # init report dataframe based on the test
         self.df_report = self.df_test[keys_from].drop_duplicates()
+
+        # init report dataframe based on the combination of base and test
+        self.df_report = pd.concat([self.df_base, self.df_test
+                                    ])[keys_from].drop_duplicates()
 
         # rename the columns
         for key_name, key_from in zip(keys_name, keys_from):
@@ -198,12 +202,15 @@ class benchmark_comparison_generator():
 
             # calculate the "mean" and "%stddev"
             base_mean = df_base[kpi_from].mean()
-            base_pctsd = df_base[kpi_from].std(ddof=1) / base_mean * 100
+            base_pctsd = df_base[kpi_from].std(
+                ddof=1) / base_mean * 100 if base_mean != 0 else np.nan
             test_mean = df_test[kpi_from].mean()
-            test_pctsd = df_test[kpi_from].std(ddof=1) / test_mean * 100
+            test_pctsd = df_test[kpi_from].std(
+                ddof=1) / test_mean * 100 if test_mean != 0 else np.nan
 
             # calculate the "%diff"
-            pctdiff = (test_mean - base_mean) / base_mean * 100
+            pctdiff = (test_mean - base_mean
+                       ) / base_mean * 100 if base_mean != 0 else np.nan
 
             return (base_mean, base_pctsd, test_mean, test_pctsd, pctdiff)
 
