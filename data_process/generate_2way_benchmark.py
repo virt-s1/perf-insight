@@ -149,8 +149,12 @@ class benchmark_comparison_generator():
         keys_name = [x['name'] for x in self.keys_cfg]
         keys_from = [x['from'] for x in self.keys_cfg]
 
-        # tailer the report dataframe from the test dataframe
+        # init report dataframe based on the test
         self.df_report = self.df_test[keys_from].drop_duplicates()
+
+        # init report dataframe based on the combination of base and test
+        self.df_report = pd.concat([self.df_base, self.df_test
+                                    ])[keys_from].drop_duplicates()
 
         # rename the columns
         for key_name, key_from in zip(keys_name, keys_from):
