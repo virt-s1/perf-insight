@@ -198,12 +198,15 @@ class benchmark_comparison_generator():
 
             # calculate the "mean" and "%stddev"
             base_mean = df_base[kpi_from].mean()
-            base_pctsd = df_base[kpi_from].std(ddof=1) / base_mean * 100
+            base_pctsd = df_base[kpi_from].std(
+                ddof=1) / base_mean * 100 if base_mean != 0 else np.nan
             test_mean = df_test[kpi_from].mean()
-            test_pctsd = df_test[kpi_from].std(ddof=1) / test_mean * 100
+            test_pctsd = df_test[kpi_from].std(
+                ddof=1) / test_mean * 100 if test_mean != 0 else np.nan
 
             # calculate the "%diff"
-            pctdiff = (test_mean - base_mean) / base_mean * 100
+            pctdiff = (test_mean - base_mean
+                       ) / base_mean * 100 if base_mean != 0 else np.nan
 
             return (base_mean, base_pctsd, test_mean, test_pctsd, pctdiff)
 
