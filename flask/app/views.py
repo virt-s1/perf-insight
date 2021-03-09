@@ -766,86 +766,86 @@ def pretty_month_year(value):
 db.create_all()
 
 appbuilder.add_view(StorageRunPubView,
-                    "Test Runs - All",
+                    "Storage Test Runs - All",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(EC2StorageRunPubView,
-                    "Test Runs - EC2",
+                    "Storage Test Runs - EC2",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(AzureStorageRunPubView,
-                    "Test Runs - Azure",
+                    "Storage Test Runs - Azure",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(EsxiStorageRunPubView,
-                    "Test Runs - ESXi",
+                    "Storage Test Runs - ESXi",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(HypervStorageRunPubView,
-                    "Test Runs - HyperV",
+                    "Storage Test Runs - HyperV",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_separator("StorageTest")
 appbuilder.add_view(StorageResultPubView,
-                    "Test Results - All",
+                    "Storage Test Results - All",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(EC2StorageResultPubView,
-                    "Test Results - EC2",
+                    "Storage Test Results - EC2",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(AzureStorageResultPubView,
-                    "Test Results - Azure",
+                    "Storage Test Results - Azure",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(EsxiStorageResultPubView,
-                    "Test Results - ESXi",
+                    "Storage Test Results - ESXi",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 appbuilder.add_view(HypervStorageResultPubView,
-                    "Test Results - HyperV",
+                    "Storage Test Results - HyperV",
                     icon="fa-angle-double-right",
                     category="StorageTest")
 
 appbuilder.add_view(NetworkRunPubView,
-                    "Test Runs - All",
+                    "Network Test Runs - All",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(EC2NetworkRunPubView,
-                    "Test Runs - EC2",
+                    "Network Test Runs - EC2",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(AzureNetworkRunPubView,
-                    "Test Runs - Azure",
+                    "Network Test Runs - Azure",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(EsxiNetworkRunPubView,
-                    "Test Runs - ESXi",
+                    "Network Test Runs - ESXi",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(HypervNetworkRunPubView,
-                    "Test Runs - HyperV",
+                    "Network Test Runs - HyperV",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_separator("NetworkTest")
 appbuilder.add_view(NetworkResultPubView,
-                    "Test Results - All",
+                    "Network Test Results - All",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(EC2NetworkResultPubView,
-                    "Test Results - EC2",
+                    "Network Test Results - EC2",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(AzureNetworkResultPubView,
-                    "Test Results - Azure",
+                    "Network Test Results - Azure",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(EsxiNetworkResultPubView,
-                    "Test Results - ESXi",
+                    "Network Test Results - ESXi",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 appbuilder.add_view(HypervNetworkResultPubView,
-                    "Test Results - HyperV",
+                    "Network Test Results - HyperV",
                     icon="fa-angle-double-right",
                     category="NetworkTest")
 
