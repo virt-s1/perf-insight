@@ -1,6 +1,7 @@
 ## About Us
 
-Beijing VirtQE S1 team and forcusing on RHEL Performance Testing on Virtualization Platforms.
+RHEL Performance Testing on Virtualization Platforms, Performance Team, Beijing VirtQE S1.
+Homepage: https://docs.engineering.redhat.com/display/VIRTPT/Virt+PT+Home
 
 ### Our mission
 
@@ -10,9 +11,8 @@ Make RHEL performance competitive.
 
 - IRC channel: #virt-pt @irc.devel.redhat.com
 - Mailing list: virt-perftest@redhat.com
-- Confluence Page: https://docs.engineering.redhat.com/display/VIRTPT/Virt+PT+Home
 - Project Lead: Charles Shih <cheshi@redhat.com>
-- Manager: Tina Mao <ymao@redhat.com> / Lei Wang <leiwang@redhat.com>
+- Direct Manager: Tina Mao <ymao@redhat.com>
 
 ### Product Owners
 

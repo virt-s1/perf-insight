@@ -76,7 +76,7 @@ db=$(cat $config | shyaml get-value -q flask.db_file)
 : ${repo:=/opt/perf-insight}
 : ${db:=/opt/perf-insight/flask/app.db}
 
-utils=$repo/data_process
+PATH=$repo/utils:$repo/data_process:$PATH
 templates=$repo/data_process/templates
 
 # Verify TestRunID
@@ -89,7 +89,6 @@ fi
 testrun_type=${testrun%%_*}
 
 # Set environment
-PATH=$utils:$PATH
 cd $basepath/testruns/$testrun
 
 # Generate plots as requested
