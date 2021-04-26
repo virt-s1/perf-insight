@@ -67,6 +67,7 @@ if [ -z $testrun ]; then
 fi
 
 # Main
+PATH=/usr/local/bin/:$PATH
 config=$HOME/.perf-insight.yaml
 basepath=$(cat $config | shyaml get-value -q flask.data_path)
 repo=$(cat $config | shyaml get-value -q flask.perf_insight_repo)
@@ -121,6 +122,7 @@ if [ "$update_db" = "1" ]; then
     generate_testrun_results.py \
         --config $templates/generate_testrun_results-${testrun_type}-dbloader.yaml \
         --output $csv_file &&
+        cp $db $db.writebackup_$(date +%Y%m%d_%H%M%S) &&
         flask_load_db.py --db_file $db --delete $testrun $flag &&
         flask_load_db.py --db_file $db --csv_file $csv_file $flag &&
         rm -rf $csv_file

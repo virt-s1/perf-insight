@@ -199,6 +199,10 @@ def network_testrun_write():
     testrun.result = ''
     testrun.rawdata = tmp_raw['Testrun']
 
+    if not testrun.testrun.startswith('uperf_'):
+        LOG.error('TestRun ID "{}" is invalid.'.format(testrun.testrun))
+        return 1
+
     session = DB_SESSION()
     results = session.query(NetworkRun).filter_by(
         testrun=testrun.testrun).all()
@@ -253,6 +257,11 @@ def network_testresult_write():
             testresult.date = tmp_raw['Date']
             testresult.comments = ''
 
+            if not testresult.testrun.startswith('uperf_'):
+                LOG.error('TestRun ID "{}" is invalid.'.format(
+                    testresult.testrun))
+                return 1
+
             session = DB_SESSION()
             try:
                 session.add(testresult)
@@ -292,6 +301,10 @@ def storage_testrun_write():
     testrun.casenum = case_count
     testrun.result = ''
     testrun.rawdata = tmp_raw['testrun']
+
+    if not testrun.testrun.startswith('fio_'):
+        LOG.error('TestRun ID "{}" is invalid.'.format(testrun.testrun))
+        return 1
 
     session = DB_SESSION()
     results = session.query(StorageTestRun).filter_by(
@@ -344,6 +357,12 @@ def storage_testresult_write():
             testresult.comments = tmp_raw['comments']
             testresult.sample = tmp_raw['Sample']
             testresult.rawdata = tmp_raw['Path']
+
+            if not testresult.testrun.startswith('fio_'):
+                LOG.error('TestRun ID "{}" is invalid.'.format(
+                    testresult.testrun))
+                return 1
+
             session = DB_SESSION()
             try:
                 session.add(testresult)
