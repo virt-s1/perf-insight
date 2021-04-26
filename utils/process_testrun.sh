@@ -67,6 +67,7 @@ if [ -z $testrun ]; then
 fi
 
 # Main
+PATH=/usr/local/bin/:$PATH
 config=$HOME/.perf-insight.yaml
 basepath=$(cat $config | shyaml get-value -q flask.data_path)
 repo=$(cat $config | shyaml get-value -q flask.perf_insight_repo)
