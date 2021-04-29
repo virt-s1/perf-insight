@@ -4,70 +4,85 @@ testrun_results_generator:
     round: 6
     fillna: "NaN"
   columns:
-    - name: testrun
+    - name: Testrun
       source: metadata
-      key: testrun.id
-    - name: type
+      key: testrun-id
+    - name: Type
       source: metadata
-      key: testrun.type
-    - name: platform
+      key: testrun-type
+    - name: Platform
       source: metadata
-      key: testrun.platform
-    - name: branch
+      key: testrun-platform
+    - name: Branch
       source: metadata
-      key: os.branch
-    - name: compose
+      key: os-branch
+    - name: Compose
       source: metadata
-      key: os.compose
-    - name: kernel
+      key: os-compose
+    - name: Kernel
       source: metadata
-      key: os.kernel
-    - name: flavor
+      key: os-kernel
+    - name: Flavor
       source: metadata
-      key: guest.flavor
-    - name: cpu_model
+      key: guest-flavor
+    - name: Capacity
       source: metadata
-      key: guest.cpu_model
-    - name: cpu
+      key: hardware-disk-capacity
+    - name: Backend
       source: metadata
-      key: guest.cpu
-    - name: memory
+      key: hardware-disk-backend
+    - name: Driver
       source: metadata
-      key: guest.memory
-    - name: backend
+      key: hardware-disk-driver
+    - name: Format
       source: metadata
-      key: hardware.disk.backend
-    - name: driver
+      key: hardware-disk-format
+    - name: CPU_Model
       source: metadata
-      key: hardware.disk.driver
-    - name: format
+      key: hypervisor-cpu_model
+    - name: CPU
       source: metadata
-      key: hardware.disk.format
-    - name: rw
+      key: hypervisor-cpu
+    - name: vCPU
+      source: metadata
+      key: guest-cpu
+    - name: Memory
+      source: metadata
+      key: guest-memory
+    - name: Tool_Version
+      source: metadata
+      key: tool-fio_version
+    - name: Date
+      source: metadata
+      key: testrun-date
+    - name: Comments
+      source: metadata
+      key: testrun-comments
+    - name: RW
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].rw"
-    - name: bs
+    - name: BS
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].bs"
-    - name: iodepth
+    - name: IOdepth
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
-    - name: numjobs
+    - name: Numjobs
       source: datastore
       jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
     - name: Sample
       source: auto
-    - name: iops
+    - name: IOPS
       source: datastore
       jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
       round: 1
-    - name: lat
+    - name: LAT
       source: datastore
       jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
       round: 3
-    - name: clat
+    - name: CLAT
       source: datastore
       jqexpr: '.iteration_data.latency.clat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
@@ -75,12 +90,3 @@ testrun_results_generator:
       round: 3
     - name: Path
       source: auto
-    - name: tool_version
-      source: metadata
-      key: tool.fio.version
-    - name: date
-      source: metadata
-      key: testrun.date
-    - name: comments
-      source: metadata
-      key: testrun.comments
