@@ -139,7 +139,9 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             os.unlink(tmp_config)
         with open(tmp_config, 'w+') as fh:
             fh.write(form.yaml1.data)
+            fh.write('\n')
             fh.write(form.yaml2.data)
+            fh.write('\n')
             fh.write(form.yaml3.data)
         # to do: prepare data for jupiter here.
         baserun = form.baserun.data
