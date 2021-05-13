@@ -115,7 +115,7 @@ fi
 
 # Update database as requested
 if [ "$update_db" = "1" ]; then
-    csv_file=/tmp/flask_testrun_results.$$.csv
+    csv_file=./.testrun_results_dbloader.csv
     [ "$testrun_type" = "fio" ] && flag="--storage"
     [ "$testrun_type" = "uperf" ] && flag="--network"
 
@@ -124,11 +124,11 @@ if [ "$update_db" = "1" ]; then
         --output $csv_file &&
         cp $db $db.writebackup_$(date +%Y%m%d_%H%M%S) &&
         flask_load_db.py --db_file $db --delete $testrun $flag &&
-        flask_load_db.py --db_file $db --csv_file $csv_file $flag &&
-        rm -rf $csv_file
+        flask_load_db.py --db_file $db --csv_file $csv_file $flag
     [ $? != 0 ] && wait && exit 1
 fi
 
 wait
 
 exit 0
+
