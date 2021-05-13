@@ -19,7 +19,7 @@ from sqlalchemy.orm import sessionmaker
 
 LOG = logging.getLogger(__name__)
 
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
 if sys.version.startswith('2'):
     LOG.info("Please do not run it using python2")
@@ -53,12 +53,12 @@ ARG_PARSER.add_argument('-d',
 ARG_GROUP.add_argument('--network',
                        dest='is_network',
                        action='store_true',
-                       help='write net test result',
+                       help='write net TestResult',
                        required=False)
 ARG_GROUP.add_argument('--storage',
                        dest='is_storage',
                        action='store_true',
-                       help='write storage test result',
+                       help='write storage TestResult',
                        required=False)
 ARGS = ARG_PARSER.parse_args()
 
@@ -144,7 +144,7 @@ class StorageTestRun(DB_BASE):
 
 class StorageTestResult(DB_BASE):
     '''
-    table for storing test result
+    table for storing TestResult
     '''
     __tablename__ = 'storage_result'
     id = Column(Integer, primary_key=True)
@@ -409,12 +409,12 @@ def testresult_delete(resultmode=None):
     session = DB_SESSION()
     results = session.query(resultmode).filter_by(testrun=testrun).all()
     if len(results) == 0:
-        LOG.info("Not found in test results".format(ARGS.testrun_delete))
+        LOG.info("Not found in TestResults.".format(ARGS.testrun_delete))
         return True
     for testresult in results:
         try:
             print('.', end='', flush=True)
-            #LOG.info("Delete test result: id-{} {}".format(testresult.id, testresult.testrun))
+            #LOG.info("Delete TestResult: id-{} {}".format(testresult.id, testresult.testrun))
             session.delete(testresult)
             case_count += 1
         except Exception as err:
