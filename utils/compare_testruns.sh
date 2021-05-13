@@ -110,7 +110,10 @@ g2m_yaml=$templates/generate_2way_metadata-${testrun_type}.yaml
 if [ -f $gtr_yaml ]; then
     cp $gtr_yaml $workspace/base.generate_testrun_results.yaml
     cp $gtr_yaml $workspace/test.generate_testrun_results.yaml
-    cat $gtr_yaml >$workspace/benchmark_config.yaml # backward support
+
+    # backward support (all-in-one yaml)
+    cat $gtr_yaml >$workspace/benchmark_config.yaml
+    echo -e "\n\n" >>$workspace/benchmark_config.yaml
 else
     echo "Cannot found GTR yaml ($gtr_yaml) from templates." >&2
     exit 1
@@ -118,7 +121,10 @@ fi
 
 if [ -f $g2b_yaml ]; then
     cp $g2b_yaml $workspace/generate_2way_benchmark.yaml
-    cat $g2b_yaml >>$workspace/benchmark_config.yaml # backward support
+
+    # backward support (all-in-one yaml)
+    cat $g2b_yaml >>$workspace/benchmark_config.yaml
+    echo -e "\n\n" >>$workspace/benchmark_config.yaml
 else
     echo "Cannot found G2B yaml ($g2b_yaml) from templates." >&2
     exit 1
@@ -126,7 +132,10 @@ fi
 
 if [ -f $g2m_yaml ]; then
     cp $g2m_yaml $workspace/generate_2way_metadata.yaml
-    cat $g2m_yaml >>$workspace/benchmark_config.yaml # backward support
+
+    # backward support (all-in-one yaml)
+    cat $g2m_yaml >>$workspace/benchmark_config.yaml
+    echo -e "\n\n" >>$workspace/benchmark_config.yaml
 else
     echo "Cannot found G2M yaml ($g2m_yaml) from templates." >&2
     exit 1
