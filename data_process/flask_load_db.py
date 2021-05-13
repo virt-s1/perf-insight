@@ -381,17 +381,17 @@ def storage_testresult_write():
 
 def testrun_delete(runmode=None):
     if ARGS.testrun_delete is None:
-        LOG.info("Please specify --delete option to delete TestRun.")
+        LOG.info("Please specify --delete option to delete a TestRun.")
         return False
     testrun = ARGS.testrun_delete
     session = DB_SESSION()
     results = session.query(runmode).filter_by(testrun=testrun).all()
     if len(results) == 0:
-        LOG.info("Not found in TestRuns.".format(ARGS.testrun_delete))
+        LOG.info("No related TestRun entries. Skip.".format(ARGS.testrun_delete))
         return True
     for testrun in results:
         try:
-            LOG.info("Delete TestRun: {}".format(testrun.testrun))
+            LOG.info("Delete TestRun '{}'".format(testrun.testrun))
             session.delete(testrun)
         except Exception as err:
             session.rollback()
@@ -402,14 +402,14 @@ def testrun_delete(runmode=None):
 
 def testresult_delete(resultmode=None):
     if ARGS.testrun_delete is None:
-        LOG.info("Please specify --delete option to delete TestRun.")
+        LOG.info("Please specify --delete option to delete a TestRun.")
         return False
     case_count = 0
     testrun = ARGS.testrun_delete
     session = DB_SESSION()
     results = session.query(resultmode).filter_by(testrun=testrun).all()
     if len(results) == 0:
-        LOG.info("Not found in TestResults.".format(ARGS.testrun_delete))
+        LOG.info("No related TestResult entries. Skip.".format(ARGS.testrun_delete))
         return True
     for testresult in results:
         try:
@@ -428,6 +428,7 @@ def testresult_delete(resultmode=None):
 
 if __name__ == "__main__":
     if ARGS.csv_file is not None:
+        LOG.info("Load TestRun into database.")
         if ARGS.is_network:
             network_testrun_write()
             network_testresult_write()
@@ -435,6 +436,7 @@ if __name__ == "__main__":
             storage_testrun_write()
             storage_testresult_write()
     if ARGS.testrun_delete is not None:
+        LOG.info("Delete TestRun '{}' from database.".format(ARGS.testrun_delete))
         if ARGS.is_network:
             testrun_delete(runmode=NetworkRun)
             testresult_delete(resultmode=NetworkResult)
