@@ -129,12 +129,28 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
 
     def form_post(self, form):
         # post process form
-        # tmpdir = tempfile.mkdtemp(suffix=None, prefix='jupiter', dir=REPORT_PATH)
+        # workspace = tempfile.mkdtemp(suffix=None, prefix='jupiter', dir=REPORT_PATH)
+
+        # Prepare the workspace
         new_dir = generate_dirname()
-        tmpdir = '{}/{}'.format(REPORT_PATH, new_dir)
-        os.mkdir(tmpdir)
-        print('save to {}'.format(tmpdir))
-        tmp_config = tmpdir + '/' + 'benchmark_config.yaml'
+        workspace = '{}/{}'.format(REPORT_PATH, new_dir)
+        os.mkdir(workspace)
+
+        # Save the yaml files
+        print('save to {}'.format(workspace))
+        with open(workspace + '/' + 'base.generate_testrun_results.yaml',
+                  'w') as fh:
+            fh.write(form.yaml1.data)
+        with open(workspace + '/' + 'test.generate_testrun_results.yaml',
+                  'w') as fh:
+            fh.write(form.yaml1.data)
+        with open(workspace + '/' + 'generate_2way_benchmark.yaml', 'w') as fh:
+            fh.write(form.yaml2.data)
+        with open(workspace + '/' + 'generate_2way_metadata.yaml', 'w') as fh:
+            fh.write(form.yaml3.data)
+
+        # Save the yaml files - backward support (all-in-one yaml)
+        tmp_config = workspace + '/' + 'benchmark_config.yaml'
         if os.path.exists(tmp_config):
             os.unlink(tmp_config)
         with open(tmp_config, 'w+') as fh:
@@ -143,17 +159,22 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             fh.write(form.yaml2.data)
             fh.write('\n')
             fh.write(form.yaml3.data)
-        # to do: prepare data for jupiter here.
+
+        # Show user message
         baserun = form.baserun.data
         testrun = form.testrun.data
         self.result = baserun + ' vs ' + testrun
-        self.message = Markup(
-            'Benchmark report is available at <a href="http://{}/perf-insight/reports/{}/report.html" class="alert-link">compared {}</a> '
-            .format(APACHE_SERVER, new_dir, self.result))
-        jupiter_prepare(baserun, testrun, tmpdir)
+        self.message = Markup('Benchmark report is available at \
+<a href="http://{}/perf-insight/reports/{}/report.html" \
+class="alert-link">compared {}</a>'.format(APACHE_SERVER, new_dir,
+                                           self.result))
+        jupiter_prepare(baserun, testrun, workspace)
         cmd = 'podman run --rm \
 --volume {}/.perf-insight.yaml:/root/.perf-insight.yaml:ro \
---volume {}:/workspace:rw jupyter_reporting '.format(os.getenv('HOME'), tmpdir)
+--volume {}:/workspace:rw jupyter_reporting '.format(os.getenv('HOME'),
+                                                     workspace)
+
+        # Generate report
         ret = subprocess.run(cmd,
                              shell=True,
                              stdout=subprocess.PIPE,
@@ -161,9 +182,12 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
                              timeout=120,
                              encoding='utf-8')
         ret_code = ret.returncode
+
+        # Update user message
         if ret_code > 0:
             flash('Error! {}'.format(ret.stdout), 'danger')
         else:
+            # Write to database
             flash(self.message, 'success')
             result_record = ComparedResult()
             result_record.baseid = baserun
@@ -176,8 +200,8 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             result_record.comments = ''
             db.session.add(result_record)
             db.session.commit()
-        #session['yaml1'] = form.yaml1.data
-        #session['yaml2'] = form.yaml2.data
+
+        # Redirect the page
         return redirect(
             url_for('YamlFormView.this_form_get',
                     baserun=baserun,
