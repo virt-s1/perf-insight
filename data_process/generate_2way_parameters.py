@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 ARG_PARSER = argparse.ArgumentParser(
     description="Generate user parameter report for the 2-way benchmark \
 comparison.")
-ARG_PARSER.add_argument('--benchmark_config',
+ARG_PARSER.add_argument('--benchmark-config',
                         dest='config',
                         action='store',
                         help='The yaml config file for generating comparison.',
