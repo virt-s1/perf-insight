@@ -5,6 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: import_testrun.py",
+            "type": "python",
+            "request": "launch",
+            "program": "data_process/import_testrun.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--metadata",
+                "./data_process/workspace/metadata.json",
+                "--url",
+                "http://pbench.perf.lab.eng.bos.redhat.com/results/ibm-x3650m5-09.lab.eng.pek2.redhat.com/fio__2020.09.11T08.04.48/",
+                "--url",
+                "http://pbench.perf.lab.eng.bos.redhat.com/results/ibm-x3650m5-09.lab.eng.pek2.redhat.com/fio__2020.09.11T08.27.50/",
+                "--url",
+                "http://pbench.perf.lab.eng.bos.redhat.com/results/ibm-x3650m5-09.lab.eng.pek2.redhat.com/fio__2020.09.11T08.31.47/",
+            ]
+        },
+        {
             "type": "bashdb",
             "request": "launch",
             "name": "Bash-Debug (compare_restruns.sh)",
