@@ -5,7 +5,7 @@ import argparse
 import logging
 
 LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(
     description="Create an html file for redirecting to the externel data \
@@ -30,23 +30,15 @@ ARG_PARSER.add_argument('--wait_sec',
                         default=1,
                         required=False)
 
-ARGS = ARG_PARSER.parse_args()
 
-# parse params
-externel_url = str(ARGS.url)
+def create_redirect_html(externel_url, filename=None, wait_sec=1):
+    """Create an html file for redirecting to a specified URL."""
+    if filename is None:
+        # Determine the filename from externel_url
+        entities = [x for x in externel_url.split('/') if x]
+        foldername = entities[-1] if entities else 'externel_datasource'
+        filename = foldername + '.html'
 
-if ARGS.file:
-    filename = ARGS.file
-else:
-    entities = [x for x in externel_url.split('/') if x]
-    filename = entities[-1] if entities else 'externel_datasource'
-    filename = filename + '_link.html'
-
-wait_sec = ARGS.wait_sec
-
-
-def write():
-    """Create an html file for redirecting."""
     html_content = '''
 <head><meta http-equiv="refresh" content="{0};url={1}"></head>
 <body>Redirecting to <a href="{1}">{1}</a></body>
@@ -55,8 +47,12 @@ def write():
     with open(filename, 'w') as f:
         f.write(html_content)
 
+    logging.info('Created redirect HTML "{}" for URL "{}".'.format(
+        filename, externel_url))
+
 
 if __name__ == '__main__':
-    write()
+    ARGS = ARG_PARSER.parse_args()
+    create_redirect_html(str(ARGS.url), ARGS.file, ARGS.wait_sec)
 
 exit(0)

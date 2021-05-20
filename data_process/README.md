@@ -94,7 +94,7 @@ Before you start, you need to prepare the following stuff:
 The following scripts are needed:
 1. generate_testrun_results.py - generate the test summary for Jupyter to display.
 2. generate_2way_metadata.py - generate the metadata comparison for Jupyter to display.
-3. generate_benchmark_config.py (TBD) - generate the benchmark config for Jupyter to display.
+3. generate_benchmark_config.py - generate the benchmark config for Jupyter to display.
 4. generate_2way_benchmark.py - generate the benchmark comparison for Jupyter to display.
 
 ### Steps
@@ -137,7 +137,7 @@ Run the following script to generate the benchmark parameters:
 
 ```bash
 $ ./generate_2way_parameters.py \
-    --benchmark_config ./workspace/generate_2way_benchmark.yaml \
+    --benchmark-config ./workspace/generate_2way_benchmark.yaml \
     --output-format csv \
     --output ./workspace/2way_parameters.csv
 ```
