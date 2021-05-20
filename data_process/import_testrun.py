@@ -47,7 +47,7 @@ if __name__ == '__main__':
 
     # Get TestRun ID and path
     testrun_id = metadata.get('testrun-id')
-    testrun_path = '{}/{}'.format(TESTRUN_PATH, testrun_id)
+    testrun_path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', testrun_id)
 
     # Verify TestRun ID and path
     if not testrun_id.startswith(('fio_', 'uperf_')):
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     if os.path.exists(workspace):
         shutil.rmtree(workspace, ignore_errors=True)
     os.makedirs(workspace)
-    logging.info('Created workspace "{}".'.format(workspace))
+    logging.debug('Created workspace "{}".'.format(workspace))
 
     # Collect external data
     logging.info('Collecting external data.')
@@ -71,12 +71,12 @@ if __name__ == '__main__':
         # Download result.json to workspace
         entities = [x for x in externel_url.split('/') if x]
         folder_name = entities[-1] if entities else 'unknown_foldername'
-        folder_path = workspace + '/' + folder_name
+        folder_path = os.path.join(workspace, folder_name)
         file_path = folder_path + '/result.json'
         file_url = externel_url + '/result.json'
 
         try:
-            logging.info('Downloading from URL "{}" to "{}".'.format(
+            logging.debug('Downloading from URL "{}" to "{}".'.format(
                 file_url, file_path))
             os.makedirs(folder_path)
             urllib.request.urlretrieve(file_url, filename=file_path)
@@ -84,20 +84,26 @@ if __name__ == '__main__':
             logging.warning('Failed to download the file: {}'.format(e))
 
         # Create redirect html
-        logging.info('Create redirect html for "{}".'.format(externel_url))
+        logging.debug('Creating redirect html for "{}".'.format(externel_url))
         cmd = '{}/data_process/create_link_file.py \
             --url {} --file {}'.format(PERF_INSIGHT_REPO, externel_url,
                                        folder_path + '_link.html')
-        logging.info('Run command: {}'.format(cmd))
-        os.system(cmd)
+        logging.debug('Run command: {}'.format(cmd))
+        res = os.system(cmd)
+        if res > 0:
+            logging.error('Command failed.')
+            exit(1)
 
     # Gather datastore
     logging.info('Gathering datastore.')
     cmd = '{}/data_process/gather_testrun_datastore.py \
         --logdir {} --output {}'.format(PERF_INSIGHT_REPO, workspace,
                                         workspace + '/datastore.json')
-    logging.info('Run command: {}'.format(cmd))
-    os.system(cmd)
+    logging.debug('Run command: {}'.format(cmd))
+    res = os.system(cmd)
+    if res > 0:
+        logging.error('Command failed.')
+        exit(1)
 
     # Remove subfolders
     logging.info('Removing subfolders.')
