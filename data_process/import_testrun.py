@@ -127,6 +127,11 @@ if __name__ == '__main__':
         logging.error('Command failed.')
         exit(1)
 
+    # Save the metadata
+    logging.info('Saving the metadata.')
+    with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
+        json.dump(metadata, f, indent=3)
+
     # Remove subfolders
     logging.info('Removing subfolders.')
     for d in os.listdir(workspace):
