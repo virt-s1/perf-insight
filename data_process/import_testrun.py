@@ -27,6 +27,41 @@ ARG_PARSER.add_argument('--metadata',
                         default=None,
                         required=True)
 
+
+def download_file(from_url, to_file):
+    """Download file from specified URL."""
+
+    try:
+        logging.debug('Downloading from URL "{}" to "{}".'.format(
+            from_url, to_file))
+        urllib.request.urlretrieve(from_url, filename=to_file)
+        return 0
+    except Exception as e:
+        logging.warning('Failed to download the file: {}'.format(e))
+        return 1
+
+
+def create_redirect_html(externel_url,
+                         output_path='.',
+                         filename=None,
+                         wait_sec=1):
+    """Create an html file for redirecting to a specified URL."""
+    logging.debug('Creating redirect html for "{}".'.format(externel_url))
+
+    if filename is None:
+        # Determine the filename from externel_url
+        filename = os.path.basename(externel_url.strip('/')) + '.html'
+    output_file = os.path.join(output_path, filename)
+
+    html_content = '''
+<head><meta http-equiv="refresh" content="{0};url={1}"></head>
+<body>Redirecting to <a href="{1}">{1}</a></body>
+'''.format(wait_sec, externel_url)
+
+    with open(output_file, 'w') as f:
+        f.write(html_content)
+
+
 if __name__ == '__main__':
 
     # Get user config
@@ -72,27 +107,14 @@ if __name__ == '__main__':
         entities = [x for x in externel_url.split('/') if x]
         folder_name = entities[-1] if entities else 'unknown_foldername'
         folder_path = os.path.join(workspace, folder_name)
-        file_path = folder_path + '/result.json'
-        file_url = externel_url + '/result.json'
+        os.makedirs(folder_path)
 
-        try:
-            logging.debug('Downloading from URL "{}" to "{}".'.format(
-                file_url, file_path))
-            os.makedirs(folder_path)
-            urllib.request.urlretrieve(file_url, filename=file_path)
-        except Exception as e:
-            logging.warning('Failed to download the file: {}'.format(e))
+        file_url = externel_url + '/result.json'
+        file_path = folder_path + '/result.json'
+        download_file(file_url, file_path)
 
         # Create redirect html
-        logging.debug('Creating redirect html for "{}".'.format(externel_url))
-        cmd = '{}/data_process/create_link_file.py \
-            --url {} --file {}'.format(PERF_INSIGHT_REPO, externel_url,
-                                       folder_path + '_link.html')
-        logging.debug('Run command: {}'.format(cmd))
-        res = os.system(cmd)
-        if res > 0:
-            logging.error('Command failed.')
-            exit(1)
+        create_redirect_html(externel_url, output_path=workspace)
 
     # Gather datastore
     logging.info('Gathering datastore.')
