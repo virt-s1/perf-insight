@@ -4,6 +4,7 @@
 import argparse
 import logging
 import json
+import yaml
 import os
 import shutil
 import urllib.request
@@ -26,11 +27,17 @@ ARG_PARSER.add_argument('--metadata',
                         default=None,
                         required=True)
 
-#TESTRUN_PATH = '/nfs/perf-insight/testruns'
-TESTRUN_PATH = '/home/cheshi/mirror/codespace/perf-insight/data_process/workspace'
-PERF_INSIGHT_REPO = '/home/cheshi/mirror/codespace/perf-insight'
-
 if __name__ == '__main__':
+
+    # Get user config
+    with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
+        user_config = yaml.safe_load(f)
+
+    PERF_INSIGHT_ROOT = user_config.get(
+        'global', {}).get('perf_insight_root') or '/nfs/perf-insight'
+    PERF_INSIGHT_REPO = user_config.get(
+        'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
+
     # Parse params
     ARGS = ARG_PARSER.parse_args()
     externel_urls = ARGS.url
