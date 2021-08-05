@@ -86,8 +86,9 @@ if [ ! -e $basepath/testruns/$testrun ]; then
     exit 1
 fi
 
-# Get TestRunType
+# Get TestRunType and Platform
 testrun_type=${testrun%%_*}
+platform=$(echo $testrun | cut -d_ -f2 | tr [:upper:] [:lower:])
 
 # Set environment
 cd $basepath/testruns/$testrun
@@ -119,8 +120,12 @@ if [ "$update_db" = "1" ]; then
     [ "$testrun_type" = "fio" ] && flag="--storage"
     [ "$testrun_type" = "uperf" ] && flag="--network"
 
+    cfg_file=$templates/generate_testrun_results-${testrun_type}-dbloader-${platform}.yaml
+    [ ! -f $cfg_file ] && cfg_file=$templates/generate_testrun_results-${testrun_type}-dbloader.yaml
+    echo "DEBUG: Use config file $cfg_file"
+
     generate_testrun_results.py \
-        --config $templates/generate_testrun_results-${testrun_type}-dbloader.yaml \
+        --config $cfg_file \
         --output $csv_file &&
         cp $db $db.writebackup_$(date +%Y%m%d_%H%M%S) &&
         flask_load_db.py --db_file $db --delete $testrun $flag &&
@@ -131,4 +136,3 @@ fi
 wait
 
 exit 0
-
