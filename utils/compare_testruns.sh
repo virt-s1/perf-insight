@@ -94,6 +94,9 @@ else
     testrun_type=$testtype
 fi
 
+# Get platform
+platform=$(echo $testrun | cut -d_ -f2 | tr [:upper:] [:lower:])
+
 # Get ProjectName
 project_name=$(echo $testid | cut -d _ -f 2 | tr "[:upper:]" "[:lower:]")
 
@@ -103,9 +106,15 @@ compareid=$(basename $workspace)
 mkdir -p $workspace || exit 1
 
 # Collect config and data
-gtr_yaml=$templates/generate_testrun_results-${testrun_type}.yaml
-g2b_yaml=$templates/generate_2way_benchmark-${testrun_type}.yaml
-g2m_yaml=$templates/generate_2way_metadata-${testrun_type}.yaml
+gtr_yaml=$templates/generate_testrun_results-${testrun_type}-${platform}.yaml
+[ ! -f $gtr_yaml ] && gtr_yaml=$templates/generate_testrun_results-${testrun_type}.yaml
+echo "DEBUG: Use config file $gtr_yaml"
+g2b_yaml=$templates/generate_2way_benchmark-${testrun_type}-${platform}.yaml
+[ ! -f $g2b_yaml ] && g2b_yaml=$templates/generate_2way_benchmark-${testrun_type}.yaml
+echo "DEBUG: Use config file $g2b_yaml"
+g2m_yaml=$templates/generate_2way_metadata-${testrun_type}-${platform}.yaml
+[ ! -f $g2m_yaml ] && g2m_yaml=$templates/generate_2way_metadata-${testrun_type}.yaml
+echo "DEBUG: Use config file $g2m_yaml"
 
 if [ -f $gtr_yaml ]; then
     cp $gtr_yaml $workspace/base.generate_testrun_results.yaml
