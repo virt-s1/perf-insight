@@ -19,8 +19,8 @@ PERF_INSIGHT_REPO = user_config.get(
     'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
 
 
-class Testrun():
-    def query(self):
+class TestRunManager():
+    def query_testruns(self):
         """Query all the TestRunIDs from PERF_INSIGHT_ROOT.
 
         Input:
@@ -45,7 +45,7 @@ class Testrun():
 
         return testruns
 
-    def inspect(self, id):
+    def inspect_testrun(self, id):
         """Inspect a specified TestRunID from PERF_INSIGHT_ROOT.
         
         Input:
@@ -56,7 +56,7 @@ class Testrun():
 
         search_path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
         if not os.path.isdir(search_path):
-            return False
+            return None
 
         # Get TestRunID
         testrun = {'id': id}
@@ -85,32 +85,44 @@ class Testrun():
 
         return testrun
 
-    # def add(self, d):
-    #     self.testruns.append(d)
+    def load_testrun(self):
+        pass
+
+    def import_testrun(self):
+        pass
 
 
-testrun = Testrun()
+testrun_manager = TestRunManager()
 
 
 @app.route('/testruns')
-def get_testruns():
-    result = testrun.query()
-    return jsonify({'testruns': {'testrun': result}})
+def query_testruns():
+    result = testrun_manager.query_testruns()
+    return jsonify({'testruns': {'testrun': result}}), 200
 
 
 @app.route('/testruns/<id>')
 def inspect_testrun(id):
-    result = testrun.inspect(id)
-    return jsonify({'testrun': result})
+    result = testrun_manager.inspect_testrun(id)
+    if result is None:
+        return jsonify({'error': 'The requested resource was not found.'}), 404
+    else:
+        return jsonify({'testrun': result}), 200
 
 
-# @app.route('/testruns', methods=['POST'])
-# def add_testrun():
-#     if request.is_json:
-#         tr = request.get_json()
-#         print(tr)
+@app.route('/testruns', methods=['POST'])
+def add_testrun():
+    if not request.is_json:
+        return {"error": "Request must be JSON"}, 415
 
-#         #testrun["id"] = _find_next_id()
-#         testrun.add(tr)
-#         return tr, 201
-#     return {"error": "Request must be JSON"}, 415
+    req = request.get_json()
+    print(req)
+
+    if req.get('action') == 'load':
+        testrun_manager.load_testrun()
+    elif req.get('action') == 'import':
+        testrun_manager.import_testrun()
+    else:
+        return {"error": "No action in request or unsupported action."}, 415
+
+    return jsonify(req), 201
