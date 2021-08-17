@@ -1,8 +1,9 @@
+from flask import Flask, request, jsonify
 import logging
 import os
 import yaml
 import json
-from flask import Flask, request, jsonify
+import shutil
 
 
 class TestRunManager():
@@ -75,73 +76,107 @@ class TestRunManager():
         """Load TestRun from staged eara.
 
         Input:
-            id = TestRunID (the folder name in staged eara)
+            request - the request json.
         Return:
-            A dict of TestRun information.
+            True or False if something goes wrong.
         """
 
         # Parse args
         id = request.get('id')
         if id is None:
             LOG.error('"id" is missing in request.')
-            return None
+            return False
 
         create_datastore = request.get('create_datastore')
         if create_datastore is None:
             LOG.error('"create_datastore" is missing in request.')
-            return None
+            return False
         elif not isinstance(create_datastore, bool):
             LOG.error('"create_datastore" in request must be a bool value.')
-            return None
+            return False
 
         update_dashboard = request.get('update_dashboard')
         if update_dashboard is None:
             LOG.error('"update_dashboard" is missing in request.')
-            return None
+            return False
         elif not isinstance(update_dashboard, bool):
             LOG.error('"update_dashboard" in request must be a bool value.')
-            return None
+            return False
 
         generate_plots = request.get('generate_plots')
         if generate_plots is None:
             LOG.error('"generate_plots" is missing in request.')
-            return None
+            return False
         elif not isinstance(generate_plots, bool):
             LOG.error('"generate_plots" in request must be a bool value.')
-            return None
+            return False
 
         # Criteria check
-        search_path = os.path.join(PERF_INSIGHT_ROOT, '.staged', id)
-        if not os.path.isdir(search_path):
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if os.path.isdir(target):
+            LOG.error('TestRunID "{}" already exists.'.format(id))
+            return False
+
+        workspace = os.path.join(PERF_INSIGHT_ROOT, '.staged', id)
+        if not os.path.isdir(workspace):
             LOG.error('Folder "{}" can not be found in staged eara.'.format(id))
-            return None
+            return False
 
         # Get TestRunID and metadata
         testrun = {'id': id}
 
         try:
-            metadata_file = os.path.join(search_path, 'metadata.json')
+            metadata_file = os.path.join(workspace, 'metadata.json')
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            LOG.info('Fail to get metadata from {}. error={}'.format(
+            LOG.error('Fail to get metadata from {}. error={}'.format(
                 metadata_file, err))
-            metadata = None
+            return False
 
-        if metadata is None:
-            LOG.error('Failed to parse "metadata.json".')
-            return None
-        else:
-            testrun.update({'metadata': metadata})
+        testrun.update({'metadata': metadata})
 
+        # Perform data process
         if generate_plots:
-            pass
+            self._generate_plots(workspace)
         if create_datastore:
-            pass
+            self._create_datastore(workspace)
         if update_dashboard:
-            pass
+            self._update_dashboard(workspace)
 
-    def import_testrun(self):
+        # Deal with the files
+        shutil.copytree(workspace, target)
+        staged_eara = os.path.join(PERF_INSIGHT_ROOT, '.staged')
+        shutil.move(os.path.join(staged_eara, id), os.path.join(
+            staged_eara, '.deleted_after_loading__{}'.format(id)))
+
+        return True
+
+    def import_testrun(self, request):
+        """Import TestRun from external pbench server.
+
+        Input:
+            request - the request json.
+        Return:
+            True or False if something goes wrong.
+        """
+        pass
+
+    def _generate_plots(self, workspace):
+        """Generate plots for pbench-fio results."""
+        cmd = '{}/data_process/generate_pbench_fio_plots.sh -d {}'.format(
+            PERF_INSIGHT_REPO, workspace)
+        os.system(cmd)
+
+    def _create_datastore(self, workspace):
+        """Create datastore for the testrun."""
+        cmd = '{}/data_process/gather_testrun_datastore.py --logdir {} \
+--output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
+        os.system(cmd)
+
+    def _update_dashboard(self, workspace):
+        """Update the testrun into dashboard."""
+        # TODO: need investigation
         pass
 
 
@@ -163,13 +198,13 @@ PERF_INSIGHT_REPO = user_config.get(
 testrun_manager = TestRunManager()
 
 
-@app.route('/testruns')
+@app.get('/testruns')
 def query_testruns():
     result = testrun_manager.query_testruns()
     return jsonify({'testruns': {'testrun': result}}), 200
 
 
-@app.route('/testruns/<id>')
+@app.get('/testruns/<id>')
 def inspect_testrun(id):
     result = testrun_manager.inspect_testrun(id)
     if result is None:
@@ -178,18 +213,17 @@ def inspect_testrun(id):
         return jsonify({'testrun': result}), 200
 
 
-@app.route('/testruns', methods=['POST'])
+@app.post('/testruns')
 def add_testrun():
-    if not request.is_json:
-        return {"error": "Request must be JSON"}, 415
-
-    req = request.get_json()
-    print(req)
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({"error": "Request must be JSON."}), 415
 
     if req.get('action') == 'load':
-        testrun_manager.load_testrun()
+        testrun_manager.load_testrun(req)
     elif req.get('action') == 'import':
-        testrun_manager.import_testrun()
+        testrun_manager.import_testrun(req)
     else:
         return {"error": "No action in request or unsupported action."}, 415
 
