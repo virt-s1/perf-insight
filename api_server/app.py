@@ -47,7 +47,7 @@ class TestRunManager():
 
     def inspect_testrun(self, id):
         """Inspect a specified TestRunID from PERF_INSIGHT_ROOT.
-        
+
         Input:
             id = TestRunID
         Return:
@@ -85,8 +85,75 @@ class TestRunManager():
 
         return testrun
 
-    def load_testrun(self):
-        pass
+    def load_testrun(self, request):
+        """Load TestRun from staged eara.
+
+        Input:
+            id = TestRunID (the folder name in staged eara)
+        Return:
+            A dict of TestRun information.
+        """
+
+        # Parse args
+        id = request.get('id')
+        if id is None:
+            LOG.error('"id" is missing in request.')
+            return None
+
+        create_datastore = request.get('create_datastore')
+        if create_datastore is None:
+            LOG.error('"create_datastore" is missing in request.')
+            return None
+        elif not isinstance(create_datastore, bool):
+            LOG.error('"create_datastore" in request must be a bool value.')
+            return None
+
+        update_dashboard = request.get('update_dashboard')
+        if update_dashboard is None:
+            LOG.error('"update_dashboard" is missing in request.')
+            return None
+        elif not isinstance(update_dashboard, bool):
+            LOG.error('"update_dashboard" in request must be a bool value.')
+            return None
+
+        generate_plots = request.get('generate_plots')
+        if generate_plots is None:
+            LOG.error('"generate_plots" is missing in request.')
+            return None
+        elif not isinstance(generate_plots, bool):
+            LOG.error('"generate_plots" in request must be a bool value.')
+            return None
+
+        # Criteria check
+        search_path = os.path.join(PERF_INSIGHT_ROOT, '.staged', id)
+        if not os.path.isdir(search_path):
+            LOG.error('Folder "{}" can not be found in staged eara.'.format(id))
+            return None
+
+        # Get TestRunID and metadata
+        testrun = {'id': id}
+
+        try:
+            metadata_file = os.path.join(search_path, 'metadata.json')
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+        except Exception as err:
+            LOG.info('Fail to get metadata from {}. error={}'.format(
+                metadata_file, err))
+            metadata = None
+
+        if metadata is None:
+            LOG.error('Failed to parse "metadata.json".')
+            return None
+        else:
+            testrun.update({'metadata': metadata})
+
+        if generate_plots:
+            pass
+        if create_datastore:
+            pass
+        if update_dashboard:
+            pass
 
     def import_testrun(self):
         pass
