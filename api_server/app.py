@@ -4,20 +4,6 @@ import yaml
 import json
 from flask import Flask, request, jsonify
 
-LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
-
-app = Flask(__name__)
-
-# Load perf-insight configure
-with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
-    user_config = yaml.safe_load(f)
-
-PERF_INSIGHT_ROOT = user_config.get(
-    'global', {}).get('perf_insight_root') or '/nfs/perf-insight'
-PERF_INSIGHT_REPO = user_config.get(
-    'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
-
 
 class TestRunManager():
     def query_testruns(self):
@@ -157,6 +143,21 @@ class TestRunManager():
 
     def import_testrun(self):
         pass
+
+
+LOG = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+
+app = Flask(__name__)
+
+# Load perf-insight configure
+with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
+    user_config = yaml.safe_load(f)
+
+PERF_INSIGHT_ROOT = user_config.get(
+    'global', {}).get('perf_insight_root') or '/nfs/perf-insight'
+PERF_INSIGHT_REPO = user_config.get(
+    'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
 
 
 testrun_manager = TestRunManager()
