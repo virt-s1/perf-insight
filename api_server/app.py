@@ -176,8 +176,74 @@ class TestRunManager():
 
     def _update_dashboard(self, workspace):
         """Update the testrun into dashboard."""
-        # TODO: need investigation
-        pass
+
+        # Get keywords from metadata
+        try:
+            f = os.path.join(workspace, 'metadata.json')
+            with open(f, 'r') as f:
+                m = json.load(f)
+        except Exception as err:
+            LOG.info('Fail to get metadata from {}. error={}'.format(f, err))
+            m = None
+
+        testrun_id = m.get('testrun-id')
+        testrun_type = m.get('testrun-type')
+        testrun_platform = m.get('testrun-platform')
+
+        # Get best config file
+        config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
+        file_a = 'generate_testrun_results-{}-dbloader-{}.yaml'.format(
+            testrun_type, testrun_platform)
+        file_b = 'generate_testrun_results-{}-dbloader.yaml'.format(
+            testrun_type)
+        if os.path.exists(os.path.join(PERF_INSIGHT_TEMP, file_a)):
+            shutil.copy(os.path.join(PERF_INSIGHT_TEMP, file_a), config)
+        elif os.path.exists(os.path.join(PERF_INSIGHT_TEMP, file_b)):
+            shutil.copy(os.path.join(PERF_INSIGHT_TEMP, file_b), config)
+        else:
+            LOG.error('Can not find file {} or {} in {}.'.format(
+                file_a, file_b, PERF_INSIGHT_TEMP))
+            return
+
+        # Create DB loader CSV
+        datastore = os.path.join(workspace, 'datastore.json')
+        metadata = os.path.join(workspace, 'metadata.json')
+        dbloader = os.path.join(workspace, '.testrun_results_dbloader.csv')
+
+        LOG.info('Creating DB loader CSV...')
+        cmd = '{}/data_process/generate_testrun_results.py --config {} --datastore {} \
+--metadata {} --output-format csv --output {}'.format(
+            PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
+        res = os.system(cmd)
+
+        if res > 0:
+            LOG.error('Failed to create DB loader CSV.')
+            return
+
+        # Update database
+        if os.path.exists(DASHBOARD_DB_FILE):
+            db_file = DASHBOARD_DB_FILE
+        else:
+            LOG.error('Can not find the dashboard DB file {}'.format(
+                DASHBOARD_DB_FILE))
+            return
+
+        if testrun_type == 'fio':
+            flag = '--storage'
+        elif testrun_type == 'uperf':
+            flag = '--network'
+
+        LOG.info('Cleaning up the TestRun from database...')
+        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+            PERF_INSIGHT_REPO, flag, db_file, testrun_id)
+        os.system(cmd)
+
+        LOG.info('Loading the TestRun into database...')
+        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --csv_file {}'.format(
+            PERF_INSIGHT_REPO, flag, db_file, dbloader)
+        os.system(cmd)
+
+        return
 
 
 LOG = logging.getLogger(__name__)
@@ -193,7 +259,9 @@ PERF_INSIGHT_ROOT = user_config.get(
     'global', {}).get('perf_insight_root') or '/nfs/perf-insight'
 PERF_INSIGHT_REPO = user_config.get(
     'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
-
+PERF_INSIGHT_TEMP = os.path.join(
+    PERF_INSIGHT_REPO,  'data_process', 'templates')
+DASHBOARD_DB_FILE = user_config.get('flask', {}).get('db_file')
 
 testrun_manager = TestRunManager()
 
