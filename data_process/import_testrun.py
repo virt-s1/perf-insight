@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Import externel data from pbench-server as a TestRun."""
 
 import argparse

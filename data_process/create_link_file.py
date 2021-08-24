@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Create an html file for redirecting to the externel data source."""
 
 import argparse

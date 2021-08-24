@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Generate the 2-way benchmark comparison for the TEST and BASE testruns.
 """
