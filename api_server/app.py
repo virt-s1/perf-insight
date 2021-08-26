@@ -78,19 +78,22 @@ class TestRunManager():
         Input:
             request - the request json.
         Return:
-            True or False if something goes wrong.
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
         """
 
         # Criteria check
         target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
         if os.path.isdir(target):
-            LOG.error('TestRunID "{}" already exists.'.format(id))
-            return False
+            msg = 'TestRunID "{}" already exists.'.format(id)
+            LOG.error(msg)
+            return False, msg
 
         workspace = os.path.join(PERF_INSIGHT_ROOT, '.staged', id)
         if not os.path.isdir(workspace):
-            LOG.error('Folder "{}" can not be found in staged eara.'.format(id))
-            return False
+            msg = 'Folder "{}" can not be found in staged eara.'.format(id)
+            LOG.error(msg)
+            return False, msg
 
         # Get TestRunID and metadata
         testrun = {'id': id}
@@ -100,27 +103,28 @@ class TestRunManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            LOG.error('Fail to get metadata from {}. error: {}'.format(
-                metadata_file, err))
-            return False
+            msg = 'Fail to get metadata from {}. error: {}'.format(
+                metadata_file, err)
+            LOG.error(msg)
+            return False, msg
 
         testrun.update({'metadata': metadata})
 
         # Perform data process
         if generate_plots:
-            res = self._generate_plots(workspace)
+            res, msg = self._generate_plots(workspace)
             if res is False:
-                return False
+                return False, msg
 
         if create_datastore:
-            res = self._create_datastore(workspace)
+            res, msg = self._create_datastore(workspace)
             if res is False:
-                return False
+                return False, msg
 
         if update_dashboard:
-            res = self._update_dashboard(workspace)
+            res, msg = self._update_dashboard(workspace)
             if res is False:
-                return False
+                return False, msg
 
         # Deal with the files
         try:
@@ -129,10 +133,11 @@ class TestRunManager():
             shutil.move(os.path.join(staged_eara, id), os.path.join(
                 staged_eara, '.deleted_after_loading__{}'.format(id)))
         except Exception as err:
-            LOG.error('Fail to deal with the files. error: {}'.format(err))
-            return False
+            msg = 'Fail to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
 
-        return True
+        return True, testrun
 
     def import_testrun(self, request):
         """Import TestRun from external pbench server.
@@ -150,7 +155,8 @@ class TestRunManager():
         Input:
             workspace - the path of the workspace.
         Return:
-            True or False if something goes wrong.
+            - (True, None), or
+            - (False, message) if something goes wrong.
         """
         LOG.info('Generate plots for pbench-fio results.')
 
@@ -158,14 +164,20 @@ class TestRunManager():
             PERF_INSIGHT_REPO, workspace)
         res = os.system(cmd)
 
-        return True if res == 0 else False
+        if res == 0:
+            return True, None
+        else:
+            msg = 'Fail to generate plots for pbench-fio results.'
+            LOG.error(msg)
+            return False, msg
 
     def _create_datastore(self, workspace):
         """Create datastore for the TestRun.
         Input:
             workspace - the path of the workspace.
         Return:
-            True or False if something goes wrong.
+            - (True, None), or
+            - (False, message) if something goes wrong.
         """
         LOG.info('Create datastore for the TestRun.')
 
@@ -173,14 +185,20 @@ class TestRunManager():
 --output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
         res = os.system(cmd)
 
-        return True if res == 0 else False
+        if res == 0:
+            return True, None
+        else:
+            msg = 'Create datastore for the TestRun.'
+            LOG.error(msg)
+            return False, msg
 
     def _update_dashboard(self, workspace):
         """Update the testrun into dashboard.
         Input:
             workspace - the path of the workspace.
         Return:
-            True or False if something goes wrong.
+            - (True, None), or
+            - (False, message) if something goes wrong.
         """
         LOG.info('Update the dashboard database.')
 
@@ -193,8 +211,9 @@ class TestRunManager():
             testrun_type = m.get('testrun-type')
             testrun_platform = m.get('testrun-platform')
         except Exception as err:
-            LOG.error('Fail to get metadata from {}. error: {}'.format(f, err))
-            return False
+            msg = 'Fail to get metadata from "{}". error: {}'.format(f, err)
+            LOG.error(msg)
+            return False, msg
 
         # Get best config file
         config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
@@ -207,9 +226,10 @@ class TestRunManager():
         elif os.path.exists(os.path.join(PERF_INSIGHT_TEMP, file_b)):
             shutil.copy(os.path.join(PERF_INSIGHT_TEMP, file_b), config)
         else:
-            LOG.error('Can not find file {} or {} in {}.'.format(
-                file_a, file_b, PERF_INSIGHT_TEMP))
-            return False
+            msg = 'Can not find file "{}" or "{}" in "{}".'.format(
+                file_a, file_b, PERF_INSIGHT_TEMP)
+            LOG.error(msg)
+            return False, msg
 
         # Create DB loader CSV
         datastore = os.path.join(workspace, 'datastore.json')
@@ -221,38 +241,46 @@ class TestRunManager():
             PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
         res = os.system(cmd)
         if res > 0:
-            LOG.error('Failed to create DB loader CSV.')
-            return False
+            msg = 'Failed to create DB loader CSV.'
+            LOG.error(msg)
+            return False, msg
 
         # Update database
         if os.path.exists(DASHBOARD_DB_FILE):
             db_file = DASHBOARD_DB_FILE
         else:
-            LOG.error('Can not find the dashboard DB file {}'.format(
-                DASHBOARD_DB_FILE))
-            return False
+            msg = 'Can not find the dashboard DB file "{}".'.format(
+                DASHBOARD_DB_FILE)
+            LOG.error(msg)
+            return False, msg
 
         if testrun_type == 'fio':
             flag = '--storage'
         elif testrun_type == 'uperf':
             flag = '--network'
         else:
-            LOG.error('Unsupported TestRun Type "{}".'.format(testrun_type))
-            return False
+            msg = 'Unsupported TestRun Type "{}" for "flask_load_db.py".'.format(
+                testrun_type)
+            LOG.error(msg)
+            return False, msg
 
         cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, testrun_id)
         res = os.system(cmd)
         if res > 0:
-            return False
+            msg = 'Failed to clean up specified TestRunID from database.'
+            LOG.error(msg)
+            return False, msg
 
         cmd = '{}/data_process/flask_load_db.py {} --db_file {} --csv_file {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, dbloader)
         res = os.system(cmd)
         if res > 0:
-            return False
+            msg = 'Failed to load specified TestRunID into database.'
+            LOG.error(msg)
+            return False, msg
 
-        return True
+        return True, None
 
 
 LOG = logging.getLogger(__name__)
@@ -328,7 +356,7 @@ def add_testrun():
 
     # Execute action
     if action == 'load':
-        res = testrun_manager.load_testrun(
+        res, con = testrun_manager.load_testrun(
             id=id,
             generate_plots=generate_plots,
             create_datastore=create_datastore,
@@ -336,7 +364,7 @@ def add_testrun():
     elif action == 'import':
         res = testrun_manager.import_testrun(req)
 
-    if res is False:
-        return jsonify({'error': 'Internal error.'}), 500
-
-    return jsonify(req), 201
+    if res:
+        return jsonify(con), 201
+    else:
+        return jsonify({'error': con}), 500
