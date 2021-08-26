@@ -47,7 +47,7 @@ def create_redirect_html(externel_url, filename=None, wait_sec=1):
     with open(filename, 'w') as f:
         f.write(html_content)
 
-    logging.info('Created redirect HTML "{}" for URL "{}".'.format(
+    LOG.info('Created redirect HTML "{}" for URL "{}".'.format(
         filename, externel_url))
 
 

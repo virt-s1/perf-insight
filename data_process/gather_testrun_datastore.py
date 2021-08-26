@@ -65,13 +65,13 @@ if __name__ == '__main__':
     output = ARGS.output
 
     # Gather data for the datastore
-    logging.info('Gathering datastore.')
+    LOG.info('Gathering datastore.')
     datastore = []
 
     for d in os.listdir(logdir):
         dname = os.path.join(logdir, d)
         if os.path.isdir(dname) and d.startswith(prefix):
-            logging.info('Collecting data from "{}".'.format(d))
+            LOG.info('Collecting data from "{}".'.format(d))
             fname = os.path.join(logdir, d, 'result.json')
             with open(fname, 'r') as f:
                 data = json.load(f)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     # Drop failures
     if drop_failures in ('enforcing', 'restricted'):
-        logging.info('Analyzing and dropping failures.')
+        LOG.info('Analyzing and dropping failures.')
         records = datastore.copy()
         datastore.clear()
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
             # drop or save this record
             if drop_this_record:
-                logging.info('{}/{} has been droped.'.format(
+                LOG.info('{}/{} has been droped.'.format(
                     path_lv_1, path_lv_2))
             else:
                 datastore.append(record)
