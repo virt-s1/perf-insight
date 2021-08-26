@@ -163,32 +163,55 @@ class TestRunManager():
         pass
 
     def _generate_plots(self, workspace):
-        """Generate plots for pbench-fio results."""
+        """Generate plots for pbench-fio results.
+        Input:
+            workspace - the path of the workspace.
+        Return:
+            True or False if something goes wrong.
+        """
+        LOG.info('Generate plots for pbench-fio results.')
+
         cmd = '{}/data_process/generate_pbench_fio_plots.sh -d {}'.format(
             PERF_INSIGHT_REPO, workspace)
-        os.system(cmd)
+        res = os.system(cmd)
+
+        return True if res == 0 else False
 
     def _create_datastore(self, workspace):
-        """Create datastore for the testrun."""
+        """Create datastore for the TestRun.
+        Input:
+            workspace - the path of the workspace.
+        Return:
+            True or False if something goes wrong.
+        """
+        LOG.info('Create datastore for the TestRun.')
+
         cmd = '{}/data_process/gather_testrun_datastore.py --logdir {} \
 --output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
-        os.system(cmd)
+        res = os.system(cmd)
+
+        return True if res == 0 else False
 
     def _update_dashboard(self, workspace):
-        """Update the testrun into dashboard."""
+        """Update the testrun into dashboard.
+        Input:
+            workspace - the path of the workspace.
+        Return:
+            True or False if something goes wrong.
+        """
+        LOG.info('Update the dashboard database.')
 
         # Get keywords from metadata
         try:
             f = os.path.join(workspace, 'metadata.json')
             with open(f, 'r') as f:
                 m = json.load(f)
+            testrun_id = m.get('testrun-id')
+            testrun_type = m.get('testrun-type')
+            testrun_platform = m.get('testrun-platform')
         except Exception as err:
-            LOG.info('Fail to get metadata from {}. error={}'.format(f, err))
-            m = None
-
-        testrun_id = m.get('testrun-id')
-        testrun_type = m.get('testrun-type')
-        testrun_platform = m.get('testrun-platform')
+            LOG.error('Fail to get metadata from {}. error={}'.format(f, err))
+            return False
 
         # Get best config file
         config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
@@ -203,22 +226,20 @@ class TestRunManager():
         else:
             LOG.error('Can not find file {} or {} in {}.'.format(
                 file_a, file_b, PERF_INSIGHT_TEMP))
-            return
+            return False
 
         # Create DB loader CSV
         datastore = os.path.join(workspace, 'datastore.json')
         metadata = os.path.join(workspace, 'metadata.json')
         dbloader = os.path.join(workspace, '.testrun_results_dbloader.csv')
 
-        LOG.info('Creating DB loader CSV...')
         cmd = '{}/data_process/generate_testrun_results.py --config {} --datastore {} \
 --metadata {} --output-format csv --output {}'.format(
             PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
         res = os.system(cmd)
-
         if res > 0:
             LOG.error('Failed to create DB loader CSV.')
-            return
+            return False
 
         # Update database
         if os.path.exists(DASHBOARD_DB_FILE):
@@ -226,24 +247,29 @@ class TestRunManager():
         else:
             LOG.error('Can not find the dashboard DB file {}'.format(
                 DASHBOARD_DB_FILE))
-            return
+            return False
 
         if testrun_type == 'fio':
             flag = '--storage'
         elif testrun_type == 'uperf':
             flag = '--network'
+        else:
+            LOG.error('Unsupported TestRun Type "{}".'.format(testrun_type))
+            return False
 
-        LOG.info('Cleaning up the TestRun from database...')
         cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, testrun_id)
-        os.system(cmd)
+        res = os.system(cmd)
+        if res > 0:
+            return False
 
-        LOG.info('Loading the TestRun into database...')
         cmd = '{}/data_process/flask_load_db.py {} --db_file {} --csv_file {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, dbloader)
-        os.system(cmd)
+        res = os.system(cmd)
+        if res > 0:
+            return False
 
-        return
+        return True
 
 
 LOG = logging.getLogger(__name__)
