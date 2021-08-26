@@ -54,7 +54,7 @@ class TestRunManager():
         #     with open(datastore_file, 'r') as f:
         #         datastore = json.load(f)
         # except Exception as err:
-        #     LOG.info('Fail to get datastore from {}. error={}'.format(
+        #     LOG.info('Fail to get datastore from {}. error: {}'.format(
         #         datastore_file, err))
         #     datastore = None
         # testrun.update({'datastore': datastore})
@@ -65,14 +65,14 @@ class TestRunManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            LOG.info('Fail to get metadata from {}. error={}'.format(
+            LOG.info('Fail to get metadata from {}. error: {}'.format(
                 metadata_file, err))
             metadata = None
         testrun.update({'metadata': metadata})
 
         return testrun
 
-    def load_testrun(self, request):
+    def load_testrun(self, id, generate_plots, create_datastore, update_dashboard):
         """Load TestRun from staged eara.
 
         Input:
@@ -80,36 +80,6 @@ class TestRunManager():
         Return:
             True or False if something goes wrong.
         """
-
-        # Parse args
-        id = request.get('id')
-        if id is None:
-            LOG.error('"id" is missing in request.')
-            return False
-
-        create_datastore = request.get('create_datastore')
-        if create_datastore is None:
-            LOG.error('"create_datastore" is missing in request.')
-            return False
-        elif not isinstance(create_datastore, bool):
-            LOG.error('"create_datastore" in request must be a bool value.')
-            return False
-
-        update_dashboard = request.get('update_dashboard')
-        if update_dashboard is None:
-            LOG.error('"update_dashboard" is missing in request.')
-            return False
-        elif not isinstance(update_dashboard, bool):
-            LOG.error('"update_dashboard" in request must be a bool value.')
-            return False
-
-        generate_plots = request.get('generate_plots')
-        if generate_plots is None:
-            LOG.error('"generate_plots" is missing in request.')
-            return False
-        elif not isinstance(generate_plots, bool):
-            LOG.error('"generate_plots" in request must be a bool value.')
-            return False
 
         # Criteria check
         target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
@@ -130,7 +100,7 @@ class TestRunManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            LOG.error('Fail to get metadata from {}. error={}'.format(
+            LOG.error('Fail to get metadata from {}. error: {}'.format(
                 metadata_file, err))
             return False
 
@@ -138,17 +108,29 @@ class TestRunManager():
 
         # Perform data process
         if generate_plots:
-            self._generate_plots(workspace)
+            res = self._generate_plots(workspace)
+            if res is False:
+                return False
+
         if create_datastore:
-            self._create_datastore(workspace)
+            res = self._create_datastore(workspace)
+            if res is False:
+                return False
+
         if update_dashboard:
-            self._update_dashboard(workspace)
+            res = self._update_dashboard(workspace)
+            if res is False:
+                return False
 
         # Deal with the files
-        shutil.copytree(workspace, target)
-        staged_eara = os.path.join(PERF_INSIGHT_ROOT, '.staged')
-        shutil.move(os.path.join(staged_eara, id), os.path.join(
-            staged_eara, '.deleted_after_loading__{}'.format(id)))
+        try:
+            shutil.copytree(workspace, target)
+            staged_eara = os.path.join(PERF_INSIGHT_ROOT, '.staged')
+            shutil.move(os.path.join(staged_eara, id), os.path.join(
+                staged_eara, '.deleted_after_loading__{}'.format(id)))
+        except Exception as err:
+            LOG.error('Fail to deal with the files. error: {}'.format(err))
+            return False
 
         return True
 
@@ -160,6 +142,7 @@ class TestRunManager():
         Return:
             True or False if something goes wrong.
         """
+        # TODO: need to implement 'import_testrun()'.
         pass
 
     def _generate_plots(self, workspace):
@@ -210,7 +193,7 @@ class TestRunManager():
             testrun_type = m.get('testrun-type')
             testrun_platform = m.get('testrun-platform')
         except Exception as err:
-            LOG.error('Fail to get metadata from {}. error={}'.format(f, err))
+            LOG.error('Fail to get metadata from {}. error: {}'.format(f, err))
             return False
 
         # Get best config file
@@ -312,13 +295,48 @@ def add_testrun():
     if request.is_json:
         req = request.get_json()
     else:
-        return jsonify({"error": "Request must be JSON."}), 415
+        return jsonify({'error': 'Request must be JSON.'}), 415
 
-    if req.get('action') == 'load':
-        testrun_manager.load_testrun(req)
-    elif req.get('action') == 'import':
-        testrun_manager.import_testrun(req)
-    else:
-        return {"error": "No action in request or unsupported action."}, 415
+    # Parse args
+    action = req.get('action')
+    if action is None:
+        return jsonify({'error': '"action" is missing in request.'}), 415
+    elif not action in ('load', 'import'):
+        return jsonify({'error': '"action" must be "load" or "import".'}), 415
+
+    id = req.get('id')
+    if id is None:
+        return jsonify({'error': '"id" is missing in request.'}), 415
+
+    generate_plots = req.get('generate_plots')
+    if generate_plots is None:
+        return jsonify({'error': '"generate_plots" is missing in request.'}), 415
+    elif not isinstance(generate_plots, bool):
+        return jsonify({'error': '"generate_plots" in request must be a bool value.'}), 415
+
+    create_datastore = req.get('create_datastore')
+    if create_datastore is None:
+        return jsonify({'error': '"create_datastore" is missing in request.'}), 415
+    elif not isinstance(create_datastore, bool):
+        return jsonify({'error': '"create_datastore" in request must be a bool value.'}), 415
+
+    update_dashboard = req.get('update_dashboard')
+    if update_dashboard is None:
+        return jsonify({'error': '"update_dashboard" is missing in request.'}), 415
+    elif not isinstance(update_dashboard, bool):
+        return jsonify({'error': '"update_dashboard" in request must be a bool value.'}), 415
+
+    # Execute action
+    if action == 'load':
+        res = testrun_manager.load_testrun(
+            id=id,
+            generate_plots=generate_plots,
+            create_datastore=create_datastore,
+            update_dashboard=update_dashboard)
+    elif action == 'import':
+        res = testrun_manager.import_testrun(req)
+
+    if res is False:
+        return jsonify({'error': 'Internal error.'}), 500
 
     return jsonify(req), 201
