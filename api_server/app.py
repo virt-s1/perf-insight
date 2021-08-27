@@ -4,6 +4,7 @@ import os
 import yaml
 import json
 import shutil
+import time
 
 
 class TestRunManager():
@@ -129,9 +130,12 @@ class TestRunManager():
         # Deal with the files
         try:
             shutil.copytree(workspace, target)
-            staged_eara = os.path.join(PERF_INSIGHT_ROOT, '.staged')
-            shutil.move(os.path.join(staged_eara, id), os.path.join(
-                staged_eara, '.deleted_after_loading__{}'.format(id)))
+            shutil.move(workspace, os.path.join(
+                os.path.dirname(workspace),
+                '.deleted_after_loading_{}__{}'.format(
+                    time.strftime('%y%m%d%H%M%S',
+                                  time.localtime()),
+                    os.path.basename(workspace))))
         except Exception as err:
             msg = 'Fail to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -158,6 +162,7 @@ class TestRunManager():
             - (True, None), or
             - (False, message) if something goes wrong.
         """
+
         LOG.info('Generate plots for pbench-fio results.')
 
         cmd = '{}/data_process/generate_pbench_fio_plots.sh -d {}'.format(
@@ -305,12 +310,14 @@ testrun_manager = TestRunManager()
 
 @app.get('/testruns')
 def query_testruns():
+    LOG.info('Received request to query all TestRuns.')
     result = testrun_manager.query_testruns()
     return jsonify({'testruns': {'testrun': result}}), 200
 
 
 @app.get('/testruns/<id>')
 def inspect_testrun(id):
+    LOG.info('Received request to inspect TestRun "{}".'.format(id))
     result = testrun_manager.inspect_testrun(id)
     if result is None:
         return jsonify({'error': 'The requested resource was not found.'}), 404
@@ -356,12 +363,14 @@ def add_testrun():
 
     # Execute action
     if action == 'load':
+        LOG.info('Received request to load TestRun "{}".'.format(id))
         res, con = testrun_manager.load_testrun(
             id=id,
             generate_plots=generate_plots,
             create_datastore=create_datastore,
             update_dashboard=update_dashboard)
     elif action == 'import':
+        LOG.info('Received request to import TestRun "{}".'.format(id))
         res = testrun_manager.import_testrun(req)
 
     if res:
