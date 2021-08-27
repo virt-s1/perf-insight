@@ -16,7 +16,7 @@ ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
 # install basic packages
-RUN dnf install -y jq pip psmisc findutils
+RUN dnf install -y jq pip psmisc findutils which
 
 # install pip requirements
 ADD ./requirements.txt /tmp/requirements.txt
