@@ -14,7 +14,8 @@ class TestRunManager():
         Input:
             None
         Return:
-            A list of TestRunIDs.
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
         """
 
         testruns = []
@@ -22,7 +23,9 @@ class TestRunManager():
         search_path = os.path.join(PERF_INSIGHT_ROOT, 'testruns')
 
         if not os.path.isdir(search_path):
-            return testruns
+            msg = 'Path "{}" does not exist.'.format(search_path)
+            LOG.error(msg)
+            return False, msg
 
         for entry in os.listdir(search_path):
             if not os.path.isdir(os.path.join(search_path, entry)):
@@ -31,7 +34,7 @@ class TestRunManager():
                 LOG.debug('Found TestRunID "{}".'.format(entry))
                 testruns.append({'id': entry})
 
-        return testruns
+        return True, {'testruns': testruns}
 
     def inspect_testrun(self, id):
         """Inspect a specified TestRunID from PERF_INSIGHT_ROOT.
@@ -379,8 +382,11 @@ testrun_manager = TestRunManager()
 @app.get('/testruns')
 def query_testruns():
     LOG.info('Received request to query all TestRuns.')
-    result = testrun_manager.query_testruns()
-    return jsonify({'testruns': {'testrun': result}}), 200
+    res, con = testrun_manager.query_testruns()
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
 
 
 @app.get('/testruns/<id>')
