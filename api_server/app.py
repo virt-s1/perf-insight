@@ -190,7 +190,7 @@ class TestRunManager():
         LOG.info('Create datastore for the TestRun.')
 
         cmd = '{}/data_process/gather_testrun_datastore.py --logdir {} \
---output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
+            --output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
         res = os.system(cmd)
 
         if res == 0:
@@ -245,7 +245,7 @@ class TestRunManager():
         dbloader = os.path.join(workspace, '.testrun_results_dbloader.csv')
 
         cmd = '{}/data_process/generate_testrun_results.py --config {} --datastore {} \
---metadata {} --output-format csv --output {}'.format(
+            --metadata {} --output-format csv --output {}'.format(
             PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
         res = os.system(cmd)
         if res > 0:
@@ -289,6 +289,62 @@ class TestRunManager():
             return False, msg
 
         return True, None
+
+    def delete_testrun(self, id):
+        """Delete a specified TestRunID from PERF_INSIGHT_ROOT.
+
+        Input:
+            id - TestRunID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+       # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(target):
+            msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Remove from dashboard
+        if os.path.exists(DASHBOARD_DB_FILE):
+            db_file = DASHBOARD_DB_FILE
+        else:
+            msg = 'Can not find the dashboard DB file "{}".'.format(
+                DASHBOARD_DB_FILE)
+            LOG.error(msg)
+            return False, msg
+
+        testrun_type = id.split('_')[0]
+        if testrun_type == 'fio':
+            flag = '--storage'
+        elif testrun_type == 'uperf':
+            flag = '--network'
+        else:
+            msg = 'Unsupported TestRun Type "{}" for "flask_load_db.py".'.format(
+                testrun_type)
+            LOG.error(msg)
+            return False, msg
+
+        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+            PERF_INSIGHT_REPO, flag, db_file, id)
+        res = os.system(cmd)
+        if res > 0:
+            msg = 'Failed to clean up specified TestRunID from database.'
+            LOG.error(msg)
+            return False, msg
+
+        # Deal with the files
+        try:
+            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+                time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
+        except Exception as err:
+            msg = 'Fail to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id}
 
 
 LOG = logging.getLogger(__name__)
@@ -379,5 +435,15 @@ def add_testrun():
 
     if res:
         return jsonify(con), 201
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.delete('/testruns/<id>')
+def delete_testrun(id):
+    LOG.info('Received request to delete TestRun "{}".'.format(id))
+    res, con = testrun_manager.delete_testrun(id)
+    if res:
+        return jsonify(con), 204    # 204 will return nothing
     else:
         return jsonify({'error': con}), 500
