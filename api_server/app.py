@@ -77,7 +77,10 @@ class TestRunManager():
         """Load TestRun from staged eara.
 
         Input:
-            request - the request json.
+            id               - TestRunID
+            generate_plots   - [bool] generate plots
+            create_datastore - [bool] create datastore
+            update_dashboard - [bool] update dashboard
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -90,7 +93,7 @@ class TestRunManager():
             LOG.error(msg)
             return False, msg
 
-        workspace = os.path.join(PERF_INSIGHT_ROOT, '.staged', id)
+        workspace = os.path.join(PERF_INSIGHT_STAG, id)
         if not os.path.isdir(workspace):
             msg = 'Folder "{}" can not be found in staged eara.'.format(id)
             LOG.error(msg)
@@ -303,6 +306,7 @@ PERF_INSIGHT_REPO = user_config.get(
     'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
 PERF_INSIGHT_TEMP = os.path.join(
     PERF_INSIGHT_REPO,  'data_process', 'templates')
+PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staged')
 DASHBOARD_DB_FILE = user_config.get('flask', {}).get('db_file')
 
 testrun_manager = TestRunManager()
