@@ -12,11 +12,12 @@ chcon -R -u system_u -t svirt_sandbox_file_t /nfs/perf-insight
 chcon -R -u system_u -t svirt_sandbox_file_t $HOME/.perf-insight.yaml
 
 # run as debug container
-podman run --volume $HOME/mirror/codespace/perf-insight:/opt/perf-insight:rw \
+podman run --rm -it --name perf-insight-api-server \
+    --volume $HOME/mirror/codespace/perf-insight:/opt/perf-insight:rw \
     --volume /nfs/perf-insight:/nfs/perf-insight:rw \
     --volume $HOME/.perf-insight.yaml:/root/.perf-insight.yaml:rw \
     --publish 5001:5000 \
-    --rm -it perf-insight-api-server /bin/bash
+    perf-insight-api-server /bin/bash
 
 # start API server (inside container)
 cd /opt/perf-insight/api_server
