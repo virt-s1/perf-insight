@@ -37,28 +37,21 @@ class TestRunManager():
         """Inspect a specified TestRunID from PERF_INSIGHT_ROOT.
 
         Input:
-            id = TestRunID
+            id - TestRunID
         Return:
-            A dict of TestRun information.
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
         """
 
+        # Criteria check
         search_path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
         if not os.path.isdir(search_path):
-            return None
+            msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
 
         # Get TestRunID
         testrun = {'id': id}
-
-        # # Get datastore
-        # try:
-        #     datastore_file = os.path.join(search_path, 'datastore.json')
-        #     with open(datastore_file, 'r') as f:
-        #         datastore = json.load(f)
-        # except Exception as err:
-        #     LOG.info('Fail to get datastore from {}. error: {}'.format(
-        #         datastore_file, err))
-        #     datastore = None
-        # testrun.update({'datastore': datastore})
 
         # Get metadata
         try:
@@ -66,12 +59,27 @@ class TestRunManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            LOG.info('Fail to get metadata from {}. error: {}'.format(
-                metadata_file, err))
+            msg = 'Fail to get metadata from {}. error: {}'.format(
+                metadata_file, err)
+            LOG.warning(msg)
             metadata = None
+
         testrun.update({'metadata': metadata})
 
-        return testrun
+        # Get datastore
+        # try:
+        #     datastore_file = os.path.join(search_path, 'datastore.json')
+        #     with open(datastore_file, 'r') as f:
+        #         datastore = json.load(f)
+        # except Exception as err:
+        #     msg = 'Fail to get datastore from {}. error: {}'.format(
+        #         datastore_file, err)
+        #     LOG.warning(msg)
+        #     datastore = None
+
+        # testrun.update({'datastore': datastore})
+
+        return True, testrun
 
     def load_testrun(self, id, generate_plots, create_datastore, update_dashboard):
         """Load TestRun from staged eara.
@@ -378,11 +386,11 @@ def query_testruns():
 @app.get('/testruns/<id>')
 def inspect_testrun(id):
     LOG.info('Received request to inspect TestRun "{}".'.format(id))
-    result = testrun_manager.inspect_testrun(id)
-    if result is None:
-        return jsonify({'error': 'The requested resource was not found.'}), 404
+    res, con = testrun_manager.inspect_testrun(id)
+    if res:
+        return jsonify(con), 200
     else:
-        return jsonify({'testrun': result}), 200
+        return jsonify({'error': con}), 500
 
 
 @app.post('/testruns')
@@ -444,6 +452,6 @@ def delete_testrun(id):
     LOG.info('Received request to delete TestRun "{}".'.format(id))
     res, con = testrun_manager.delete_testrun(id)
     if res:
-        return jsonify(con), 204    # 204 will return nothing
+        return jsonify(con), 204    # 204 returns nothing in content
     else:
         return jsonify({'error': con}), 500
