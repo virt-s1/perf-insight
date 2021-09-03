@@ -301,6 +301,33 @@ class TestRunManager():
 
         return True, None
 
+    def fetch_testrun(self, id):
+        """Fetch a specified TestRunID to the staged eara.
+
+        Input:
+            id - TestRunID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(target):
+            msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Deal with the files
+        try:
+            shutil.copytree(target, os.path.join(PERF_INSIGHT_STAG, id))
+        except Exception as err:
+            msg = 'Fail to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id}
+
     def delete_testrun(self, id):
         """Delete a specified TestRunID from PERF_INSIGHT_ROOT.
 
@@ -311,7 +338,7 @@ class TestRunManager():
             - (False, message) if something goes wrong.
         """
 
-       # Criteria check
+        # Criteria check
         target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
         if not os.path.isdir(target):
             msg = 'TestRunID "{}" does not exist.'.format(id)
@@ -449,6 +476,16 @@ def add_testrun():
 
     if res:
         return jsonify(con), 201
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.put('/testruns/<id>')
+def fetch_testrun(id):
+    LOG.info('Received request to fetch TestRun "{}".'.format(id))
+    res, con = testrun_manager.fetch_testrun(id)
+    if res:
+        return jsonify(con), 200
     else:
         return jsonify({'error': con}), 500
 
