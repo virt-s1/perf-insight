@@ -84,7 +84,8 @@ class TestRunManager():
 
         return True, testrun
 
-    def load_testrun(self, id, generate_plots, create_datastore, update_dashboard):
+    def load_testrun(self, id, generate_plots, create_datastore,
+                     update_dashboard):
         """Load TestRun from staged eara.
 
         Input:
@@ -157,16 +158,76 @@ class TestRunManager():
 
         return True, testrun
 
-    def import_testrun(self, request):
+    def import_testrun(self, id, create_datastore, update_dashboard,
+                       metadata, external_urls):
         """Import TestRun from external pbench server.
 
         Input:
-            request - the request json.
+            id               - TestRunID
+            create_datastore - [bool] create datastore
+            update_dashboard - [bool] update dashboard
+            metadata         - [dict] metadata
+            external_urls    - [list] external URLs
         Return:
-            True or False if something goes wrong.
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
         """
-        # TODO: need to implement 'import_testrun()'.
-        pass
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if os.path.isdir(target):
+            msg = 'TestRunID "{}" already exists.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        workspace = os.path.join(PERF_INSIGHT_STAG, id)
+        if os.path.isdir(workspace):
+            msg = 'Folder "{}" already exists in staged eara.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Get TestRunID and metadata
+        testrun = {'id': id}
+
+        # TODO: implement the metadata logic
+        # try:
+        #     metadata_file = os.path.join(workspace, 'metadata.json')
+        #     with open(metadata_file, 'r') as f:
+        #         metadata = json.load(f)
+        # except Exception as err:
+        #     msg = 'Fail to get metadata from {}. error: {}'.format(
+        #         metadata_file, err)
+        #     LOG.error(msg)
+        #     return False, msg
+
+        # testrun.update({'metadata': metadata})
+
+        # Perform data process
+        if create_datastore:
+            res, msg = self._create_datastore(workspace)
+            if res is False:
+                return False, msg
+
+        if update_dashboard:
+            res, msg = self._update_dashboard(workspace)
+            if res is False:
+                return False, msg
+
+        # Deal with the files
+        try:
+            shutil.copytree(workspace, target)
+            shutil.move(workspace, os.path.join(
+                os.path.dirname(workspace),
+                '.deleted_after_loading_{}__{}'.format(
+                    time.strftime('%y%m%d%H%M%S',
+                                  time.localtime()),
+                    os.path.basename(workspace))))
+        except Exception as err:
+            msg = 'Fail to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, testrun
 
     def _generate_plots(self, workspace):
         """Generate plots for pbench-fio results.
@@ -444,11 +505,10 @@ def add_testrun():
     if id is None:
         return jsonify({'error': '"id" is missing in request.'}), 415
 
-    generate_plots = req.get('generate_plots')
-    if generate_plots is None:
-        return jsonify({'error': '"generate_plots" is missing in request.'}), 415
-    elif not isinstance(generate_plots, bool):
-        return jsonify({'error': '"generate_plots" in request must be a bool value.'}), 415
+    if action == 'load':
+        LOG.info('Received request to load TestRun "{}".'.format(id))
+    elif action == 'import':
+        LOG.info('Received request to import TestRun "{}".'.format(id))
 
     create_datastore = req.get('create_datastore')
     if create_datastore is None:
@@ -462,17 +522,40 @@ def add_testrun():
     elif not isinstance(update_dashboard, bool):
         return jsonify({'error': '"update_dashboard" in request must be a bool value.'}), 415
 
+    if action == 'load':
+        generate_plots = req.get('generate_plots')
+        if generate_plots is None:
+            return jsonify({'error': '"generate_plots" is missing in request.'}), 415
+        elif not isinstance(generate_plots, bool):
+            return jsonify({'error': '"generate_plots" in request must be a bool value.'}), 415
+
+    if action == 'import':
+        metadata = req.get('metadata')
+        if metadata is None:
+            return jsonify({'error': '"metadata" is missing in request.'}), 415
+        elif not isinstance(metadata, dict):
+            return jsonify({'error': '"metadata" in request must be a json block.'}), 415
+
+        external_urls = req.get('external_urls')
+        if external_urls is None:
+            return jsonify({'error': '"external_urls" is missing in request.'}), 415
+        elif not isinstance(external_urls, list):
+            return jsonify({'error': '"external_urls" in request must be a json block.'}), 415
+
     # Execute action
     if action == 'load':
-        LOG.info('Received request to load TestRun "{}".'.format(id))
         res, con = testrun_manager.load_testrun(
             id=id,
             generate_plots=generate_plots,
             create_datastore=create_datastore,
             update_dashboard=update_dashboard)
     elif action == 'import':
-        LOG.info('Received request to import TestRun "{}".'.format(id))
-        res = testrun_manager.import_testrun(req)
+        res, con = testrun_manager.import_testrun(
+            id=id,
+            create_datastore=create_datastore,
+            update_dashboard=update_dashboard,
+            metadata=metadata,
+            external_urls=external_urls)
 
     if res:
         return jsonify(con), 201
