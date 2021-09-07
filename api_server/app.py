@@ -5,6 +5,7 @@ import yaml
 import json
 import shutil
 import time
+import urllib
 
 
 class TestRunManager():
@@ -182,14 +183,78 @@ class TestRunManager():
 
         workspace = os.path.join(PERF_INSIGHT_STAG, id)
         if os.path.isdir(workspace):
-            msg = 'Folder "{}" already exists in staged eara.'.format(id)
+            LOG.warning(
+                'Folder "{}" already exists in the staged area and will be overwritten.'.format(id))
+            shutil.rmtree(workspace, ignore_errors=True)
+
+        testrun_type = metadata.get('testrun-type')
+        if testrun_type is None:
+            msg = '"testrun-type" must be provisioned in metadata.'
+            LOG.error(msg)
+            return False, msg
+        if testrun_type not in ('fio', 'uperf'):
+            msg = 'Unsupported testrun-type "{}" from metadata. Valid types: "fio", "uperf".'.format(
+                testrun_type)
             LOG.error(msg)
             return False, msg
 
-        # Get TestRunID and metadata
-        testrun = {'id': id}
+        for url in external_urls:
+            url = url.strip('/')
+            basename = os.path.basename(url)
+            if not basename.startswith(testrun_type):
+                msg = 'URL with "{}" cannot be handled as "{}" tests.'.format(
+                    basename, testrun_type)
+                LOG.error(msg)
+                return False, msg
+
+        # Create a workspace in the staged eara
+        os.makedirs(workspace)
+
+        # Retrive the URLs
+        for url in external_urls:
+            url = url.strip('/')
+            subfolder = os.path.join(workspace, os.path.basename(url))
+
+            # Download the result.json file
+            from_file = url + '/result.json'
+            to_file = os.path.join(subfolder, 'result.json')
+
+            LOG.debug('Downloading "{}" as "{}".'.format(from_file, to_file))
+            try:
+                os.makedirs(subfolder)
+                urllib.request.urlretrieve(from_file, to_file)
+            except Exception as e:
+                msg = 'Failed to download result.json: {}'.format(e)
+                LOG.error(msg)
+                return False, msg
+
+            # Create an html file for redirecting
+            LOG.debug('Creating an html file for redirecting "{}".'.format(url))
+            filename = os.path.basename(url) + '.html'
+            html_content = '''
+                <head><meta http-equiv="refresh" content="{0};url={1}"></head>
+                <body>Redirecting to <a href="{1}">{1}</a></body>
+                '''.format(1, url)
+
+            with open(os.path.join(workspace, filename), 'w') as f:
+                f.write(html_content)
 
         # TODO: implement the metadata logic
+        # add external_url.txt
+        # deal with the urls into metadata (?)
+        # dump to metadata.json
+        # creawte datastore
+        # update dashboard
+
+        # Update metadata and dump to a file
+        if metadata.get('testrun-id') != id:
+            LOG.warning(
+                'The "testrun-id" in metadata is mismatched, replace with "{}".'.format(id))
+        metadata['testrun-id'] = id
+
+        # Return
+        return True, {'id': id, 'metadata': metadata}
+
         # try:
         #     metadata_file = os.path.join(workspace, 'metadata.json')
         #     with open(metadata_file, 'r') as f:
@@ -218,7 +283,7 @@ class TestRunManager():
             shutil.copytree(workspace, target)
             shutil.move(workspace, os.path.join(
                 os.path.dirname(workspace),
-                '.deleted_after_loading_{}__{}'.format(
+                '.deleted_after_importing_{}__{}'.format(
                     time.strftime('%y%m%d%H%M%S',
                                   time.localtime()),
                     os.path.basename(workspace))))
