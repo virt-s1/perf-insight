@@ -87,7 +87,7 @@ class TestRunManager():
 
     def load_testrun(self, id, generate_plots, create_datastore,
                      update_dashboard):
-        """Load TestRun from staged eara.
+        """Load TestRun from staging area.
 
         Input:
             id               - TestRunID
@@ -108,7 +108,7 @@ class TestRunManager():
 
         workspace = os.path.join(PERF_INSIGHT_STAG, id)
         if not os.path.isdir(workspace):
-            msg = 'Folder "{}" can not be found in staged eara.'.format(id)
+            msg = 'Folder "{}" can not be found in staging area.'.format(id)
             LOG.error(msg)
             return False, msg
 
@@ -184,7 +184,7 @@ class TestRunManager():
         workspace = os.path.join(PERF_INSIGHT_STAG, id)
         if os.path.isdir(workspace):
             LOG.warning(
-                'Folder "{}" already exists in the staged area and will be overwritten.'.format(id))
+                'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
             shutil.rmtree(workspace, ignore_errors=True)
 
         testrun_type = metadata.get('testrun-type')
@@ -207,7 +207,7 @@ class TestRunManager():
                 LOG.error(msg)
                 return False, msg
 
-        # Create a workspace in the staged eara
+        # Create a workspace in the staging area
         os.makedirs(workspace)
 
         # Retrive data from the URLs
@@ -423,7 +423,7 @@ class TestRunManager():
         return True, None
 
     def fetch_testrun(self, id):
-        """Fetch a specified TestRunID to the staged eara.
+        """Fetch a specified TestRunID to the staging area.
 
         Input:
             id - TestRunID
@@ -521,7 +521,7 @@ PERF_INSIGHT_REPO = user_config.get(
     'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
 PERF_INSIGHT_TEMP = os.path.join(
     PERF_INSIGHT_REPO,  'data_process', 'templates')
-PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staged')
+PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 DASHBOARD_DB_FILE = user_config.get('flask', {}).get('db_file')
 
 testrun_manager = TestRunManager()
