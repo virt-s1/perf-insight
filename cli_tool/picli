@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+"""
+PiCLI - the CLI tool for perf-insight server.
+
+Read this for more details on Click Context:
+https://click.palletsprojects.com/en/8.0.x/commands/
+"""
+import click
+import requests
+import json
+
+
+@click.group()
+@click.option('--debug/--no-debug', default=False)
+@click.option('--api-server')
+@click.pass_context
+def cli(ctx, debug, api_server):
+    ctx.ensure_object(dict)
+    ctx.obj['DEBUG'] = debug
+    if api_server:
+        ctx.obj['API_SERVER'] = api_server
+
+
+@cli.command()
+@click.pass_context
+def testrun_list(ctx):
+    """testrun_list."""
+    click.echo('API server: {API_SERVER}'.format(**ctx.obj))
+
+    url = 'http://{API_SERVER}/testruns'.format(**ctx.obj)
+
+    try:
+        response = requests.get(url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        for testrun in result.get('testruns', {}):
+            click.echo("{}".format(testrun['id']))
+
+    except requests.exceptions.RequestException as ex:
+        click.echo("something wrong: {}".format(ex))
+
+
+@cli.command()
+@click.option('--testrun-id')
+@click.pass_context
+def testrun_inspect(ctx, testrun_id):
+    """testrun_inspect."""
+    API_SERVER = ctx.obj['API_SERVER']
+    click.echo('API server: {API_SERVER}'.format(**ctx.obj))
+
+    url = 'http://{}/testruns/{}'.format(API_SERVER, testrun_id)
+
+    try:
+        response = requests.get(url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo("{}".format(result))
+
+    except requests.exceptions.RequestException as ex:
+        click.echo("something wrong: {}".format(ex))
+
+
+@cli.command()
+@click.pass_context
+def testrun_load(ctx):
+    """testrun_load."""
+    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+
+
+@cli.command()
+@click.pass_context
+def testrun_import(ctx):
+    """testrun_import."""
+    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+
+
+@cli.command()
+@click.pass_context
+def testrun_fetch(ctx):
+    """testrun_fetch."""
+    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+
+
+@cli.command()
+@click.pass_context
+def testrun_delete(ctx):
+    """testrun_delete."""
+    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+
+
+if __name__ == '__main__':
+    cli(obj={'API_SERVER': 'localhost:5001'})
