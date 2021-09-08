@@ -210,7 +210,7 @@ class TestRunManager():
         # Create a workspace in the staged eara
         os.makedirs(workspace)
 
-        # Retrive the URLs
+        # Retrive data from the URLs
         for url in external_urls:
             url = url.strip('/')
             subfolder = os.path.join(workspace, os.path.basename(url))
@@ -228,6 +228,10 @@ class TestRunManager():
                 LOG.error(msg)
                 return False, msg
 
+            # Write down external_url.txt
+            with open(os.path.join(subfolder, 'external_url.txt'), 'w') as f:
+                f.write(url)
+
             # Create an html file for redirecting
             LOG.debug('Creating an html file for redirecting "{}".'.format(url))
             filename = os.path.basename(url) + '.html'
@@ -239,40 +243,31 @@ class TestRunManager():
             with open(os.path.join(workspace, filename), 'w') as f:
                 f.write(html_content)
 
-        # TODO: implement the metadata logic
-        # add external_url.txt
-        # deal with the urls into metadata (?)
-        # dump to metadata.json
-        # creawte datastore
-        # update dashboard
-
-        # Update metadata and dump to a file
-        if metadata.get('testrun-id') != id:
+        # Update metadata and dump to metadata.json
+        if metadata.get('testrun-id') is None:
+            metadata['testrun-id'] = id
+        elif metadata.get('testrun-id') != id:
             LOG.warning(
                 'The "testrun-id" in metadata is mismatched, replace with "{}".'.format(id))
-        metadata['testrun-id'] = id
+            metadata['testrun-id'] = id
 
-        # Return
-        return True, {'id': id, 'metadata': metadata}
+        if metadata.get('external_urls') is None:
+            metadata['external_urls'] = external_urls
+        elif not isinstance(metadata.get('external_urls'), list) or set(metadata.get('external_urls')) != set(external_urls):
+            LOG.warning(
+                'The "external_urls" in metadata is mismatched, replace with "{}".'.format(external_urls))
+            metadata['external_urls'] = external_urls
 
-        # try:
-        #     metadata_file = os.path.join(workspace, 'metadata.json')
-        #     with open(metadata_file, 'r') as f:
-        #         metadata = json.load(f)
-        # except Exception as err:
-        #     msg = 'Fail to get metadata from {}. error: {}'.format(
-        #         metadata_file, err)
-        #     LOG.error(msg)
-        #     return False, msg
+        with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
+            json.dump(metadata, f, indent=3)
 
-        # testrun.update({'metadata': metadata})
-
-        # Perform data process
+        # Create datastore if needed
         if create_datastore:
             res, msg = self._create_datastore(workspace)
             if res is False:
                 return False, msg
 
+        # Update dashboard if needed
         if update_dashboard:
             res, msg = self._update_dashboard(workspace)
             if res is False:
@@ -292,7 +287,7 @@ class TestRunManager():
             LOG.error(msg)
             return False, msg
 
-        return True, testrun
+        return True, {'id': id, 'metadata': metadata}
 
     def _generate_plots(self, workspace):
         """Generate plots for pbench-fio results.
