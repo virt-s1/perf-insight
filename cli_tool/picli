@@ -26,9 +26,7 @@ def cli(ctx, debug, api_server):
 @click.pass_context
 def testrun_list(ctx):
     """testrun_list."""
-    click.echo('API server: {API_SERVER}'.format(**ctx.obj))
-
-    url = 'http://{API_SERVER}/testruns'.format(**ctx.obj)
+    url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
 
     try:
         response = requests.get(url)
@@ -37,8 +35,10 @@ def testrun_list(ctx):
         result = response.json()
 
         # Successful request
-        for testrun in result.get('testruns', {}):
-            click.echo("{}".format(testrun['id']))
+        click.echo("{}".format(json.dumps(result, indent=4)))
+
+        # for testrun in result.get('testruns', {}):
+        #     click.echo("{}".format(testrun['id']))
 
     except requests.exceptions.RequestException as ex:
         click.echo("something wrong: {}".format(ex))
@@ -49,10 +49,7 @@ def testrun_list(ctx):
 @click.pass_context
 def testrun_inspect(ctx, testrun_id):
     """testrun_inspect."""
-    API_SERVER = ctx.obj['API_SERVER']
-    click.echo('API server: {API_SERVER}'.format(**ctx.obj))
-
-    url = 'http://{}/testruns/{}'.format(API_SERVER, testrun_id)
+    url = 'http://{}/testruns/{}'.format(ctx.obj['API_SERVER'], testrun_id)
 
     try:
         response = requests.get(url)
@@ -61,7 +58,7 @@ def testrun_inspect(ctx, testrun_id):
         result = response.json()
 
         # Successful request
-        click.echo("{}".format(result))
+        click.echo("{}".format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
         click.echo("something wrong: {}".format(ex))
