@@ -224,7 +224,7 @@ class TestRunManager():
                 os.makedirs(subfolder)
                 urllib.request.urlretrieve(from_file, to_file)
             except Exception as e:
-                msg = 'Failed to download result.json: {}'.format(e)
+                msg = 'Failed to download {}: {}'.format(from_file, e)
                 LOG.error(msg)
                 return False, msg
 
