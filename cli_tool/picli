@@ -54,12 +54,13 @@ def testrun_list(ctx):
         if details:
             click.echo('{}'.format(details))
 
+
 @cli.command()
 @click.option('--testrun-id', required=True, prompt='TestRun ID',
-              help='The TestRun to be inspected.')
+              help='The TestRun to be processed.')
 @click.pass_context
 def testrun_inspect(ctx, testrun_id):
-    """Inspect specified TestRun."""
+    """Inspect a specified TestRun."""
 
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
@@ -88,13 +89,13 @@ def testrun_inspect(ctx, testrun_id):
 
 @cli.command()
 @click.option('--testrun-id', required=True, prompt='TestRun ID',
-              help='The TestRun to be loaded.')
+              help='The TestRun to be processed.')
 @click.option('--generate-plots', required=False, type=bool, default=False,
-              help='Generate plots for fio TestRun (default=false).')
+              help='Generate plots for fio TestRun.', show_default=True)
 @click.option('--create-datastore', required=False, type=bool, default=True,
-              help='Create datastore file (default=true).')
+              help='Create datastore file.', show_default=True)
 @click.option('--update-dashboard', required=False, type=bool, default=True,
-              help='Update dashboard (default=true).')
+              help='Update dashboard.', show_default=True)
 @click.pass_context
 def testrun_load(ctx, testrun_id, generate_plots, create_datastore, update_dashboard):
     """Load TestRun from the staging area."""
@@ -135,10 +136,62 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore, update_dashb
 
 
 @cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.option('--external-url', required=True, multiple=True,
+              help='The external URL to be imported. \
+(This option can be provided multiple times)')
+@click.option('--metadata-keypair', required=True, multiple=True,
+              help='The metadata in KEY=VALUE format to be added. \
+(This option can be provided multiple times)')
+@click.option('--create-datastore', required=False, type=bool, default=True,
+              help='Create datastore file.', show_default=True)
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard.', show_default=True)
 @click.pass_context
-def testrun_import(ctx):
-    """testrun_import."""
-    pass
+def testrun_import(ctx, testrun_id, external_url, metadata_keypair, create_datastore, update_dashboard):
+    """Import TestRun from external pbench server."""
+
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+
+    external_urls = list(external_url)
+    metadata = {}
+    for keypair in metadata_keypair:
+        key, value = keypair.split('=')
+        metadata[key] = value
+
+    try:
+        response = requests.post(
+            url=request_url,
+            headers={
+                'Content-Type': 'application/json; charset=UTF-8'
+            },
+            json={
+                'action': 'import',
+                'create_datastore': create_datastore,
+                'update_dashboard': create_datastore,
+                'id': testrun_id,
+                'metadata': metadata,
+                'external_urls': external_urls
+            })
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
 
 
 @cli.command()
