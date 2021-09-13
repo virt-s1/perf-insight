@@ -97,7 +97,8 @@ def testrun_inspect(ctx, testrun_id):
 @click.option('--update-dashboard', required=False, type=bool, default=True,
               help='Update dashboard.', show_default=True)
 @click.pass_context
-def testrun_load(ctx, testrun_id, generate_plots, create_datastore, update_dashboard):
+def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
+                 update_dashboard):
     """Load TestRun from the staging area."""
 
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
@@ -149,7 +150,8 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore, update_dashb
 @click.option('--update-dashboard', required=False, type=bool, default=True,
               help='Update dashboard.', show_default=True)
 @click.pass_context
-def testrun_import(ctx, testrun_id, external_url, metadata_keypair, create_datastore, update_dashboard):
+def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
+                   create_datastore, update_dashboard):
     """Import TestRun from external pbench server."""
 
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
@@ -169,7 +171,7 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair, create_datas
             json={
                 'action': 'import',
                 'create_datastore': create_datastore,
-                'update_dashboard': create_datastore,
+                'update_dashboard': update_dashboard,
                 'id': testrun_id,
                 'metadata': metadata,
                 'external_urls': external_urls
