@@ -142,17 +142,66 @@ def testrun_import(ctx):
 
 
 @cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
 @click.pass_context
-def testrun_fetch(ctx):
-    """testrun_fetch."""
-    pass
+def testrun_fetch(ctx, testrun_id):
+    """Fetch TestRun to the staging area."""
+
+    request_url = 'http://{}/testruns/{}'.format(
+        ctx.obj['API_SERVER'], testrun_id)
+
+    try:
+        response = requests.put(url=request_url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
 
 
 @cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
 @click.pass_context
-def testrun_delete(ctx):
-    """testrun_delete."""
-    pass
+def testrun_delete(ctx, testrun_id):
+    """Delete a specified TestRun."""
+
+    request_url = 'http://{}/testruns/{}'.format(
+        ctx.obj['API_SERVER'], testrun_id)
+
+    try:
+        response = requests.delete(url=request_url)
+
+        response.raise_for_status()
+
+        # Successful request
+        click.echo('TestRun "{}" has been deleted.'.format(testrun_id))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
 
 
 if __name__ == '__main__':
