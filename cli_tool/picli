@@ -242,9 +242,11 @@ def testrun_delete(ctx, testrun_id):
         response = requests.delete(url=request_url)
 
         response.raise_for_status()
+        result = response.json()
 
         # Successful request
-        click.echo('TestRun "{}" has been deleted.'.format(testrun_id))
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details

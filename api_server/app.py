@@ -638,6 +638,6 @@ def delete_testrun(id):
     LOG.info('Received request to delete TestRun "{}".'.format(id))
     res, con = testrun_manager.delete_testrun(id)
     if res:
-        return jsonify(con), 204    # 204 returns nothing in content
+        return jsonify(con), 200    # use 200 since 204 returns no json
     else:
         return jsonify({'error': con}), 500
