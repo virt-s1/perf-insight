@@ -6,6 +6,7 @@ PiCLI - the CLI tool for perf-insight server.
 Read this for more details on Click Context:
 https://click.palletsprojects.com/en/8.0.x/commands/
 """
+
 import click
 import requests
 import json
@@ -25,43 +26,64 @@ def cli(ctx, debug, api_server):
 @cli.command()
 @click.pass_context
 def testrun_list(ctx):
-    """testrun_list."""
-    url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    """List all TestRuns."""
+
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
 
     try:
-        response = requests.get(url)
+        response = requests.get(url=request_url)
 
         response.raise_for_status()
         result = response.json()
 
         # Successful request
-        click.echo("{}".format(json.dumps(result, indent=4)))
+        click.echo('{}'.format(json.dumps(result, indent=4)))
 
         # for testrun in result.get('testruns', {}):
-        #     click.echo("{}".format(testrun['id']))
+        #     click.echo('{}'.format(testrun['id']))
 
     except requests.exceptions.RequestException as ex:
-        click.echo("something wrong: {}".format(ex))
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
 
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
 
 @cli.command()
-@click.option('--testrun-id')
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be inspected.')
 @click.pass_context
 def testrun_inspect(ctx, testrun_id):
-    """testrun_inspect."""
-    url = 'http://{}/testruns/{}'.format(ctx.obj['API_SERVER'], testrun_id)
+    """Inspect specified TestRun."""
+
+    request_url = 'http://{}/testruns/{}'.format(
+        ctx.obj['API_SERVER'], testrun_id)
 
     try:
-        response = requests.get(url)
+        response = requests.get(url=request_url)
 
         response.raise_for_status()
         result = response.json()
 
         # Successful request
-        click.echo("{}".format(json.dumps(result, indent=4)))
+        click.echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        click.echo("something wrong: {}".format(ex))
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
 
 
 @cli.command()
