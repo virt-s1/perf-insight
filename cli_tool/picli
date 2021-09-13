@@ -87,32 +87,74 @@ def testrun_inspect(ctx, testrun_id):
 
 
 @cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be loaded.')
+@click.option('--generate-plots', required=False, type=bool, default=False,
+              help='Generate plots for fio TestRun (default=false).')
+@click.option('--create-datastore', required=False, type=bool, default=True,
+              help='Create datastore file (default=true).')
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard (default=true).')
 @click.pass_context
-def testrun_load(ctx):
-    """testrun_load."""
-    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+def testrun_load(ctx, testrun_id, generate_plots, create_datastore, update_dashboard):
+    """Load TestRun from the staging area."""
+
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+
+    try:
+        response = requests.post(
+            url=request_url,
+            headers={
+                'Content-Type': 'application/json; charset=UTF-8'
+            },
+            json={
+                'action': 'load',
+                'generate_plots': generate_plots,
+                'create_datastore': create_datastore,
+                'update_dashboard': update_dashboard,
+                'id': testrun_id
+            })
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
 
 
 @cli.command()
 @click.pass_context
 def testrun_import(ctx):
     """testrun_import."""
-    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+    pass
 
 
 @cli.command()
 @click.pass_context
 def testrun_fetch(ctx):
     """testrun_fetch."""
-    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+    pass
 
 
 @cli.command()
 @click.pass_context
 def testrun_delete(ctx):
     """testrun_delete."""
-    click.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+    pass
 
 
 if __name__ == '__main__':
-    cli(obj={'API_SERVER': 'localhost:5001'})
+    config = {'API_SERVER': 'localhost:5001'}
+    cli(obj=config)
