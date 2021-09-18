@@ -52,6 +52,7 @@ ARGS = ARG_PARSER.parse_args()
 
 class testrun_results_generator():
     """Generate TestRun Results according to the customized configuration."""
+
     def __init__(self, ARGS):
         # load config
         with open(ARGS.config, 'r') as f:
@@ -82,11 +83,11 @@ class testrun_results_generator():
         self._parse_data()
 
     def _parse_data(self):
-        self._build_datatable()
-        self._build_dataframe()
+        self._parse_datastore()
+        self._create_dataframe()
         self._format_dataframe()
 
-    def _build_datatable(self):
+    def _parse_datastore(self):
         """Parse data from the datastore into datatable.
 
         Input:
@@ -95,104 +96,142 @@ class testrun_results_generator():
         Output:
         - self.datatable: datatable to be generated.
         """
-        def _get_value_metadata(cfg, data=None):
-            """Get value from metadata."""
-            if cfg.get('key'):
-                return self.metadata.get(cfg.get('key'))
 
-        def _get_value_datastore(cfg, data=None):
-            """Get value(s) from datastore."""
-            # jq().transform() returns a list of string(s)
+        def _query_datastore(jqexpr, iterdata):
+            """Query datastore and return a list."""
             try:
-                res = jq(cfg['jqexpr']).transform(data, multiple_output=True)
+                res = jq(jqexpr).transform(iterdata, multiple_output=True)
+                # jq().transform() returns a list of string(s)
             except Exception as e:
                 if 'Cannot iterate over null' in str(e):
                     res = [np.nan]
                 else:
-                    print('ERROR: Unable to get value from JSON: %s' % e)
-                    print('ERROR: cfg = %s' % cfg)
-                    print('ERROR: data = %s' % data)
+                    LOG.debug('jqexpr: {}; data: {}'.format(jqexpr, iterdata))
+                    LOG.error('Query datastore failed: {}'.format(e))
                     exit(1)
 
-            # multiply the factor if available
-            if 'factor' in cfg:
-                res = [x * cfg['factor'] for x in res]
+            return res
 
-            # return the whole list or the only value
-            return res if len(res) > 1 else res[0]
-
-        def _get_value_auto(cfg, data=None):
-            """Get value by calculating."""
-            if cfg['name'] == 'Sample':
-                return 'all'
-            if cfg['name'] == 'Path':
-                value = os.path.join(data['path_lv_1'], data['path_lv_2'])
-                return value
-
-        def _get_value_unknown(cfg, data=None):
-            print('ERROR: Unknown type in "source", config = "%s".' % cfg)
-            exit(1)
-
-        switch = {
-            'metadata': _get_value_metadata,
-            'datastore': _get_value_datastore,
-            'auto': _get_value_auto,
-        }
-
-        self.config
-        self.datastore
+        # Build the datatable
         self.datatable = []
 
-        # generate rows for the datatable
         for iterdata in self.datastore:
-            # generate one row
-            data = {}
+            # Build the row
+            row = {}
+            split_info = {}
+
+            # Fill elements into the row
             for cfg in self.config.get('columns'):
-                # get and set value(s)
                 name = cfg.get('name')
-                data[name] = switch.get(cfg['source'],
-                                        _get_value_unknown)(cfg, iterdata)
+                method = cfg.get('method')
 
-            # deal with split if needed
-            need_split = False
-            if self.config.get('defaults', {}).get('split'):
-                # get max number of samples
-                max_sample = 1
-                for value in data.values():
-                    if isinstance(value, list) and len(value) > max_sample:
-                        max_sample = len(value)
-                need_split = True if max_sample > 1 else False
+                if method == 'query_metadata':
+                    # Query metadata
+                    row[name] = self.metadata.get(cfg['key'])
 
-            if need_split:
-                # split into samples
-                for index in range(1, max_sample + 1):
-                    sample_data = {}
-                    # deal with each column
-                    for name, value in data.items():
-                        if isinstance(value, list):
-                            # get the first value and save the rest
-                            sample_data[name] = value[0]
-                            data[name] = value[1:]
-                            # Set "WRONG" flags for user check
-                            if len(data[name]) == 0:
-                                data[name] = 'WRONG'
-                        else:
-                            sample_data[name] = value
+                elif method == 'query_datastore':
+                    # Query datastore
+                    res = _query_datastore(cfg['jqexpr'], iterdata)
 
-                    # update related columns
-                    if 'Sample' in data:
-                        sample_data['Sample'] = index
-                    if 'Path' in data:
-                        sample_data['Path'] = os.path.join(
-                            data['Path'], 'sample%s' % index)
+                    # Process data
+                    if 'factor' in cfg:
+                        # Multiply the factor if available
+                        res = [x * cfg['factor'] for x in res]
 
-                    # save this row (sample) to datatable
-                    self.datatable.append(sample_data.copy())
-            else:
-                # no need to split, save directly
-                self.datatable.append(data.copy())
+                    # Get the object itself if there is only one in the list
+                    if len(res) > 1:
+                        row[name] = res
+                        split_info.setdefault('iter', [])
+                        split_info.get('iter').append(
+                            {'name': name, 'len': len(res)})
+                    else:
+                        row[name] = res[0]
 
-    def _build_dataframe(self):
+                elif method == 'batch_query_datastore':
+                    # Batch query datastore
+                    array = []
+                    for jqexpr in cfg['jqexpr']:
+                        res = _query_datastore(jqexpr, iterdata)
+                        data = res if len(res) > 1 else res[0]
+                        array.append(data)
+
+                    try:
+                        row[name] = cfg['format'] % tuple(array)
+                    except Exception as e:
+                        LOG.error('format: "{}"; data: {}'.format(
+                            cfg['format'], array))
+                        LOG.error('Failed to format string: {}'.format(e))
+                        exit(1)
+
+                elif method == 'get_sample':
+                    # Get value for "Sample"
+                    row[name] = 'all'
+                    split_info.update({'name': {'sample': name}})
+
+                elif method == 'get_source_url':
+                    # Get value for "SourceURL"
+                    external_url = iterdata.get('external_url')
+
+                    if external_url:
+                        row[name] = '{}/{}'.format(external_url,
+                                                   iterdata['path_lv_2'])
+                    else:
+                        row[name] = '{}/{}'.format(iterdata['path_lv_1'],
+                                                   iterdata['path_lv_2'])
+                    split_info.update({'name': {'source_url': name}})
+
+                else:
+                    LOG.error('Unsupported method in config: {}'.format(cfg))
+                    exit(1)
+
+            # Check if this row need to be splitted
+            if not self.config.get('defaults', {}).get('split'):
+                # No need to split, append directly
+                self.datatable.append(row.copy())
+                continue
+
+            if not split_info.get('iter'):
+                # Nothing to be splitted, append directly
+                self.datatable.append(row.copy())
+                continue
+
+            # Split this row
+            split_names = [x['name'] for x in split_info.get('iter', [])]
+            split_nblen = [x['len'] for x in split_info.get('iter', [])]
+            max_sample = max(split_nblen)
+
+            # Criteria check
+            if max_sample != min(split_nblen):
+                LOG.warning('The row cannot be splitted gracefully. '
+                            'Row: {}'.format(row))
+                # Cannot be splitted gracefully, append directly
+                self.datatable.append(row.copy())
+                continue
+
+            # Split into subrows
+            for index in range(1, max_sample + 1):
+                subrow = {}
+                # Deal with each element
+                for name, value in row.items():
+                    if name in split_names:
+                        subrow[name] = value[index-1]
+                    else:
+                        subrow[name] = value
+
+                # Update special elements
+                sample_name = split_info.get('name', {}).get('sample')
+                if sample_name:
+                    subrow[sample_name] = index
+
+                source_url_name = split_info.get('name', {}).get('sample')
+                if source_url_name:
+                    subrow[source_url_name] = '{}/sample{}'.format(
+                        row[source_url_name], index)
+
+                # Append the subrow
+                self.datatable.append(subrow.copy())
+
+    def _create_dataframe(self):
         # create the dataframe
         self.dataframe = pd.DataFrame(self.datatable)
 
