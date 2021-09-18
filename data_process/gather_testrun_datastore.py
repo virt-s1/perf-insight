@@ -59,7 +59,7 @@ if __name__ == '__main__':
     # Parse parameters
     ARGS = ARG_PARSER.parse_args()
     logdir = ARGS.logdir or os.getcwd()
-    #testrun = ARGS.testrun or os.path.basename(os.path.abspath(logdir))
+    # testrun = ARGS.testrun or os.path.basename(os.path.abspath(logdir))
     prefix = ARGS.prefix if ARGS.prefix else ('fio_', 'uperf_')
     drop_failures = ARGS.drop_failures
     output = ARGS.output
@@ -72,14 +72,22 @@ if __name__ == '__main__':
         dname = os.path.join(logdir, d)
         if os.path.isdir(dname) and d.startswith(prefix):
             LOG.info('Collecting data from "{}".'.format(d))
-            fname = os.path.join(logdir, d, 'result.json')
-            with open(fname, 'r') as f:
+            with open(os.path.join(logdir, d, 'result.json'), 'r') as f:
                 data = json.load(f)
 
+            try:
+                with open(os.path.join(
+                        logdir, d, 'external_url.txt'), 'r') as f:
+                    external_url = f.readline().strip().rstrip('/')
+            except:
+                external_url = ''
+
             for idata in data:
+                idata['external_url'] = external_url
                 idata['path_lv_1'] = d
                 idata['path_lv_2'] = idata['iteration_name_format'] % (
                     idata['iteration_number'], idata['iteration_name'])
+
             datastore += data
 
     # Drop failures
@@ -91,6 +99,7 @@ if __name__ == '__main__':
         for record in records:
             drop_this_record = False
 
+            external_url = record.get('external_url')
             path_lv_1 = record.get('path_lv_1')
             path_lv_2 = record.get('path_lv_2')
 
@@ -105,17 +114,25 @@ if __name__ == '__main__':
                     drop_this_record = True
                 else:
                     # drop the first failed record only when passed one exists
+                    passed_label = path_lv_2.replace('-fail1', '')
                     for x in records:
-                        if x.get('path_lv_1') == path_lv_1 and x.get(
-                                'path_lv_2') + '-fail1' == path_lv_2:
+                        if (
+                            x.get('path_lv_2') == passed_label
+                            and x.get('path_lv_1') == path_lv_1
+                            and x.get('external_url') == external_url
+                        ):
                             # found the passed record
                             drop_this_record = True
                             break
 
             # drop or save this record
             if drop_this_record:
-                LOG.info('{}/{} has been droped.'.format(
-                    path_lv_1, path_lv_2))
+                if external_url:
+                    LOG.info('{}/{} has been droped.'.format(
+                        external_url, path_lv_2))
+                else:
+                    LOG.info('{}/{} has been droped.'.format(
+                        path_lv_1, path_lv_2))
             else:
                 datastore.append(record)
 
