@@ -5,89 +5,98 @@ testrun_results_generator:
     fillna: "NaN"
   columns:
     - name: Testrun
-      source: metadata
+      method: query_metadata
       key: testrun-id
     - name: Type
-      source: metadata
+      method: query_metadata
       key: testrun-type
     - name: Platform
-      source: metadata
+      method: query_metadata
       key: testrun-platform
     - name: Branch
-      source: metadata
+      method: query_metadata
       key: os-branch
     - name: Compose
-      source: metadata
+      method: query_metadata
       key: os-compose
     - name: Kernel
-      source: metadata
+      method: query_metadata
       key: os-kernel
     - name: Flavor
-      source: metadata
+      method: query_metadata
       key: guest-flavor
     - name: Hypervisor
-      source: metadata
+      method: query_metadata
       key: hypervisor-version
     - name: Net-Driver
-      source: metadata
+      method: query_metadata
       key: hardware-net-driver
     - name: Net-Duplex
-      source: metadata
+      method: query_metadata
       key: hardware-net-duplex
     - name: Net-Speed
-      source: metadata
+      method: query_metadata
       key: hardware-net-speed
     - name: CPU_Model
-      source: metadata
+      method: query_metadata
       key: hypervisor-cpu_model
     - name: CPU
-      source: metadata
+      method: query_metadata
       key: hypervisor-cpu
     - name: vCPU
-      source: metadata
+      method: query_metadata
       key: guest-cpu
     - name: Memory
-      source: metadata
+      method: query_metadata
       key: guest-memory
     - name: Tool_Version
-      source: metadata
+      method: query_metadata
       key: tool-uperf_version
     - name: Date
-      source: metadata
+      method: query_metadata
       key: testrun-date
     - name: Comments
-      source: metadata
+      method: query_metadata
       key: testrun-comments
+    - name: CaseName
+      method: batch_query_datastore
+      format: "%s-%s-%s-%sB-%si"
+      jqexpr:
+        - ".iteration_data.parameters.benchmark[].benchmark_name"
+        - ".iteration_data.parameters.benchmark[].protocol"
+        - ".iteration_data.parameters.benchmark[].test_type"
+        - ".iteration_data.parameters.benchmark[].message_size_bytes"
+        - ".iteration_data.parameters.benchmark[].instances"
     - name: Protocol
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].protocol"
     - name: TestType
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].test_type"
     - name: MSize
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].message_size_bytes"
     - name: Instance
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].instances"
     - name: Sample
-      source: auto
+      method: get_sample
     - name: Throughput
-      source: datastore
+      method: query_datastore
       jqexpr: '.iteration_data.throughput.Gb_sec[] | select(.client_hostname=="all") | .samples[].value'
       unit: Mb/s
       factor: 1024
       round: 3
     - name: Trans
-      source: datastore
+      method: query_datastore
       jqexpr: '.iteration_data.throughput.trans_sec[] | select(.client_hostname=="all") | .samples[].value'
       unit: t/s
       round: 1
     - name: Latency
-      source: datastore
+      method: query_datastore
       jqexpr: '.iteration_data.latency.usec[] | select(.client_hostname=="all") | .samples[].value'
       unit: us
       factor: 1
       round: 1
     - name: Path
-      source: auto
+      method: get_source_url
