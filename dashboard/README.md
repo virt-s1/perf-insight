@@ -1,4 +1,4 @@
-# perf-insight/flask
+# perf-insight/dashboard
 
 The performance test report system, allowing quality engineers to gain insight into the valuable data in the test results.
 
@@ -8,7 +8,7 @@ The performance test report system, allowing quality engineers to gain insight i
 
 ## Swith to repo directory and install required pkgs
 
-    cd perf-insight/flask
+    cd perf-insight/dashboard
     pip install -r requirements.txt
 
 ## Create an Admin user (only required at first run)
@@ -38,3 +38,32 @@ The performance test report system, allowing quality engineers to gain insight i
 ## References
 
 ### - *[Flask-AppBuilder](https://flask-appbuilder.readthedocs.io/en/latest/index.html)*
+
+
+# Dashboard Server
+
+## Container usage
+
+```bash
+# build container image
+podman build ./dashboard/ -t dashboard-server
+
+# correct SELinux context for container
+chcon -R -u system_u -t svirt_sandbox_file_t $HOME/mirror/codespace/perf-insight
+chcon -R -u system_u -t svirt_sandbox_file_t /nfs/perf-insight
+chcon -R -u system_u -t svirt_sandbox_file_t $HOME/.perf-insight.yaml
+chcon -R -u system_u -t svirt_sandbox_file_t /nfs/app.db
+
+# run as debug container
+podman run --rm -it --name dashboard-server \
+    --volume $HOME/mirror/codespace/perf-insight:/opt/perf-insight:rw \
+    --volume $HOME/.perf-insight.yaml:/root/.perf-insight.yaml:rw \
+    --volume /nfs/app.db:/data/app.db:rw \
+    --publish 5000:5000 \
+    dashboard-server /bin/bash
+
+# start API server (inside container)
+cd /opt/perf-insight/dashboard/
+flask run --host 0.0.0.0 --port 5000
+
+```

@@ -28,8 +28,11 @@ OPENID_PROVIDERS = [
     },
 ]
 
-SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "app.db")
 # SQLALCHEMY_DATABASE_URI = 'mysql://myapp@localhost/myapp'
+if os.path.isdir('/data'):
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + '/data/app.db'
+else:
+    SQLALCHEMY_DATABASE_URI = "sqlite:///{}/app.db".format(basedir)
 
 BABEL_DEFAULT_LOCALE = "en"
 
