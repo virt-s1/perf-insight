@@ -6,7 +6,7 @@ testrun_results_generator:
   columns:
     - name: CaseName
       method: batch_query_datastore
-      format: "%s-%s-d%s-n%s"
+      format: "%s-%s-%sd-%sj"
       jqexpr:
         - ".iteration_data.parameters.benchmark[].rw"
         - ".iteration_data.parameters.benchmark[].bs"
