@@ -6,22 +6,39 @@
 # build container image
 podman build ./api_server/ -t perf-insight-api-server
 
-# correct SELinux context for container
-chcon -R -u system_u -t svirt_sandbox_file_t $HOME/mirror/codespace/perf-insight
-chcon -R -u system_u -t svirt_sandbox_file_t /nfs/perf-insight
-chcon -R -u system_u -t svirt_sandbox_file_t $HOME/.perf-insight.yaml
+# Prepare environment
+HOST_PERF_INSIGHT_REPO=$HOME/mirror/codespace/perf-insight
+HOST_PERF_INSIGHT_ROOT=/nfs/perf-insight
+HOST_PERF_INSIGHT_DATA=/nfs/perf-insight-data
+HOST_PERF_INSIGHT_STAG=
+HOST_PERF_INSIGHT_TEMP=
+HOST_PERF_INSIGHT_SBIN=
 
-# run as debug container
+# Correct SELinux context for container
+chcon -R -u system_u -t svirt_sandbox_file_t $HOST_PERF_INSIGHT_REPO
+chcon -R -u system_u -t svirt_sandbox_file_t $HOST_PERF_INSIGHT_ROOT
+chcon -R -u system_u -t svirt_sandbox_file_t $HOST_PERF_INSIGHT_DATA
+
+# Run as deamon
+podman run --rm -itd --name perf-insight-api-server \
+    --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:rw \
+    --volume $HOST_PERF_INSIGHT_ROOT:/nfs/perf-insight:rw \
+    --volume $HOST_PERF_INSIGHT_DATA/config.yaml:/root/.perf-insight.yaml:ro \
+    --publish 5001:5000 \
+    perf-insight-api-server
+
+# DEBUG: Run as debug container
 podman run --rm -it --name perf-insight-api-server \
-    --volume $HOME/mirror/codespace/perf-insight:/opt/perf-insight:rw \
-    --volume /nfs/perf-insight:/nfs/perf-insight:rw \
-    --volume $HOME/.perf-insight.yaml:/root/.perf-insight.yaml:rw \
+    --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:rw \
+    --volume $HOST_PERF_INSIGHT_ROOT:/nfs/perf-insight:rw \
+    --volume $HOST_PERF_INSIGHT_DATA/config.yaml:/root/.perf-insight.yaml:ro \
     --publish 5001:5000 \
     perf-insight-api-server /bin/bash
 
-# start API server (inside container)
+# DEBUG: Start Flask server (inside container)
 cd /opt/perf-insight/api_server
 FLASK_APP=app.py
 FLASK_ENV=development
 flask run --host 0.0.0.0 --port 5000
+
 ```

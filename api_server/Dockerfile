@@ -12,24 +12,20 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED 1
 
-# configure application
-WORKDIR /app
+# Install basic packages
+RUN dnf install -y psmisc findutils which ncurses tree procps-ng
+RUN dnf install -y pip jq
 
-# install basic packages
-RUN dnf install -y pip jq psmisc findutils which ncurses tree procps-ng
-
-# install pip requirements
+# Install pip requirements
 ADD ./requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install -r /tmp/requirements.txt
 
-# create mount point
-RUN mkdir -p /opt/perf-insight
-RUN mkdir -p /nfs/perf-insight
+# Create mount point
+RUN mkdir -p /opt/perf-insight /mnt/perf-insight
 
-# Export volumes
-VOLUME [ "/opt/perf-insight" ]
-VOLUME [ "/nfs/perf-insight" ]
-VOLUME [ "/root/.perf-insight.yaml" ]
+# Configure application
+WORKDIR /app
+COPY ./api-server.sh /app/api-server.sh
 
 # During debugging, this entry point will be overridden.
-CMD ["/bin/bash"]
+CMD ["/app/api-server.sh"]
