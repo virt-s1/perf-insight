@@ -3,7 +3,7 @@
 ## Container usage
 
 ```bash
-# build container image
+# Build container image
 podman build ./api_server/ -t perf-insight-api-server
 
 # Prepare environment
