@@ -1,6 +1,6 @@
 FROM fedora:34
 
-# metadata
+# Set metadata
 LABEL author="Charles Shih"
 LABEL maintainer="cheshi@redhat.com"
 LABEL version="1.0"

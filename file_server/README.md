@@ -21,14 +21,14 @@ chcon -R -u system_u -t svirt_sandbox_file_t $HOST_PERF_INSIGHT_ROOT
 # Run as deamon
 podman run --rm -itd --name perf-insight-file-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:ro \
-    --volume $HOST_PERF_INSIGHT_ROOT:/data/perf-insight:ro \
+    --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:ro \
     --publish 8080:80 \
     perf-insight-file-server
 
 # DEBUG: Run as debug container
 podman run --rm -it --name perf-insight-file-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:ro \
-    --volume $HOST_PERF_INSIGHT_ROOT:/data/perf-insight:ro \
+    --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:ro \
     --publish 8080:80 \
     perf-insight-file-server /bin/bash
 
