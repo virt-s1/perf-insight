@@ -5,7 +5,7 @@
 #
 #        USAGE: ./dashboard-server.sh
 #
-#  DESCRIPTION: Start the dashboard server.
+#  DESCRIPTION: Foreground the dashboard service.
 #
 #      OPTIONS: ---
 # REQUIREMENTS: ---

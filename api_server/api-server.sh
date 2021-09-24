@@ -5,7 +5,7 @@
 #
 #        USAGE: ./api-server.sh
 #
-#  DESCRIPTION: Start the RESTful API server.
+#  DESCRIPTION: Foreground the RESTful API service.
 #
 #      OPTIONS: ---
 # REQUIREMENTS: ---
