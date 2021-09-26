@@ -8,7 +8,7 @@ import time
 import urllib
 
 
-class TestRunManager():
+class PerfInsightManager():
     def query_testruns(self):
         """Query all the TestRunIDs from PERF_INSIGHT_ROOT.
 
@@ -524,13 +524,13 @@ PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
 
-testrun_manager = TestRunManager()
+manager = PerfInsightManager()
 
 
 @app.get('/testruns')
 def query_testruns():
     LOG.info('Received request to query all TestRuns.')
-    res, con = testrun_manager.query_testruns()
+    res, con = manager.query_testruns()
     if res:
         return jsonify(con), 200
     else:
@@ -540,7 +540,7 @@ def query_testruns():
 @app.get('/testruns/<id>')
 def inspect_testrun(id):
     LOG.info('Received request to inspect TestRun "{}".'.format(id))
-    res, con = testrun_manager.inspect_testrun(id)
+    res, con = manager.inspect_testrun(id)
     if res:
         return jsonify(con), 200
     else:
@@ -604,13 +604,13 @@ def add_testrun():
 
     # Execute action
     if action == 'load':
-        res, con = testrun_manager.load_testrun(
+        res, con = manager.load_testrun(
             id=id,
             generate_plots=generate_plots,
             create_datastore=create_datastore,
             update_dashboard=update_dashboard)
     elif action == 'import':
-        res, con = testrun_manager.import_testrun(
+        res, con = manager.import_testrun(
             id=id,
             create_datastore=create_datastore,
             update_dashboard=update_dashboard,
@@ -626,7 +626,7 @@ def add_testrun():
 @app.put('/testruns/<id>')
 def fetch_testrun(id):
     LOG.info('Received request to fetch TestRun "{}".'.format(id))
-    res, con = testrun_manager.fetch_testrun(id)
+    res, con = manager.fetch_testrun(id)
     if res:
         return jsonify(con), 200
     else:
@@ -636,7 +636,7 @@ def fetch_testrun(id):
 @app.delete('/testruns/<id>')
 def delete_testrun(id):
     LOG.info('Received request to delete TestRun "{}".'.format(id))
-    res, con = testrun_manager.delete_testrun(id)
+    res, con = manager.delete_testrun(id)
     if res:
         return jsonify(con), 200    # use 200 since 204 returns no json
     else:
