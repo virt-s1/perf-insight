@@ -562,6 +562,41 @@ class PerfInsightManager():
 
         return True, {'benchmarks': benchmarks}
 
+    def inspect_benchmark(self, id):
+        """Inspect a specified benchmark from PERF_INSIGHT_ROOT.
+
+        Input:
+            id - Benchmark ID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        search_path = os.path.join(PERF_INSIGHT_ROOT, 'reports', id)
+        if not os.path.isdir(search_path):
+            msg = 'Benchmark "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Get BenchmarkID
+        benchmark = {'id': id}
+
+        # Get metadata
+        try:
+            metadata_file = os.path.join(search_path, 'metadata.json')
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+        except Exception as err:
+            msg = 'Fail to get metadata from {}. error: {}'.format(
+                metadata_file, err)
+            LOG.warning(msg)
+            metadata = None
+
+        benchmark.update({'metadata': metadata})
+
+        return True, benchmark
+
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
                          metadata_yaml=None):
@@ -856,6 +891,16 @@ def delete_testrun(id):
 def query_benchmarks():
     LOG.info('Received request to query all benchmarks.')
     res, con = manager.query_benchmarks()
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.get('/benchmarks/<id>')
+def inspect_benchmark(id):
+    LOG.info('Received request to inspect benchmark "{}".'.format(id))
+    res, con = manager.inspect_benchmark(id)
     if res:
         return jsonify(con), 200
     else:
