@@ -780,26 +780,8 @@ class PerfInsightManager():
         return True, {'id': id}
 
 
-# Main
-LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
-
+# Flask
 app = Flask(__name__)
-
-# Load perf-insight configure
-with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
-    user_config = yaml.safe_load(f)
-
-config = user_config.get('global', {})
-config.update(user_config.get('api', {}))
-
-PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
-PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
-PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
-PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
-DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
-
-manager = PerfInsightManager()
 
 
 # TestRun entrypoints
@@ -987,3 +969,24 @@ def delete_benchmark(id):
         return jsonify(con), 200    # use 200 since 204 returns no json
     else:
         return jsonify({'error': con}), 500
+
+
+# Main
+LOG = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+
+
+# Load perf-insight configure
+with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
+    user_config = yaml.safe_load(f)
+
+config = user_config.get('global', {})
+config.update(user_config.get('api', {}))
+
+PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
+PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
+PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
+PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
+DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
+
+manager = PerfInsightManager()
