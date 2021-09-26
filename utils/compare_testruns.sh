@@ -72,7 +72,7 @@ apache_server=$(cat $config | shyaml get-value -q flask.apache_server)
 : ${apache_server:=perf-insight.lab.eng.pek2.redhat.com}
 
 PATH=$repo/utils:$repo/data_process:$PATH
-templates=$repo/data_process/templates
+templates=$repo/templates
 
 # Verify TestRunID
 if [ ! -d $basepath/testruns/$baseid ]; then

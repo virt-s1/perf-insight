@@ -520,7 +520,7 @@ PERF_INSIGHT_ROOT = user_config.get(
 PERF_INSIGHT_REPO = user_config.get(
     'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
 PERF_INSIGHT_TEMP = os.path.join(
-    PERF_INSIGHT_REPO,  'data_process', 'templates')
+    PERF_INSIGHT_REPO, 'templates')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 DASHBOARD_DB_FILE = user_config.get('flask', {}).get('db_file')
 

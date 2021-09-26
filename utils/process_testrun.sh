@@ -78,7 +78,7 @@ db=$(cat $config | shyaml get-value -q flask.db_file)
 : ${db:=/opt/perf-insight/flask/app.db}
 
 PATH=$repo/utils:$repo/data_process:$PATH
-templates=$repo/data_process/templates
+templates=$repo/templates
 
 # Verify TestRunID
 if [ ! -e $basepath/testruns/$testrun ]; then

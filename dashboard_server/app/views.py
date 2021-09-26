@@ -104,7 +104,7 @@ class YamlFormView(SimpleFormView):
             return redirect(self.get_redirect())
 
         if session.get('yaml1') is None:
-            TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/\
+            TESTRUN_RESULTS_YAML = '/opt/perf-insight/\
 templates/generate_testrun_results-{}.yaml'.format(testrun_type)
             with open(TESTRUN_RESULTS_YAML, 'r') as fh:
                 form.yaml1.data = fh.read()
@@ -112,7 +112,7 @@ templates/generate_testrun_results-{}.yaml'.format(testrun_type)
             form.yaml1.data = session['yaml1']
 
         if session.get('yaml2') is None:
-            TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/\
+            TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/\
 templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_BENCHMARK_YAML, 'r') as fh:
                 form.yaml2.data = fh.read()
@@ -120,7 +120,7 @@ templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
             form.yaml2.data = session['yaml2']
 
         if session.get('yaml3') is None:
-            TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/\
+            TWO_WAY_METADATA_YAML = '/opt/perf-insight/\
 templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_METADATA_YAML, 'r') as fh:
                 form.yaml3.data = fh.read()
