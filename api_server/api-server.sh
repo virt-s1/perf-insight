@@ -21,8 +21,6 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 cleanup() {
     trap - SIGINT SIGTERM ERR EXIT
-    httpd -k stop
-    killall tail
     exit 0
 }
 
