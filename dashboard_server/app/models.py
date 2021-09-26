@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+File:  models.py @flask-appbuilder
+Owner: Frank Liang <xiliang@redhat.com>
+"""
+
 from flask import Markup, url_for
 from flask_appbuilder import Model
 from flask_appbuilder.filemanager import ImageManager
@@ -11,16 +17,17 @@ import os
 
 from flask_appbuilder.models.mixins import ImageColumn
 
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+import yaml
 
-with open(os.getenv('HOME') + '/.perf-insight.yaml', 'r') as fh:
-    keys_data = load(fh, Loader=Loader)
 
-APACHE_SERVER = keys_data['flask']['apache_server']
+# Load perf-insight configure
+with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
+    user_config = yaml.safe_load(f)
+
+config = user_config.get('global', {})
+config.update(user_config.get('dashboard', {}))
+
+FILE_SERVER = config.get('file_server', 'localhost')
 
 
 class NetworkRun(Model):
@@ -41,7 +48,7 @@ class NetworkRun(Model):
 
     def rawdata_url(self):
         if self.rawdata:
-            return Markup('<a href=http://' + APACHE_SERVER +
+            return Markup('<a href=http://' + FILE_SERVER +
                           '/perf-insight/testruns/' + str(self.rawdata) +
                           '> rawdata </a>')
         else:
@@ -95,7 +102,7 @@ class NetworkResult(Model):
 
     def rawdata_url(self):
         if self.rawdata:
-            return Markup('<a href=http://' + APACHE_SERVER +
+            return Markup('<a href=http://' + FILE_SERVER +
                           '/perf-insight/testruns/' + str(self.testrun) + '/' +
                           str(self.rawdata) + '> rawdata </a>')
         else:
@@ -120,7 +127,7 @@ class StorageRun(Model):
 
     def rawdata_url(self):
         if self.rawdata:
-            return Markup('<a href=http://' + APACHE_SERVER +
+            return Markup('<a href=http://' + FILE_SERVER +
                           '/perf-insight/testruns/' + str(self.rawdata) +
                           '> rawdata </a>')
         else:
@@ -171,7 +178,7 @@ class StorageResult(Model):
 
     def rawdata_url(self):
         if self.rawdata:
-            return Markup('<a href=http://' + APACHE_SERVER +
+            return Markup('<a href=http://' + FILE_SERVER +
                           '/perf-insight/testruns/' + str(self.testrun) + '/' +
                           str(self.rawdata) + '> rawdata </a>')
         else:
@@ -194,7 +201,7 @@ class ComparedResult(Model):
 
     def report_url(self):
         if self.reportlink:
-            return Markup('<a href=http://' + APACHE_SERVER +
+            return Markup('<a href=http://' + FILE_SERVER +
                           '/perf-insight/reports/{}/report.html '.format(
                               self.reportlink) + '> Report </a>')
         else:

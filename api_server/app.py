@@ -515,14 +515,14 @@ app = Flask(__name__)
 with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
     user_config = yaml.safe_load(f)
 
-PERF_INSIGHT_ROOT = user_config.get(
-    'global', {}).get('perf_insight_root') or '/nfs/perf-insight'
-PERF_INSIGHT_REPO = user_config.get(
-    'global', {}).get('perf_insight_repo') or '/opt/perf-insight'
-PERF_INSIGHT_TEMP = os.path.join(
-    PERF_INSIGHT_REPO, 'templates')
+config = user_config.get('global', {})
+config.update(user_config.get('api', {}))
+
+PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
+PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
+PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
-DASHBOARD_DB_FILE = user_config.get('flask', {}).get('db_file')
+DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
 
 testrun_manager = TestRunManager()
 
