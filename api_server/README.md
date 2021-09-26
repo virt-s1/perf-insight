@@ -22,7 +22,7 @@ chcon -R -u system_u -t svirt_sandbox_file_t $HOST_PERF_INSIGHT_DATA
 # Run as deamon
 podman run --rm -itd --name perf-insight-api-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:rw \
-    --volume $HOST_PERF_INSIGHT_ROOT:/nfs/perf-insight:rw \
+    --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_DATA/config.yaml:/root/.perf-insight.yaml:ro \
     --publish 5001:5000 \
     perf-insight-api-server
@@ -30,7 +30,7 @@ podman run --rm -itd --name perf-insight-api-server \
 # DEBUG: Run as debug container
 podman run --rm -it --name perf-insight-api-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:rw \
-    --volume $HOST_PERF_INSIGHT_ROOT:/nfs/perf-insight:rw \
+    --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_DATA/config.yaml:/root/.perf-insight.yaml:ro \
     --publish 5001:5000 \
     perf-insight-api-server /bin/bash
