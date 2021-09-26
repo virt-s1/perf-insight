@@ -9,6 +9,40 @@ import urllib
 
 
 class PerfInsightManager():
+    # Shared functions
+    def _get_template(self, filename, platform=None):
+        """Select template and return the file path.
+
+        Input:
+            filename  - The filename of the template
+            platform  - The platform on which to use the template
+        Return:
+            - The path or None if something goes wrong.
+        """
+        # Try to find platform specific template
+        ext = filename.split('.')[-1]
+        base = filename.removesuffix('.' + ext)
+
+        if platform:
+            file = '{}-{}.{}'.format(base, platform, ext)
+            path = os.path.join(PERF_INSIGHT_TEMP, file)
+            if os.path.exists(path):
+                LOG.info(
+                    'Found platform specific template "{}".'.format(file))
+                return path
+
+        # Try to find the specified template
+        path = os.path.join(PERF_INSIGHT_TEMP, filename)
+        if os.path.exists(path):
+            LOG.info('Found the specified template "{}".'.format(filename))
+            return path
+
+        # No template was found
+        LOG.error('Cannot find template "{}" in "{}".'.format(
+            filename, PERF_INSIGHT_TEMP))
+        return None
+
+    # TestRun Functions
     def query_testruns(self):
         """Query all the TestRunIDs from PERF_INSIGHT_ROOT.
 
@@ -355,21 +389,16 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        # Get best config file
-        config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
-        file_a = 'generate_testrun_results-{}-dbloader-{}.yaml'.format(
-            testrun_type, testrun_platform)
-        file_b = 'generate_testrun_results-{}-dbloader.yaml'.format(
+        # Get template
+        filename = 'generate_testrun_results-{}-dbloader.yaml'.format(
             testrun_type)
-        if os.path.exists(os.path.join(PERF_INSIGHT_TEMP, file_a)):
-            shutil.copy(os.path.join(PERF_INSIGHT_TEMP, file_a), config)
-        elif os.path.exists(os.path.join(PERF_INSIGHT_TEMP, file_b)):
-            shutil.copy(os.path.join(PERF_INSIGHT_TEMP, file_b), config)
-        else:
-            msg = 'Can not find file "{}" or "{}" in "{}".'.format(
-                file_a, file_b, PERF_INSIGHT_TEMP)
-            LOG.error(msg)
-            return False, msg
+        path = self._get_template(filename, testrun_platform)
+
+        if path is None:
+            return False, 'Cannot find template "{}".'.format(filename)
+
+        config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
+        shutil.copyfile(path, config)
 
         # Create DB loader CSV
         datastore = os.path.join(workspace, 'datastore.json')
