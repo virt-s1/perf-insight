@@ -534,6 +534,159 @@ class PerfInsightManager():
 
         return True, {'id': id}
 
+    # Benchmark Functions
+    def create_benchmark(self, test_id, base_id, test_yaml=None,
+                         base_yaml=None, benchmark_yaml=None,
+                         metadata_yaml=None):
+        """Create benchmark report for the specified TestRuns.
+
+        Input:
+            test_id        - TestRun to be checked/compared
+            base_id        - TestRun to be used as baseline
+            test_yaml      - Configure file to parse the TEST samples
+            base_yaml      - Configure file to parse the BASE samples
+            benchmark_yaml - Configure file for the benchmark comparsion
+            metadata_yaml  - Configure file for the metadata comparsion
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        benchmark = 'benchmark_{}_over_{}'.format(test_id, base_id)
+        target = os.path.join(PERF_INSIGHT_ROOT, 'reports', benchmark)
+        if os.path.isdir(target):
+            msg = 'Benchmark report "{}" already exists.'.format(benchmark)
+            LOG.error(msg)
+            return False, msg
+
+        for id in (test_id, base_id):
+            path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+            if not os.path.isdir(path):
+                msg = 'TestRunID "{}" does not exist.'.format(id)
+                LOG.error(msg)
+                return False, msg
+            for file in ('datastore.json', 'metadata.json'):
+                path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id, file)
+                if not os.path.exists(path):
+                    msg = 'File "{}" does not exist.'.format(path)
+                    LOG.error(msg)
+                    return False, msg
+
+        # Prepare benchmark workspace
+        workspace = os.path.join(PERF_INSIGHT_STAG, benchmark)
+        if os.path.isdir(workspace):
+            msg = 'Folder "{}" already exists in the staging area.'.format(
+                benchmark)
+            LOG.error(msg)
+            return False, msg
+
+        # Copy data files
+        os.makedirs(workspace)
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         test_id, 'datastore.json'),
+            os.path.join(workspace, 'test.datastore.json'))
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         test_id, 'metadata.json'),
+            os.path.join(workspace, 'test.metadata.json'))
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         base_id, 'datastore.json'),
+            os.path.join(workspace, 'base.datastore.json'))
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         base_id, 'metadata.json'),
+            os.path.join(workspace, 'base.metadata.json'))
+
+        # Get keywords from metadata
+        try:
+            with open(os.path.join(workspace, 'test.metadata.json'), 'r') as f:
+                test_metadata = json.load(f)
+            with open(os.path.join(workspace, 'base.metadata.json'), 'r') as f:
+                base_metadata = json.load(f)
+        except Exception as err:
+            msg = 'Fail to get metadata from "{}". error: {}'.format(f, err)
+            LOG.error(msg)
+            return False, msg
+
+        test_type = test_metadata.get('testrun-type')
+        test_platform = test_metadata.get('testrun-platform')
+        base_type = base_metadata.get('testrun-type')
+        base_platform = base_metadata.get('testrun-platform')
+
+        # Check TestRun types
+        if test_type != base_type:
+            msg = 'Different tests "{}:{}" cannot be benchmarked.'.format(
+                test_type, base_type)
+
+        # Copy configure files
+        filename = test_yaml or 'generate_testrun_results-{}.yaml'.format(
+            test_type)
+        path = self._get_template(filename, test_platform)
+        if path:
+            shutil.copyfile(path, os.path.join(
+                workspace, 'test.generate_testrun_results.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(filename)
+
+        filename = base_yaml or 'generate_testrun_results-{}.yaml'.format(
+            base_type)
+        path = self._get_template(filename, base_platform)
+        if path:
+            shutil.copyfile(path, os.path.join(
+                workspace, 'base.generate_testrun_results.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(filename)
+
+        file = benchmark_yaml or 'generate_2way_benchmark-{}.yaml'.format(
+            test_type)
+        path = self._get_template(file, test_platform)
+        if path:
+            shutil.copyfile(path, os.path.join(
+                workspace, 'generate_2way_benchmark.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(filename)
+
+        filename = metadata_yaml or 'generate_2way_metadata-{}.yaml'.format(
+            test_type)
+        path = self._get_template(filename, test_platform)
+        if path:
+            shutil.copyfile(path, os.path.join(
+                workspace, 'generate_2way_metadata.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(filename)
+
+        # TODO: connect JupyterLab and generate the report
+
+        # Update metadata and dump to metadata.json
+        json_block = {'id': benchmark,
+                      'path': target,
+                      'create_time': time.strftime(
+                          '%Y-%m-%d %H:%M:%S', time.localtime()),
+                      'test_id': test_id,
+                      'base_id': base_id,
+                      'test_metadata': test_metadata,
+                      'base_metadata': base_metadata}
+
+        # TODO: dump to json file
+
+        # Deal with the files
+        try:
+            shutil.copytree(workspace, target)
+            shutil.move(workspace, os.path.join(
+                os.path.dirname(workspace),
+                '.deleted_after_creating_{}__{}'.format(
+                    time.strftime('%y%m%d%H%M%S', time.localtime()),
+                    os.path.basename(workspace))))
+        except Exception as err:
+            msg = 'Fail to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, json_block
+
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
@@ -668,5 +821,40 @@ def delete_testrun(id):
     res, con = manager.delete_testrun(id)
     if res:
         return jsonify(con), 200    # use 200 since 204 returns no json
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.post('/benchmark')
+def create_benchmark():
+    LOG.info('Received request to create benchmark report.')
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    test_id = req.get('test_id')
+    if test_id is None:
+        return jsonify({'error': '"test_id" is missing in request.'}), 415
+
+    base_id = req.get('base_id')
+    if base_id is None:
+        return jsonify({'error': '"base_id" is missing in request.'}), 415
+
+    test_yaml = req.get('test_yaml')
+    base_yaml = req.get('base_yaml')
+    benchmark_yaml = req.get('benchmark_yaml')
+    metadata_yaml = req.get('metadata_yaml')
+
+    res, con = manager.create_benchmark(test_id,
+                                        base_id,
+                                        test_yaml,
+                                        base_yaml, benchmark_yaml,
+                                        metadata_yaml)
+
+    if res:
+        return jsonify(con), 201
     else:
         return jsonify({'error': con}), 500
