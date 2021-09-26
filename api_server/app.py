@@ -749,7 +749,38 @@ class PerfInsightManager():
 
         return True, json_block
 
+    def delete_benchmark(self, id):
+        """Delete a specified benchmark from PERF_INSIGHT_ROOT.
 
+        Input:
+            id - Benchmark ID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'reports', id)
+        if not os.path.isdir(target):
+            msg = 'Benchmark "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # TODO: Remove from the dashboard DB
+
+        # Deal with the files
+        try:
+            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+                time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
+        except Exception as err:
+            msg = 'Fail to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id}
+
+
+# Main
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
@@ -769,6 +800,9 @@ PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
 
 manager = PerfInsightManager()
+
+
+# TestRun entrypoints
 
 
 @app.get('/testruns')
@@ -887,6 +921,9 @@ def delete_testrun(id):
         return jsonify({'error': con}), 500
 
 
+# Benchmark entrypoints
+
+
 @app.get('/benchmarks')
 def query_benchmarks():
     LOG.info('Received request to query all benchmarks.')
@@ -938,5 +975,15 @@ def create_benchmark():
 
     if res:
         return jsonify(con), 201
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.delete('/benchmarks/<id>')
+def delete_benchmark(id):
+    LOG.info('Received request to delete benchmark "{}".'.format(id))
+    res, con = manager.delete_benchmark(id)
+    if res:
+        return jsonify(con), 200    # use 200 since 204 returns no json
     else:
         return jsonify({'error': con}), 500
