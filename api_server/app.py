@@ -722,17 +722,20 @@ class PerfInsightManager():
 
         # TODO: connect JupyterLab and generate the report
 
-        # Update metadata and dump to metadata.json
-        json_block = {'id': benchmark,
-                      'path': target,
-                      'create_time': time.strftime(
-                          '%Y-%m-%d %H:%M:%S', time.localtime()),
-                      'test_id': test_id,
-                      'base_id': base_id,
-                      'test_metadata': test_metadata,
-                      'base_metadata': base_metadata}
+        # TODO: Update the dashboard database
 
-        # TODO: dump to json file
+        # Update metadata and dump to metadata.json
+        metadata = {'id': benchmark,
+                    'path': target,
+                    'create_time': time.strftime(
+                        '%Y-%m-%d %H:%M:%S', time.localtime()),
+                    'test_id': test_id,
+                    'base_id': base_id,
+                    'test_metadata': test_metadata,
+                    'base_metadata': base_metadata}
+
+        with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
+            json.dump(metadata, f, indent=3)
 
         # Deal with the files
         try:
@@ -747,7 +750,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        return True, json_block
+        return True, metadata
 
     def delete_benchmark(self, id):
         """Delete a specified benchmark from PERF_INSIGHT_ROOT.
