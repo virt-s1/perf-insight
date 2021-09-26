@@ -535,6 +535,33 @@ class PerfInsightManager():
         return True, {'id': id}
 
     # Benchmark Functions
+    def query_benchmarks(self):
+        """Query all Benchmark reports from PERF_INSIGHT_ROOT.
+
+        Input:
+            None
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        benchmarks = []
+        search_path = os.path.join(PERF_INSIGHT_ROOT, 'reports')
+
+        if not os.path.isdir(search_path):
+            msg = 'Path "{}" does not exist.'.format(search_path)
+            LOG.error(msg)
+            return False, msg
+
+        for entry in os.listdir(search_path):
+            if not os.path.isdir(os.path.join(search_path, entry)):
+                continue
+            if entry.startswith('benchmark_'):
+                LOG.debug('Found benchmark "{}".'.format(entry))
+                benchmarks.append({'id': entry})
+
+        return True, {'benchmarks': benchmarks}
+
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
                          metadata_yaml=None):
@@ -825,7 +852,17 @@ def delete_testrun(id):
         return jsonify({'error': con}), 500
 
 
-@app.post('/benchmark')
+@app.get('/benchmarks')
+def query_benchmarks():
+    LOG.info('Received request to query all benchmarks.')
+    res, con = manager.query_benchmarks()
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.post('/benchmarks')
 def create_benchmark():
     LOG.info('Received request to create benchmark report.')
 
