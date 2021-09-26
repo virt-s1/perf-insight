@@ -21,10 +21,11 @@ ADD ./requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install -r /tmp/requirements.txt
 
 # Create mount point
-RUN mkdir -p /opt/perf-insight /mnt/perf-insight
+RUN mkdir -p /opt/perf-insight /mnt/perf-insight /data
 
 # Configure application
 WORKDIR /app
+RUN ln -s /data/config.yaml /root/.perf-insight.yaml
 COPY ./api-server.sh /app/api-server.sh
 
 # During debugging, this entry point will be overridden.
