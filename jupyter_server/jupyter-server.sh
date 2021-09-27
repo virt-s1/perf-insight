@@ -27,4 +27,4 @@ cleanup() {
 # Start JupyterLab
 mkdir -p /app/workspace
 jupyter-lab -y --allow-root --no-browser --ip 0.0.0.0 --port 8888 \
-    --notebook-dir=/app/workspace
+    --notebook-dir=/app/workspace --collaborative
