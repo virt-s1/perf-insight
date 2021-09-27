@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import logging
 import os
 import yaml
+import re
 import json
 import shutil
 import time
@@ -16,7 +17,7 @@ class JupyterHelper():
         Input:
             None
         Return:
-            - list
+            - list or None
         """
         studies = []
         search_path = JUPYTERLAB_WORKSPACE
@@ -45,9 +46,34 @@ class JupyterHelper():
         Input:
             None
         Return:
-            - dict
+            - list or None
         """
-        pass
+        labs = []
+
+        cmd = 'jupyter server list'
+        with os.popen(cmd) as p:
+            output = p.readlines()
+
+        # Ex: 'http://hostname:8888/?token=b298...d8 :: /app/workspace/cheshi'
+        re_labinfo = re.compile(r'^http://(\S+):(\d+)/\?token=(\S+) :: (\S+)$')
+
+        try:
+            for line in output:
+                m = re_labinfo.match(line.strip())
+                if m:
+                    labs.append({'line': m[0],
+                                'host': m[1],
+                                 'port': m[2],
+                                 'token': m[3],
+                                 'dir': m[4],
+                                 'user': m[4].split('/')[-1]})
+        except Exception as err:
+            msg = 'Fail to parse output from "{}". error: {}'.format(
+                cmd, err)
+            LOG.error(msg)
+            return None
+
+        return labs
 
     def _start_lab(self):
         """Start a JupyterLab server for a specified user.
@@ -110,7 +136,13 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        pass
+        labs = self._get_labs()
+        if labs is not None:
+            return True, labs
+        else:
+            msg = 'Failed to query information of the running labs.'
+            LOG.error(msg)
+            return False, msg
 
     def stop_study(self):
         """Stop the study for a specified user.
