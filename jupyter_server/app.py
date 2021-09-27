@@ -16,9 +16,28 @@ class JupyterHelper():
         Input:
             None
         Return:
-            - dict
+            - list
         """
-        pass
+        studies = []
+        search_path = JUPYTERLAB_WORKSPACE
+
+        if not os.path.isdir(search_path):
+            msg = 'Path "{}" does not exist.'.format(search_path)
+            LOG.error(msg)
+            return None
+
+        for user in os.listdir(search_path):
+            if not os.path.isdir(os.path.join(search_path, user)):
+                continue
+            for id in os.listdir(os.path.join(search_path, user)):
+                if not id.startswith('benchmark_'):
+                    continue
+                if os.path.islink(os.path.join(search_path, user, id)):
+                    LOG.debug(
+                        'Found study "{}" for user "{}".'.format(id, user))
+                    studies.append({'id': id, 'user': user})
+
+        return studies
 
     def _get_labs(self):
         """Get information of the running labs.
@@ -66,7 +85,7 @@ class JupyterHelper():
 
     # Study Functions
     def query_studies(self):
-        """Query information of current studies.
+        """Query information of the current studies.
 
         Input:
             user - Owner of the study
@@ -74,7 +93,13 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        pass
+        studies = self._get_studies()
+        if studies is not None:
+            return True, studies
+        else:
+            msg = 'Failed to query information of the current studies.'
+            LOG.error(msg)
+            return False, msg
 
     def start_study(self):
         """Start a study for a specified user.
