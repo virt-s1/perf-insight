@@ -33,6 +33,8 @@ podman run --rm -it --name perf-insight-jupyter-server \
 # DEBUG: Start apache server (inside container)
 mkdir -p /app/workspace
 jupyter-lab -y --allow-root --no-browser --ip 0.0.0.0 --port 8888 \
-    --notebook-dir=/app/workspace
+    --ServerApp.password_required=True \
+    --ServerApp.password='argon2:$argon2id$v=19$m=10240,t=10,p=8$CitYS3BPMSBPtBVrfKRxLg$Oao8niNXff1Ai5SxJHeQvA' \
+    --notebook-dir=/app/workspace --collaborative
 
 ```
