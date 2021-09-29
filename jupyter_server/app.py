@@ -50,23 +50,22 @@ class JupyterHelper():
         """
         labs = []
 
-        cmd = 'jupyter server list'
-        with os.popen(cmd) as p:
+        with os.popen('jupyter server list') as p:
             output = p.readlines()
 
-        # Ex: 'http://hostname:8888/?token=b298...d8 :: /app/workspace/cheshi'
-        re_labinfo = re.compile(r'^http://(\S+):(\d+)/\?token=(\S+) :: (\S+)$')
+        # Ex1: 'http://hostname:8888/ :: /app/workspace/cheshi'
+        # Ex2: 'http://hostname:8888/?token=b298...d8 :: /app/workspace/cheshi'
+        re_labinfo = re.compile(r'^http://(\S+):(\d+)/(\S*) :: (\S+)$')
 
         try:
             for line in output:
                 m = re_labinfo.match(line.strip())
                 if m:
-                    labs.append({'line': m[0],
-                                'host': m[1],
-                                 'port': m[2],
-                                 'token': m[3],
-                                 'dir': m[4],
-                                 'user': m[4].split('/')[-1]})
+                    token = m[3][7:] if m[3].startswith('?token=') else ''
+                    user = m[4].split('/')[-1]
+
+                    labs.append({'line': m[0], 'host': m[1], 'port': m[2],
+                                 'token': token, 'dir': m[4], 'user': user})
         except Exception as err:
             msg = 'Fail to parse output from "{}". error: {}'.format(
                 cmd, err)
