@@ -61,14 +61,23 @@ class JupyterHelper():
             for line in output:
                 m = re_labinfo.match(line.strip())
                 if m:
-                    token = m[3][7:] if m[3].startswith('?token=') else ''
-                    user = m[4].split('/')[-1]
+                    token = m[3][7:] if m[3].startswith('?token=') else None
+                    path = m[4]
+                    user = path.split('/')[-1]
+
+                    try:
+                        with open(os.path.join(path, '.passwd'), 'r') as f:
+                            hash = f.readline()
+                    except Exception as err:
+                        LOG.warning('Unable to get hashed passwd for user {}. error: {}'.format(
+                            user, err))
+                        hash = None
 
                     labs.append({'line': m[0], 'host': m[1], 'port': m[2],
-                                 'token': token, 'dir': m[4], 'user': user})
+                                 'token': token, 'path': path, 'user': user,
+                                 'hash': hash})
         except Exception as err:
-            msg = 'Fail to parse output from "{}". error: {}'.format(
-                cmd, err)
+            msg = 'Fail to read jupyter server list. error: {}'.format(err)
             LOG.error(msg)
             return None
 
