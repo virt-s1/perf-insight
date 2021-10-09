@@ -22,7 +22,7 @@ class JupyterHelper():
             - list or None
         """
         studies = []
-        search_path = JUPYTERLAB_WORKSPACE
+        search_path = JUPYTER_WORKSPACE
 
         if not os.path.isdir(search_path):
             msg = 'Path "{}" does not exist.'.format(search_path)
@@ -104,8 +104,8 @@ class JupyterHelper():
 
         return None
 
-    def _start_lab(self):
-        """Start a JupyterLab server for a specified user.
+    def _start_lab(self, username, password):
+        """Start a JupyterLab server for the specified user.
 
         Input:
             user - Username associated with the lab
@@ -113,7 +113,50 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        pass
+        # Prepare environment
+        workspace = os.path.join(JUPYTER_WORKSPACE, username)
+        os.makedirs(workspace, exist_ok=True)
+
+        hashed_passwd = passwd(password)
+        with open(os.path.join(workspace, '.passwd'), 'w') as f:
+            f.write(hashed_passwd)
+
+        # Determine port
+        try:
+            min_port = int(JUPYTER_LAB_PORTS.split('-')[0])
+            max_port = int(JUPYTER_LAB_PORTS.split('-')[1])
+        except Exception as err:
+            LOG.warning('Fail to get port range for Jupyter labs.', err)
+            min_port = max_port = 8888
+
+        labs = self._get_labs()
+        if labs:
+            port = max([int(x['port']) for x in labs]) + 1
+            if port > max_port:
+                msg = 'No more labs can be started. (port range: {}~{})'.format(
+                    min_port, max_port)
+                LOG.error(msg)
+                return False, msg
+        else:
+            port = min_port
+
+        # Start Jupyter lab
+        cmd = 'jupyter-lab -y --allow-root --no-browser --collaborative \
+            --ip 0.0.0.0 --port {} --notebook-dir={} \
+            --ServerApp.password_required=True \
+            --ServerApp.password=\'{}\' \
+            &>>{}/.jupyter.log &'.format(
+            port, workspace, hashed_passwd, workspace
+        )
+        os.system(cmd)
+        
+        # Get lab info
+        lab = self._get_lab_by_user(username)
+        if lab is None:
+            msg = 'Fail to create Jupyter lab for user {}.'.format(username)
+            LOG.error(msg)
+            return False, msg
+        return True, lab
 
     def _stop_lab(self):
         """Stop the JupyterLab server for a specified user.
@@ -162,6 +205,17 @@ class JupyterHelper():
             msg = 'Failed to query information of the running labs.'
             LOG.error(msg)
             return False, msg
+
+    def create_lab(self, username, password):
+        """Create a Jupyter lab for the specified user.
+
+        Input:
+            user - Username associated with the lab
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+        return self._start_lab(username, password)
 
     # Study Functions
     def query_studies(self):
@@ -271,6 +325,31 @@ def query_labs():
         return jsonify({'error': con}), 500
 
 
+@app.post('/labs')
+def create_lab():
+    LOG.info('Received request to create a Jupyter lab.')
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    username = req.get('username')
+    if username is None:
+        return jsonify({'error': '"username" is missing in request.'}), 415
+
+    password = req.get('password')
+    if password is None:
+        return jsonify({'error': '"password" is missing in request.'}), 415
+
+    # Execute action
+    res, con = helper.create_lab(username, password)
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
 
 @app.get('/studies')
 def query_studies():
@@ -350,6 +429,7 @@ config.update(user_config.get('jupyter', {}))
 PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/mnt/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
-JUPYTERLAB_WORKSPACE = config.get('jupyterlab_workspace', '/app/workspace')
+JUPYTER_WORKSPACE = config.get('jupyter_workspace', '/app/workspace')
+JUPYTER_LAB_PORTS = config.get('jupyter_lab_ports', '8880-8899')
 
 helper = JupyterHelper()
