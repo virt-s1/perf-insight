@@ -156,7 +156,7 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
 
-    def start_study(self, report_id, username):
+    def start_study(self, report_id, username, password):
         """Start a study for a specified user.
 
         Input:
@@ -166,8 +166,8 @@ class JupyterHelper():
             - (False, message) if something goes wrong.
         """
         # Check if the report exists
-        target = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
-        if not os.path.isdir(target):
+        source = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
+        if not os.path.isdir(source):
             msg = 'Report ID "{}" does not exist.'.format(id)
             LOG.error(msg)
             return False, msg
@@ -190,20 +190,26 @@ class JupyterHelper():
         # Check if the user already have a Jupyter lab
         lab = self._get_lab_by_user(username)
         if lab:
-            # TODO: Check the password
-            # password, lab['hash']
-            pass
+            # Verify the password
+            if not lab['hash']:
+                msg = 'Cannot get hashed password for user "{}".'.format(
+                    username)
+                LOG.error(msg)
+                return False, msg
+
+            if not passwd_check(lab['hash'], password):
+                msg = 'Invalid password for user "{}".'.format(username)
+                LOG.error(msg)
+                return False, msg
         else:
             # TODO: create a lab for the user
-            # username, password
+            # username, password, port
             lab = self._start_lab()
 
-        # TODO: check out the report for the user
-        # report_id
-        # path = lab['path']
-        # PERF_INSIGHT_ROOT
+        # Check out the report
+        os.symlink(source, os.path.join(lab['path'], report_id))
 
-        return True, {}
+        return True, {'id': report_id, 'user': username}
 
     def stop_study(self):
         """Stop the study for a specified user.
