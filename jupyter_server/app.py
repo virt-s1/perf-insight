@@ -88,6 +88,11 @@ class JupyterHelper():
     def _get_lab_by_user(self, username):
         """Get information of the running lab by username.
 
+        Restriction: When the user has multiple labs, only the first one will
+        be returned. This may cause problems. But the logic of start lab will
+        check the running list, so it will not happen. Only care should be
+        taken to prevent users from manually creating labs.
+
         Input:
             None
         Return:
@@ -106,6 +111,9 @@ class JupyterHelper():
 
     def _start_lab(self, username, password):
         """Start a JupyterLab server for the specified user.
+
+        Restriction: A user can only have one lab, please check it before
+        calling this function.
 
         Input:
             user - Username associated with the lab
@@ -215,6 +223,11 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
+        if self._get_lab_by_user(username):
+            msg = 'Only one lab can be created for user "{}".'.format(username)
+            LOG.error(msg)
+            return False, msg
+
         return self._start_lab(username, password)
 
     # Study Functions
