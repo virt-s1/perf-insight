@@ -83,6 +83,25 @@ class JupyterHelper():
 
         return labs
 
+    def _get_lab_by_user(self, username):
+        """Get information of the running lab by username.
+
+        Input:
+            None
+        Return:
+            - list or None
+        """
+        labs = self._get_labs()
+
+        if labs is None:
+            return None
+
+        for lab in labs:
+            if lab['user'] == username:
+                return lab
+
+        return None
+
     def _start_lab(self):
         """Start a JupyterLab server for a specified user.
 
