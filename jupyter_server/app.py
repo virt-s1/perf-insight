@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+from jupyter_server.auth import passwd
+from jupyter_server.auth import passwd_check
 import logging
 import os
 import yaml
@@ -154,7 +156,7 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
 
-    def start_study(self):
+    def start_study(self, report_id, username):
         """Start a study for a specified user.
 
         Input:
@@ -163,13 +165,45 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        labs = self._get_labs()
-        if labs is not None:
-            return True, labs
-        else:
-            msg = 'Failed to query information of the running labs.'
+        # Check if the report exists
+        target = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
+        if not os.path.isdir(target):
+            msg = 'Report ID "{}" does not exist.'.format(id)
             LOG.error(msg)
             return False, msg
+
+        # Check if the report is available for checking out
+        studies = self._get_studies()
+        if studies is None:
+            msg = 'Failed to query information of the current studies.'
+            LOG.error(msg)
+            return False, msg
+
+        users = [x['user'] for x in studies if x['id'] == report_id]
+        if users:
+            # Report has been checked out
+            msg = 'The report has been checked out by user "{}".'.format(
+                ', '.join(users))
+            LOG.error(msg)
+            return False, msg
+
+        # Check if the user already have a Jupyter lab
+        lab = self._get_lab_by_user(username)
+        if lab:
+            # TODO: Check the password
+            # password, lab['hash']
+            pass
+        else:
+            # TODO: create a lab for the user
+            # username, password
+            lab = self._start_lab()
+
+        # TODO: check out the report for the user
+        # report_id
+        # path = lab['path']
+        # PERF_INSIGHT_ROOT
+
+        return True, {}
 
     def stop_study(self):
         """Stop the study for a specified user.
@@ -207,18 +241,45 @@ def query_studies():
         return jsonify({'error': con}), 500
 
 
-@app.post('/studies')
-def start_study():
-    LOG.info('Received request to start a study.')
+@app.put('/studies')
+def update_study():
     if request.is_json:
         req = request.get_json()
     else:
         return jsonify({'error': 'Request must be JSON.'}), 415
 
-    res, con = helper.start_study()
+    # Parse args
+    action = req.get('action')
+    if action is None:
+        return jsonify({'error': '"action" is missing in request.'}), 415
+    elif not action in ('start', 'stop'):
+        return jsonify({'error': '"action" must be "start" or "stop".'}), 415
+
+    report_id = req.get('report_id')
+    if report_id is None:
+        return jsonify({'error': '"report_id" is missing in request.'}), 415
+
+    if action == 'start':
+        LOG.info('Received request to start a study for "{}".'.format(report_id))
+    elif action == 'stop':
+        LOG.info('Received request to stop the study for "{}".'.format(report_id))
+
+    username = req.get('username')
+    if username is None:
+        return jsonify({'error': '"username" is missing in request.'}), 415
+
+    password = req.get('password')
+    if password is None:
+        return jsonify({'error': '"password" is missing in request.'}), 415
+
+    # Execute action
+    if action == 'start':
+        res, con = helper.start_study()
+    elif action == 'stop':
+        res, con = helper.stop_study()
 
     if res:
-        return jsonify(con), 201
+        return jsonify(con), 200
     else:
         return jsonify({'error': con}), 500
 
