@@ -138,6 +138,31 @@ class JupyterHelper():
         """
         pass
 
+    # Lab Functions
+    def query_labs(self):
+        """Query information of the running labs.
+
+        Input:
+            None
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+        labs = self._get_labs()
+        if labs is not None:
+            # Remove sensitive information
+            for lab in labs:
+                lab.pop('line')
+                lab.pop('token')
+                lab.pop('path')
+                lab.pop('hash')
+
+            return True, labs
+        else:
+            msg = 'Failed to query information of the running labs.'
+            LOG.error(msg)
+            return False, msg
+
     # Study Functions
     def query_studies(self):
         """Query information of the current studies.
@@ -235,6 +260,16 @@ def create_report(id):
         return jsonify(con), 200
     else:
         return jsonify({'error': con}), 500
+
+@app.get('/labs')
+def query_labs():
+    LOG.info('Received request to query all Jupyter labs.')
+    res, con = helper.query_labs()
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
 
 
 @app.get('/studies')
