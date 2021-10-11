@@ -140,7 +140,8 @@ class JupyterHelper():
         calling this function.
 
         Input:
-            user - Username associated with the lab
+            username - Username associated with the lab
+            password - Password to be set
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -180,14 +181,14 @@ class JupyterHelper():
             &>>{}/.jupyter.log &'.format(
             port, workspace, hashed_passwd, workspace
         )
-        os.system(cmd)
-        
-        # Get lab info
-        lab = self._get_lab_by_user(username)
-        if lab is None:
-            msg = 'Fail to create Jupyter lab for user {}.'.format(username)
+        res = os.system(cmd)
+        if res > 0:
+            msg = 'Fail to create Jupyter lab for user "{}".'.format(username)
             LOG.error(msg)
             return False, msg
+        else:
+            time.sleep(1)
+            lab = self._get_lab_by_user(username)
         return True, lab
 
     def _stop_lab(self, username, password):
@@ -388,6 +389,7 @@ def create_report(id):
     else:
         return jsonify({'error': con}), 500
 
+
 @app.get('/labs')
 def query_labs():
     LOG.info('Received request to query all Jupyter labs.')
@@ -529,6 +531,6 @@ PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/mnt/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 JUPYTER_WORKSPACE = config.get('jupyter_workspace', '/app/workspace')
-JUPYTER_LAB_PORTS = config.get('jupyter_lab_ports', '8880-8899')
+JUPYTER_LAB_PORTS = config.get('jupyter_lab_ports', '8890-8899')
 
 helper = JupyterHelper()
