@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from jupyter_server.auth import passwd
-from jupyter_server.auth import passwd_check
+from jupyter_server.auth.security import passwd_check
 import logging
 import os
 import yaml
@@ -71,7 +71,7 @@ class JupyterHelper():
                         with open(os.path.join(path, '.passwd'), 'r') as f:
                             hash = f.readline()
                     except Exception as err:
-                        LOG.warning('Unable to get hashed passwd for user {}. error: {}'.format(
+                        LOG.warning('Unable to get hashed passwd for user "{}". error: {}'.format(
                             user, err))
                         hash = None
 
@@ -108,6 +108,30 @@ class JupyterHelper():
                 return lab
 
         return None
+
+    def _check_password(self, username, password):
+        """Check password for specified user.
+        Input:
+            username - Username associated with the lab
+            password - Password to be checked
+
+        Return:
+            - True   - Valid password
+            - False  - Something wrong or invalid password
+        """
+        lab = self._get_lab_by_user(username)
+        hashed_password = lab.get('hash') if lab else None
+        if hashed_password is None:
+            LOG.error('Cannot get hashed password for user "{}".'.format(
+                username))
+            return False
+
+        if passwd_check(lab['hash'], password):
+            LOG.info('Password for user "{}" is valid.'.format(username))
+            return True
+        else:
+            LOG.error('Password for user "{}" is invalid.'.format(username))
+            return False
 
     def _start_lab(self, username, password):
         """Start a JupyterLab server for the specified user.
@@ -166,16 +190,41 @@ class JupyterHelper():
             return False, msg
         return True, lab
 
-    def _stop_lab(self):
-        """Stop the JupyterLab server for a specified user.
+    def _stop_lab(self, username, password):
+        """Stop the JupyterLab server for the specified user.
 
         Input:
-            user - Username associated with the lab
+            username - Username associated with the lab
+            password - Password to be checked
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        pass
+        # Get lab info
+        lab = self._get_lab_by_user(username)
+        if lab is None:
+            msg = 'No lab is associated with user "{}".'.format(username)
+            LOG.error(msg)
+            return False, msg
+
+        # Verify password
+        if not self._check_password(username, password):
+            msg = 'Fail to verify user "{}", operation denied.'.format(
+                username)
+            LOG.error(msg)
+            return False, msg
+
+        # Stop the lab
+        cmd = 'jupyter server stop {}'.format(lab.get('port'))
+        res = os.system(cmd)
+
+        if res > 0:
+            msg = 'Fail to stop lab "{}" for user "{}".'.format(
+                lab.get('port'), username)
+            LOG.error(msg)
+            return False, msg
+        else:
+            return True, lab
 
     # Report Functions
     def create_report(self, id):
@@ -229,6 +278,17 @@ class JupyterHelper():
             return False, msg
 
         return self._start_lab(username, password)
+
+    def delete_lab(self, username, password):
+        """Delete a Jupyter lab for the specified user.
+
+        Input:
+            user - Username associated with the lab
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+        return self._stop_lab(username, password)
 
     # Study Functions
     def query_studies(self):
@@ -360,6 +420,32 @@ def create_lab():
     res, con = helper.create_lab(username, password)
     if res:
         return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.delete('/labs')
+def delete_lab():
+    LOG.info('Received request to delete a Jupyter lab.')
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    username = req.get('username')
+    if username is None:
+        return jsonify({'error': '"username" is missing in request.'}), 415
+
+    password = req.get('password')
+    if password is None:
+        return jsonify({'error': '"password" is missing in request.'}), 415
+
+    # Execute action
+    res, con = helper.delete_lab(username, password)
+    if res:
+        return jsonify(con), 200    # use 200 since 204 returns no json
     else:
         return jsonify({'error': con}), 500
 
