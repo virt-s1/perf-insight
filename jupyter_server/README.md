@@ -27,7 +27,7 @@ podman run --rm -it --name perf-insight-jupyter-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:ro \
     --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_DATA/config.yaml:/root/.perf-insight.yaml:ro \
-    --publish 8880-8938:8880-8938 \
+    --publish 8880-8899:8880-8899 \
     perf-insight-jupyter-server /bin/bash
 
 # DEBUG: Start apache server (inside container)
