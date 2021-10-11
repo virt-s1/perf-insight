@@ -19,7 +19,8 @@ class JupyterHelper():
         Input:
             None
         Return:
-            - list or None
+            - list of the dict, or
+            - None if something goes wrong.
         """
         studies = []
         search_path = JUPYTER_WORKSPACE
@@ -48,7 +49,8 @@ class JupyterHelper():
         Input:
             None
         Return:
-            - list or None
+            - list of the dict, or
+            - None if something goes wrong.
         """
         labs = []
 
@@ -94,9 +96,10 @@ class JupyterHelper():
         taken to prevent users from manually creating labs.
 
         Input:
-            None
+            username - Username associated with the lab
         Return:
-            - list or None
+            - list of the dict, or
+            - None if something goes wrong.
         """
         labs = self._get_labs()
 
@@ -111,10 +114,10 @@ class JupyterHelper():
 
     def _check_password(self, username, password):
         """Check password for specified user.
+        
         Input:
             username - Username associated with the lab
             password - Password to be checked
-
         Return:
             - True   - Valid password
             - False  - Something wrong or invalid password
@@ -189,7 +192,7 @@ class JupyterHelper():
         else:
             time.sleep(1)
             lab = self._get_lab_by_user(username)
-        return True, lab
+            return True, lab
 
     def _stop_lab(self, username, password):
         """Stop the JupyterLab server for the specified user.
@@ -232,7 +235,7 @@ class JupyterHelper():
         """Create the benchmark report in staging area.
 
         Input:
-            id - Benchmark ID
+            id - the benchmark report ID
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -268,7 +271,8 @@ class JupyterHelper():
         """Create a Jupyter lab for the specified user.
 
         Input:
-            user - Username associated with the lab
+            username - Username associated with the lab
+            password - Password to be set
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -284,7 +288,8 @@ class JupyterHelper():
         """Delete a Jupyter lab for the specified user.
 
         Input:
-            user - Username associated with the lab
+            username - Username associated with the lab
+            password - Password to be checked
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -296,7 +301,7 @@ class JupyterHelper():
         """Query information of the current studies.
 
         Input:
-            user - Owner of the study
+            None
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -313,7 +318,9 @@ class JupyterHelper():
         """Start a study for a specified user.
 
         Input:
-            user - Owner of the study
+            report_id - Report ID to be studied
+            username  - Username associated with the lab
+            password  - Password to be set/checked
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -362,7 +369,9 @@ class JupyterHelper():
         """Stop the study for a specified user.
 
         Input:
-            user - Owner of the study
+            report_id - Report ID to be studied
+            username  - Username associated with the lab
+            password  - Password to be checked
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -390,7 +399,7 @@ class JupyterHelper():
 app = Flask(__name__)
 
 
-@app.put('/reports/<id>')
+@app.post('/reports/<id>')
 def create_report(id):
     LOG.info('Received request to create report for "{}".'.format(id))
     res, con = helper.create_report(id)
