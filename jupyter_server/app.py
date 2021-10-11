@@ -343,21 +343,15 @@ class JupyterHelper():
         # Check if the user already have a Jupyter lab
         lab = self._get_lab_by_user(username)
         if lab:
-            # Verify the password
-            if not lab['hash']:
-                msg = 'Cannot get hashed password for user "{}".'.format(
+            # Verify password
+            if not self._check_password(username, password):
+                msg = 'Fail to verify user "{}", operation denied.'.format(
                     username)
                 LOG.error(msg)
                 return False, msg
-
-            if not passwd_check(lab['hash'], password):
-                msg = 'Invalid password for user "{}".'.format(username)
-                LOG.error(msg)
-                return False, msg
         else:
-            # TODO: create a lab for the user
-            # username, password, port
-            lab = self._start_lab()
+            # Create a Jupyter lab for the user
+            lab = self._start_lab(username, password)
 
         # Check out the report
         os.symlink(source, os.path.join(lab['path'], report_id))
@@ -462,28 +456,19 @@ def query_studies():
         return jsonify({'error': con}), 500
 
 
-@app.put('/studies')
-def update_study():
+@app.post('/studies')
+def create_study():
+    LOG.info('Received request to start a study.')
+
     if request.is_json:
         req = request.get_json()
     else:
         return jsonify({'error': 'Request must be JSON.'}), 415
 
     # Parse args
-    action = req.get('action')
-    if action is None:
-        return jsonify({'error': '"action" is missing in request.'}), 415
-    elif not action in ('start', 'stop'):
-        return jsonify({'error': '"action" must be "start" or "stop".'}), 415
-
     report_id = req.get('report_id')
     if report_id is None:
         return jsonify({'error': '"report_id" is missing in request.'}), 415
-
-    if action == 'start':
-        LOG.info('Received request to start a study for "{}".'.format(report_id))
-    elif action == 'stop':
-        LOG.info('Received request to stop the study for "{}".'.format(report_id))
 
     username = req.get('username')
     if username is None:
@@ -494,10 +479,7 @@ def update_study():
         return jsonify({'error': '"password" is missing in request.'}), 415
 
     # Execute action
-    if action == 'start':
-        res, con = helper.start_study()
-    elif action == 'stop':
-        res, con = helper.stop_study()
+    res, con = helper.start_study(report_id, username, password)
 
     if res:
         return jsonify(con), 200
