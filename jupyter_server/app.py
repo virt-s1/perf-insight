@@ -358,7 +358,7 @@ class JupyterHelper():
 
         return True, {'id': report_id, 'user': username}
 
-    def stop_study(self):
+    def stop_study(self, report_id, username, password):
         """Stop the study for a specified user.
 
         Input:
@@ -367,7 +367,23 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        pass
+        # Check if the report is checked out by the user
+        studies = self._get_studies()
+        if studies is None:
+            msg = 'Failed to query information of the current studies.'
+            LOG.error(msg)
+            return False, msg
+
+        if (report_id, username) not in [(study['id'], study['user']) for study in studies]:
+            msg = 'Report "{}" is not checked out by user "{}".'.format(
+                report_id, username)
+            LOG.error(msg)
+            return False, msg
+
+        # Check in the report
+        os.unlink(os.path.join(JUPYTER_WORKSPACE, username, report_id))
+
+        return True, {'id': report_id, 'user': username}
 
 
 # Flask
@@ -487,10 +503,29 @@ def create_study():
         return jsonify({'error': con}), 500
 
 
-@app.delete('/studies/<id>')
-def stop_study(id):
+@app.delete('/studies')
+def delete_study():
     LOG.info('Received request to stop a study.')
-    res, con = helper.stop_study(id)
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    report_id = req.get('report_id')
+    if report_id is None:
+        return jsonify({'error': '"report_id" is missing in request.'}), 415
+
+    username = req.get('username')
+    if username is None:
+        return jsonify({'error': '"username" is missing in request.'}), 415
+
+    password = req.get('password')
+    if password is None:
+        return jsonify({'error': '"password" is missing in request.'}), 415
+
+    res, con = helper.stop_study(report_id, username, password)
     if res:
         return jsonify(con), 200    # use 200 since 204 returns no json
     else:
