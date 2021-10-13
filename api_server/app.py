@@ -6,6 +6,7 @@ import json
 import shutil
 import time
 import urllib
+import requests
 
 
 class PerfInsightManager():
@@ -721,6 +722,34 @@ class PerfInsightManager():
             return False, 'Cannot find template "{}".'.format(filename)
 
         # TODO: connect JupyterLab and generate the report
+        request_url = 'http://{}/reports/{}'.format(
+            JUPYTER_API_SERVER, benchmark)
+
+        try:
+            response = requests.post(
+                url=request_url,
+                headers={
+                    'Content-Type': 'application/json; charset=UTF-8'
+                },
+                json={})
+
+            response.raise_for_status()
+            result = response.json()
+
+            # Successful request
+            LOG.info('{}'.format(json.dumps(result, indent=4)))
+
+        except requests.exceptions.RequestException as ex:
+            # Try to get more details
+            try:
+                details = response.json()
+            except:
+                details = None
+
+            # Failed request
+            LOG.info('{}'.format(ex))
+            if details:
+                LOG.info('{}'.format(details))
 
         # TODO: Update the dashboard database
 
@@ -991,5 +1020,6 @@ PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
 PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
+JUPYTER_API_SERVER = config.get('jupyter_api_server', 'localhost:8880')
 
 manager = PerfInsightManager()
