@@ -114,7 +114,7 @@ class JupyterHelper():
 
     def _check_password(self, username, password):
         """Check password for specified user.
-        
+
         Input:
             username - Username associated with the lab
             password - Password to be checked
@@ -186,7 +186,8 @@ class JupyterHelper():
         )
         res = os.system(cmd)
         if res > 0:
-            msg = 'Failed to create Jupyter lab for user "{}".'.format(username)
+            msg = 'Failed to create Jupyter lab for user "{}".'.format(
+                username)
             LOG.error(msg)
             return False, msg
         else:
@@ -254,11 +255,12 @@ class JupyterHelper():
             return False, msg
 
         # Create the report html
-        cmd = '/app/generate_report.sh {}'.format(workspace)
+        cmd = '{}/data_process/generate_report.sh {} &>{}/generate_report.log'.format(
+            PERF_INSIGHT_REPO, workspace, workspace)
         res = os.system(cmd)
 
         if res > 0:
-            msg = 'Failed to generate report html, see nbconvert.log for more details.'
+            msg = 'Failed to generate report html, see generate_report.log for more details.'
             LOG.error(msg)
             return False, msg
 

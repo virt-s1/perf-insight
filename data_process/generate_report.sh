@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # Parse parameters
 [ -z "$1" ] && echo "Usage: $0 <workspace>" >&2 && exit 1
 

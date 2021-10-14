@@ -670,10 +670,10 @@ class PerfInsightManager():
                     'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
                 shutil.rmtree(workspace, ignore_errors=True)
             else:
-            msg = 'Folder "{}" already exists in the staging area.'.format(
-                benchmark)
-            LOG.error(msg)
-            return False, msg
+                msg = 'Folder "{}" already exists in the staging area.'.format(
+                    benchmark)
+                LOG.error(msg)
+                return False, msg
 
         # Copy data files
         os.makedirs(workspace)
@@ -779,17 +779,17 @@ class PerfInsightManager():
             LOG.info('Benchmark report generated.')
 
         except requests.exceptions.RequestException as ex:
-            # Try to get json reply
+            LOG.error('Failed to generate benchmark report with Jupyter server.')
+
+            # Use json reply if available
             try:
-                details = response.json()
+                details = response.json()['error']
             except:
-                details = ''
+                details = str(ex)
 
             # Failed request
-            msg = 'Failed to connect to Jupyter server or generate benchmark report.'
-            msg = '; '.join((msg, str(details), str(ex)))
-            LOG.error(msg)
-            return False, msg
+            LOG.error(details)
+            return False, details
 
         # TODO: Update the dashboard database
 
