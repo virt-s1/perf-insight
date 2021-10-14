@@ -81,7 +81,7 @@ class JupyterHelper():
                                  'token': token, 'path': path, 'user': user,
                                  'hash': hash})
         except Exception as err:
-            msg = 'Fail to read jupyter server list. error: {}'.format(err)
+            msg = 'Failed to read jupyter server list. error: {}'.format(err)
             LOG.error(msg)
             return None
 
@@ -162,7 +162,7 @@ class JupyterHelper():
             min_port = int(JUPYTER_LAB_PORTS.split('-')[0])
             max_port = int(JUPYTER_LAB_PORTS.split('-')[1])
         except Exception as err:
-            LOG.warning('Fail to get port range for Jupyter labs.', err)
+            LOG.warning('Failed to get port range for Jupyter labs.', err)
             min_port = max_port = 8888
 
         labs = self._get_labs()
@@ -186,7 +186,7 @@ class JupyterHelper():
         )
         res = os.system(cmd)
         if res > 0:
-            msg = 'Fail to create Jupyter lab for user "{}".'.format(username)
+            msg = 'Failed to create Jupyter lab for user "{}".'.format(username)
             LOG.error(msg)
             return False, msg
         else:
@@ -213,7 +213,7 @@ class JupyterHelper():
 
         # Verify password
         if not self._check_password(username, password):
-            msg = 'Fail to verify user "{}", operation denied.'.format(
+            msg = 'Failed to verify user "{}", operation denied.'.format(
                 username)
             LOG.error(msg)
             return False, msg
@@ -223,7 +223,7 @@ class JupyterHelper():
         res = os.system(cmd)
 
         if res > 0:
-            msg = 'Fail to stop lab "{}" for user "{}".'.format(
+            msg = 'Failed to stop lab "{}" for user "{}".'.format(
                 lab.get('port'), username)
             LOG.error(msg)
             return False, msg
@@ -374,7 +374,7 @@ class JupyterHelper():
         if lab:
             # Verify password
             if not self._check_password(username, password):
-                msg = 'Fail to verify user "{}", operation denied.'.format(
+                msg = 'Failed to verify user "{}", operation denied.'.format(
                     username)
                 LOG.error(msg)
                 return False, msg
@@ -382,7 +382,7 @@ class JupyterHelper():
             # Create a Jupyter lab for the user
             res, lab = self._start_lab(username, password)
             if res is False:
-                msg = 'Fail to create lab for user "{}"'.format(username)
+                msg = 'Failed to create lab for user "{}"'.format(username)
                 LOG.error(msg)
                 return False, msg
 

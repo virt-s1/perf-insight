@@ -98,7 +98,7 @@ class PerfInsightManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            msg = 'Fail to get metadata from {}. error: {}'.format(
+            msg = 'Failed to get metadata from {}. error: {}'.format(
                 metadata_file, err)
             LOG.warning(msg)
             metadata = None
@@ -111,7 +111,7 @@ class PerfInsightManager():
         #     with open(datastore_file, 'r') as f:
         #         datastore = json.load(f)
         # except Exception as err:
-        #     msg = 'Fail to get datastore from {}. error: {}'.format(
+        #     msg = 'Failed to get datastore from {}. error: {}'.format(
         #         datastore_file, err)
         #     LOG.warning(msg)
         #     datastore = None
@@ -155,7 +155,7 @@ class PerfInsightManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            msg = 'Fail to get metadata from {}. error: {}'.format(
+            msg = 'Failed to get metadata from {}. error: {}'.format(
                 metadata_file, err)
             LOG.error(msg)
             return False, msg
@@ -188,7 +188,7 @@ class PerfInsightManager():
                                   time.localtime()),
                     os.path.basename(workspace))))
         except Exception as err:
-            msg = 'Fail to deal with the files. error: {}'.format(err)
+            msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
@@ -318,7 +318,7 @@ class PerfInsightManager():
                                   time.localtime()),
                     os.path.basename(workspace))))
         except Exception as err:
-            msg = 'Fail to deal with the files. error: {}'.format(err)
+            msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
@@ -342,7 +342,7 @@ class PerfInsightManager():
         if res == 0:
             return True, None
         else:
-            msg = 'Fail to generate plots for pbench-fio results.'
+            msg = 'Failed to generate plots for pbench-fio results.'
             LOG.error(msg)
             return False, msg
 
@@ -363,7 +363,7 @@ class PerfInsightManager():
         if res == 0:
             return True, None
         else:
-            msg = 'Create datastore for the TestRun.'
+            msg = 'Failed to create datastore for the TestRun.'
             LOG.error(msg)
             return False, msg
 
@@ -386,7 +386,7 @@ class PerfInsightManager():
             testrun_type = m.get('testrun-type')
             testrun_platform = m.get('testrun-platform')
         except Exception as err:
-            msg = 'Fail to get metadata from "{}". error: {}'.format(f, err)
+            msg = 'Failed to get metadata from "{}". error: {}'.format(f, err)
             LOG.error(msg)
             return False, msg
 
@@ -473,7 +473,7 @@ class PerfInsightManager():
         try:
             shutil.copytree(target, os.path.join(PERF_INSIGHT_STAG, id))
         except Exception as err:
-            msg = 'Fail to deal with the files. error: {}'.format(err)
+            msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
@@ -529,7 +529,7 @@ class PerfInsightManager():
             shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
                 time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
         except Exception as err:
-            msg = 'Fail to deal with the files. error: {}'.format(err)
+            msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
@@ -589,7 +589,7 @@ class PerfInsightManager():
             with open(metadata_file, 'r') as f:
                 metadata = json.load(f)
         except Exception as err:
-            msg = 'Fail to get metadata from {}. error: {}'.format(
+            msg = 'Failed to get metadata from {}. error: {}'.format(
                 metadata_file, err)
             LOG.warning(msg)
             metadata = None
@@ -670,7 +670,7 @@ class PerfInsightManager():
             with open(os.path.join(workspace, 'base.metadata.json'), 'r') as f:
                 base_metadata = json.load(f)
         except Exception as err:
-            msg = 'Fail to get metadata from "{}". error: {}'.format(f, err)
+            msg = 'Failed to get metadata from "{}". error: {}'.format(f, err)
             LOG.error(msg)
             return False, msg
 
@@ -771,7 +771,7 @@ class PerfInsightManager():
                     time.strftime('%y%m%d%H%M%S', time.localtime()),
                     os.path.basename(workspace))))
         except Exception as err:
-            msg = 'Fail to deal with the files. error: {}'.format(err)
+            msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
@@ -801,7 +801,7 @@ class PerfInsightManager():
             shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
                 time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
         except Exception as err:
-            msg = 'Fail to deal with the files. error: {}'.format(err)
+            msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
