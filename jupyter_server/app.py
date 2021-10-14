@@ -358,7 +358,11 @@ class JupyterHelper():
                 return False, msg
         else:
             # Create a Jupyter lab for the user
-            lab = self._start_lab(username, password)
+            res, lab = self._start_lab(username, password)
+            if res is False:
+                msg = 'Fail to create lab for user "{}"'.format(username)
+                LOG.error(msg)
+                return False, msg
 
         # Check out the report
         os.symlink(source, os.path.join(lab['path'], report_id))
