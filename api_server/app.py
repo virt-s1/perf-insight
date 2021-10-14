@@ -43,6 +43,28 @@ class PerfInsightManager():
             filename, PERF_INSIGHT_TEMP))
         return None
 
+    def _select_file(self, search_path, candidates):
+        """Select the first available file from candidates.
+
+        Input:
+            search_path - Where to search the candidate
+            candidates  - A list of filenames (priority decreases)
+        Return:
+            - The selected filename, or
+            - '' if not found
+        """
+        LOG.debug('Searching from path "{}"...'.format(search_path))
+
+        for name in candidates:
+            if os.path.isfile(os.path.join(search_path, name)):
+                LOG.debug('"{}" -> YES'.format(name))
+                return name
+            else:
+                LOG.debug('"{}" -> NO'.format(name))
+
+        LOG.debug('No candidate can be found.')
+        return ''
+
     # TestRun Functions
     def query_testruns(self):
         """Query all the TestRunIDs from PERF_INSIGHT_ROOT.
@@ -391,15 +413,18 @@ class PerfInsightManager():
             return False, msg
 
         # Get template
-        filename = 'generate_testrun_results-{}-dbloader.yaml'.format(
-            testrun_type)
-        path = self._get_template(filename, testrun_platform)
-
-        if path is None:
-            return False, 'Cannot find template "{}".'.format(filename)
-
-        config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
-        shutil.copyfile(path, config)
+        candidates = [
+            'generate_testrun_results-{}-{}-dbloader.yaml'.format(
+                testrun_type, testrun_platform),
+            'generate_testrun_results-{}-dbloader.yaml'.format(
+                testrun_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, '.testrun_results_dbloader.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
 
         # Create DB loader CSV
         datastore = os.path.join(workspace, 'datastore.json')
@@ -684,48 +709,61 @@ class PerfInsightManager():
             msg = 'Different tests "{}:{}" cannot be benchmarked.'.format(
                 test_type, base_type)
 
-        # Copy configure files
-        filename = test_yaml or 'generate_testrun_results-{}.yaml'.format(
-            test_type)
-        path = self._get_template(filename, test_platform)
-        if path:
-            shutil.copyfile(path, os.path.join(
-                workspace, 'test.generate_testrun_results.yaml'))
+        # Deploy configure files
+        candidates = [test_yaml] if test_yaml else [
+            'generate_testrun_results-{}-{}.yaml'.format(
+                test_type, test_platform),
+            'generate_testrun_results-{}.yaml'.format(test_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'test.generate_testrun_results.yaml'))
         else:
-            return False, 'Cannot find template "{}".'.format(filename)
+            return False, 'Cannot find template "{}".'.format(candidates)
 
-        filename = base_yaml or 'generate_testrun_results-{}.yaml'.format(
-            base_type)
-        path = self._get_template(filename, base_platform)
-        if path:
-            shutil.copyfile(path, os.path.join(
-                workspace, 'base.generate_testrun_results.yaml'))
+        candidates = [base_yaml] if base_yaml else [
+            'generate_testrun_results-{}-{}.yaml'.format(
+                base_type, base_platform),
+            'generate_testrun_results-{}.yaml'.format(base_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'base.generate_testrun_results.yaml'))
         else:
-            return False, 'Cannot find template "{}".'.format(filename)
+            return False, 'Cannot find template "{}".'.format(candidates)
 
-        file = benchmark_yaml or 'generate_2way_benchmark-{}.yaml'.format(
-            test_type)
-        path = self._get_template(file, test_platform)
-        if path:
-            shutil.copyfile(path, os.path.join(
-                workspace, 'generate_2way_benchmark.yaml'))
+        candidates = [benchmark_yaml] if benchmark_yaml else [
+            'generate_2way_benchmark-{}-{}.yaml'.format(
+                test_type, test_platform),
+            'generate_2way_benchmark-{}.yaml'.format(test_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'generate_2way_benchmark.yaml'))
         else:
-            return False, 'Cannot find template "{}".'.format(filename)
+            return False, 'Cannot find template "{}".'.format(candidates)
 
-        filename = metadata_yaml or 'generate_2way_metadata-{}.yaml'.format(
-            test_type)
-        path = self._get_template(filename, test_platform)
-        if path:
-            shutil.copyfile(path, os.path.join(
-                workspace, 'generate_2way_metadata.yaml'))
+        candidates = [metadata_yaml] if metadata_yaml else [
+            'generate_2way_metadata-{}-{}.yaml'.format(
+                test_type, test_platform),
+            'generate_2way_metadata-{}.yaml'.format(test_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'generate_2way_metadata.yaml'))
         else:
-            return False, 'Cannot find template "{}".'.format(filename)
+            return False, 'Cannot find template "{}".'.format(candidates)
 
         # Connect to Jupyter server and generate the report
         request_url = 'http://{}/reports/{}'.format(
             JUPYTER_API_SERVER, benchmark)
 
         try:
+            LOG.debug('Send request: {}'.format(request_url))
             response = requests.post(url=request_url)
 
             response.raise_for_status()
@@ -743,7 +781,7 @@ class PerfInsightManager():
 
             # Failed request
             msg = 'Failed to connect to Jupyter server or generate benchmark report.'
-            msg = '; '.join((msg, details, ex))
+            msg = '; '.join((msg, str(details), str(ex)))
             LOG.error(msg)
             return False, msg
 
