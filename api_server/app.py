@@ -165,7 +165,8 @@ class PerfInsightManager():
 
         workspace = os.path.join(PERF_INSIGHT_STAG, id)
         if not os.path.isdir(workspace):
-            msg = 'Folder "{}" can not be found in staging area.'.format(id)
+            msg = 'Folder "{}" can not be found in the staging area.'.format(
+                id)
             LOG.error(msg)
             return False, msg
 
@@ -625,7 +626,7 @@ class PerfInsightManager():
 
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
-                         metadata_yaml=None):
+                         metadata_yaml=None, allow_overwrite=True):
         """Create benchmark report for the specified TestRuns.
 
         Input:
@@ -664,6 +665,11 @@ class PerfInsightManager():
         # Prepare benchmark workspace
         workspace = os.path.join(PERF_INSIGHT_STAG, benchmark)
         if os.path.isdir(workspace):
+            if allow_overwrite:
+                LOG.warning(
+                    'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
+                shutil.rmtree(workspace, ignore_errors=True)
+            else:
             msg = 'Folder "{}" already exists in the staging area.'.format(
                 benchmark)
             LOG.error(msg)
