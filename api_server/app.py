@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, redirect, jsonify
 import logging
 import os
 import yaml
@@ -1041,6 +1041,24 @@ def delete_benchmark(id):
         return jsonify(con), 200    # use 200 since 204 returns no json
     else:
         return jsonify({'error': con}), 500
+
+
+# Jupyter server's entrypoints (labs, studies)
+
+@app.route('/labs', methods=['GET', 'POST', 'DELETE', 'PUT'])
+@app.route('/studies', methods=['GET', 'POST', 'DELETE', 'PUT'])
+def jupyter_server_proxy():
+    LOG.debug(request)
+    LOG.info('Redirect request to the Jupyter API Server.')
+
+    jupyter_server = 'http://{}/'.format(JUPYTER_API_SERVER)
+    response = requests.request(
+        method=request.method,
+        url=request.url.replace(request.host_url, jupyter_server),
+        data=request.get_data(),
+        headers=request.headers)
+
+    return jsonify(response.json()), response.status_code
 
 
 # Main
