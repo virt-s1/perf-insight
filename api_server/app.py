@@ -721,35 +721,31 @@ class PerfInsightManager():
         else:
             return False, 'Cannot find template "{}".'.format(filename)
 
-        # TODO: connect JupyterLab and generate the report
+        # Connect to Jupyter server and generate the report
         request_url = 'http://{}/reports/{}'.format(
             JUPYTER_API_SERVER, benchmark)
 
         try:
-            response = requests.post(
-                url=request_url,
-                headers={
-                    'Content-Type': 'application/json; charset=UTF-8'
-                },
-                json={})
+            response = requests.post(url=request_url)
 
             response.raise_for_status()
             result = response.json()
 
             # Successful request
-            LOG.info('{}'.format(json.dumps(result, indent=4)))
+            LOG.info('Benchmark report generated.')
 
         except requests.exceptions.RequestException as ex:
-            # Try to get more details
+            # Try to get json reply
             try:
                 details = response.json()
             except:
-                details = None
+                details = ''
 
             # Failed request
-            LOG.info('{}'.format(ex))
-            if details:
-                LOG.info('{}'.format(details))
+            msg = 'Failed to connect to Jupyter server or generate benchmark report.'
+            msg = '; '.join((msg, details, ex))
+            LOG.error(msg)
+            return False, msg
 
         # TODO: Update the dashboard database
 

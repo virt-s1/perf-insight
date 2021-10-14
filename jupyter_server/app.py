@@ -231,16 +231,38 @@ class JupyterHelper():
             return True, lab
 
     # Report Functions
-    def create_report(self, id):
+    def create_report(self, report_id):
         """Create the benchmark report in staging area.
 
         Input:
-            id - the benchmark report ID
+            report_id - the benchmark report ID
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        pass
+        # Criteria check
+        source = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
+        if os.path.isdir(source):
+            msg = 'Report ID "{}" already exists.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        workspace = os.path.join(PERF_INSIGHT_STAG, report_id)
+        if not os.path.isdir(workspace):
+            msg = 'Folder "{}" can not be found in staging area.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Create the report html
+        cmd = '/app/generate_report.sh {}'.format(workspace)
+        res = os.system(cmd)
+
+        if res > 0:
+            msg = 'Failed to generate report html, see nbconvert.log for more details.'
+            LOG.error(msg)
+            return False, msg
+
+        return True, {}
 
     # Lab Functions
     def query_labs(self):
