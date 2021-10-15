@@ -372,9 +372,124 @@ def lab_delete(ctx, username, password):
     jsonresp = response.json()
     click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
-# def study_list():
-# def study_start():
-# def study_stop():
+
+@cli.command()
+@click.pass_context
+def study_list(ctx):
+    """List all current studies."""
+
+    # Build the request
+    request_url = 'http://{}/studies'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The ID of the report to be studied.')
+@click.option('--username', required=True, prompt='Username',
+              help='The username associated with the lab.')
+@click.password_option('--password', required=True, prompt='Password',
+                       help='The lab password to be created or verified.')
+@click.pass_context
+def study_start(ctx, report_id, username, password):
+    """Start a study for the specified user."""
+
+    # Build the request
+    request_url = 'http://{}/studies'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'report_id': report_id,
+                    'username': username, 'password': password}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The ID of the report to be studied.')
+@click.option('--username', required=True, prompt='Username',
+              help='The username associated with the lab.')
+@click.option('--password', required=True, prompt='Password',
+              hide_input=True, help='The lab password to be verified.')
+@click.pass_context
+def study_stop(ctx, report_id, username, password):
+    """Stop a study for the specified user."""
+
+    # Build the request
+    request_url = 'http://{}/studies'.format(ctx.obj['API_SERVER'])
+    request_method = 'DELETE'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'report_id': report_id,
+                    'username': username, 'password': password}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 if __name__ == '__main__':
