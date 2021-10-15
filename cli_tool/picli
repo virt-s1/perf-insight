@@ -262,6 +262,178 @@ def testrun_delete(ctx, testrun_id):
 
 @cli.command()
 @click.pass_context
+def benchmark_list(ctx):
+    """List all benchmark reports."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.pass_context
+def benchmark_inspect(ctx, report_id):
+    """Inspect a specified benchmark report."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks/{}'.format(
+        ctx.obj['API_SERVER'], report_id)
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--base-id', required=True, prompt='TestRunID(BASE)',
+              help='The TestRunID of the base samples.')
+@click.option('--test-id', required=True, prompt='TestRunID(TEST)',
+              help='The TestRunID of the test samples.')
+@click.option('--base-yaml', required=False,
+              help='The parse configure for the base samples.')
+@click.option('--test-yaml', required=False,
+              help='The parse configure for the test samples.')
+@click.option('--benchmark-yaml', required=False,
+              help='The configure file for benchmark comparison.')
+@click.option('--metadata-yaml', required=False,
+              help='The configure file for metadata comparison.')
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard or not.', show_default=True)
+@click.option('--allow-overwrite', required=False, type=bool, default=True,
+              help=' Allow overwrite content in the staging area.', show_default=True)
+@click.pass_context
+def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
+                     benchmark_yaml, metadata_yaml, update_dashboard, allow_overwrite):
+    """Create a benchmark report."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        "base_id": base_id, "test_id": test_id,
+        'test_yaml': test_yaml, 'base_yaml': base_yaml,
+        'benchmark_yaml': benchmark_yaml,
+        'metadata_yaml': metadata_yaml,
+        'update_dashboard': update_dashboard,
+        'allow_overwrite': allow_overwrite
+    }
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The ID of the benchmark report.')
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard or not.', show_default=True)
+@click.pass_context
+def benchmark_delete(ctx, report_id, update_dashboard):
+    """Delete a benchmark report."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks'.format(ctx.obj['API_SERVER'])
+    request_method = 'DELETE'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'report_id': report_id,
+                    'update_dashboard': update_dashboard}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.pass_context
 def lab_list(ctx):
     """List all running labs."""
 
