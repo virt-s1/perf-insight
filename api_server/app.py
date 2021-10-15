@@ -191,11 +191,13 @@ class PerfInsightManager():
             if res is False:
                 return False, msg
 
+        # Create datastore as requested
         if create_datastore:
             res, msg = self._create_datastore(workspace)
             if res is False:
                 return False, msg
 
+        # Update dashboard as requested
         if update_dashboard:
             res, msg = self._update_dashboard(workspace)
             if res is False:
@@ -319,13 +321,13 @@ class PerfInsightManager():
         with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
             json.dump(metadata, f, indent=3)
 
-        # Create datastore if needed
+        # Create datastore as requested
         if create_datastore:
             res, msg = self._create_datastore(workspace)
             if res is False:
                 return False, msg
 
-        # Update dashboard if needed
+        # Update dashboard as requested
         if update_dashboard:
             res, msg = self._update_dashboard(workspace)
             if res is False:
