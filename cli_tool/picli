@@ -585,8 +585,8 @@ def study_list(ctx):
               help='The ID of the report to be studied.')
 @click.option('--username', required=True, prompt='Username',
               help='The username associated with the lab.')
-@click.password_option('--password', required=True, prompt='Password',
-                       help='The lab password to be created or verified.')
+@click.option('--password', required=True, prompt='Password',
+              hide_input=True, help='The lab password to be verified.')
 @click.pass_context
 def study_start(ctx, report_id, username, password):
     """Start a study for the specified user."""
