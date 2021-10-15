@@ -184,7 +184,7 @@ class JupyterHelper():
         else:
             port = min_port
 
-        # Start Jupyter lab
+        # Create a Jupyter lab
         cmd = 'jupyter-lab -y --allow-root --no-browser --collaborative \
             --ip 0.0.0.0 --port {} --notebook-dir={} \
             --ServerApp.password_required=True \
@@ -201,7 +201,13 @@ class JupyterHelper():
         else:
             time.sleep(1)
             lab = self._get_lab_by_user(username)
-            return True, lab
+            lab_safe = {
+                'user': lab.get('user'),
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')
+            }
+            return True, lab_safe
 
     def _delete_lab(self, username, password):
         """Stop the JupyterLab server for the specified user.
@@ -227,7 +233,7 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
 
-        # Stop the lab
+        # Delete the Jupyter lab
         cmd = 'jupyter server stop {}'.format(lab.get('port'))
         res = os.system(cmd)
 
@@ -237,7 +243,13 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
         else:
-            return True, lab
+            lab_safe = {
+                'user': lab.get('user'),
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')
+            }
+            return True, lab_safe
 
     # Report Functions
     def create_report(self, report_id):
@@ -285,19 +297,23 @@ class JupyterHelper():
             - (False, message) if something goes wrong.
         """
         labs = self._get_labs()
-        if labs is not None:
-            # Remove sensitive information
-            for lab in labs:
-                lab.pop('line')
-                lab.pop('token')
-                lab.pop('path')
-                lab.pop('hash')
 
-            return True, labs
-        else:
+        if labs is None:
             msg = 'Failed to query information of the running labs.'
             LOG.error(msg)
             return False, msg
+
+        # Remove sensitive information
+        labs_safe = []
+        for lab in labs:
+            labs_safe.append({
+                'user': lab.get('user'),
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')
+            })
+
+        return True, labs_safe
 
     def create_lab(self, username, password):
         """Create a Jupyter lab for the specified user.
@@ -399,7 +415,17 @@ class JupyterHelper():
         # Check out the report
         os.symlink(source, os.path.join(lab['path'], report_id))
 
-        return True, {'id': report_id, 'user': username}
+        # Compile return data
+        data = {
+            'id': report_id,
+            'user': username,
+            'lab_info': {
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')}
+        }
+
+        return True, data
 
     def stop_study(self, report_id, username, password):
         """Stop the study for a specified user.
