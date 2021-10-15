@@ -30,7 +30,13 @@ ARG_GROUP = ARG_PARSER.add_mutually_exclusive_group(required=True)
 ARG_PARSER.add_argument('--csv_file',
                         dest='csv_file',
                         action='store',
-                        help="specify log directory",
+                        help="specify csv file for testruns",
+                        default=None,
+                        required=False)
+ARG_PARSER.add_argument('--json_file',
+                        dest='json_file',
+                        action='store',
+                        help="specify json file for benchmark",
                         default=None,
                         required=False)
 ARG_PARSER.add_argument('--db_file',
@@ -59,6 +65,11 @@ ARG_GROUP.add_argument('--storage',
                        dest='is_storage',
                        action='store_true',
                        help='write storage TestResult',
+                       required=False)
+ARG_GROUP.add_argument('--benchmark',
+                       dest='is_benchmark',
+                       action='store_true',
+                       help='write benchmark ReportResult',
                        required=False)
 ARGS = ARG_PARSER.parse_args()
 
@@ -94,6 +105,7 @@ class NetworkResult(DB_BASE):
     __tablename__ = 'network_result'
     id = Column(Integer, primary_key=True)
     testrun = Column(String(200))
+    # TODO: case_id = Column(String(50))
     run_type = Column(String(50))
     platform = Column(String(50))
     flavor = Column(String(50), nullable=True)
@@ -149,6 +161,7 @@ class StorageTestResult(DB_BASE):
     __tablename__ = 'storage_result'
     id = Column(Integer, primary_key=True)
     testrun = Column(String(100))
+    # TODO: case_id = Column(String(50))
     kernel = Column(String(50))
     branch = Column(String(50))
     backend = Column(String(50))
@@ -409,7 +422,8 @@ def testresult_delete(resultmode=None):
     session = DB_SESSION()
     results = session.query(resultmode).filter_by(testrun=testrun).all()
     if len(results) == 0:
-        LOG.info("No related TestResult entries. Skip.".format(ARGS.testrun_delete))
+        LOG.info("No related TestResult entries. Skip.".format(
+            ARGS.testrun_delete))
         return True
     for testresult in results:
         try:
@@ -443,3 +457,14 @@ if __name__ == "__main__":
         elif ARGS.is_storage:
             testrun_delete(runmode=StorageTestRun)
             testresult_delete(resultmode=StorageTestResult)
+
+    # {
+    #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
+    #     'base_id':	'fio_ESXi_RHEL-8.3.0-GA-x86_64_lite_scsi_D210108T114621',
+    #     'test_id':	'fio_ESXi_RHEL-8.4.0-x86_64_lite_scsi_D210108T210650',
+    #     'create_time': '2021-01-19 23:43:21.058955',
+    #     'report_url': 'http://xxx/xx/x/report.html',
+    #     'comments': '',
+    #     'metadata': {'id': 'benchmark',
+    #                  'path': 'target'}
+    # }

@@ -793,6 +793,17 @@ class PerfInsightManager():
 
         # TODO: Update the dashboard database
 
+    # {
+    #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
+    #     'base_id':	'fio_ESXi_RHEL-8.3.0-GA-x86_64_lite_scsi_D210108T114621',
+    #     'test_id':	'fio_ESXi_RHEL-8.4.0-x86_64_lite_scsi_D210108T210650',
+    #     'create_time': '2021-01-19 23:43:21.058955',
+    #     'report_url': 'http://xxx/xx/x/report.html',
+    #     'comments': '',
+    #     'metadata': {'id': 'benchmark',
+    #                  'path': 'target'}
+    # }
+
         # Update metadata and dump to metadata.json
         metadata = {'id': benchmark,
                     'path': target,
@@ -1021,11 +1032,8 @@ def create_benchmark():
     benchmark_yaml = req.get('benchmark_yaml')
     metadata_yaml = req.get('metadata_yaml')
 
-    res, con = manager.create_benchmark(test_id,
-                                        base_id,
-                                        test_yaml,
-                                        base_yaml, benchmark_yaml,
-                                        metadata_yaml)
+    res, con = manager.create_benchmark(
+        test_id, base_id, test_yaml, base_yaml, benchmark_yaml, metadata_yaml)
 
     if res:
         return jsonify(con), 201
