@@ -122,14 +122,19 @@ class JupyterHelper():
             - True   - Valid password
             - False  - Something wrong or invalid password
         """
-        lab = self._get_lab_by_user(username)
-        hashed_password = lab.get('hash') if lab else None
+        try:
+            with open(os.path.join(
+                    JUPYTER_WORKSPACE, username, '.passwd'), 'r') as f:
+                hashed_password = f.readline()
+        except:
+            hashed_password = None
+
         if hashed_password is None:
             LOG.error('Cannot get hashed password for user "{}".'.format(
                 username))
             return False
 
-        if passwd_check(lab['hash'], password):
+        if passwd_check(hashed_password, password):
             LOG.info('Password for user "{}" is valid.'.format(username))
             return True
         else:
@@ -214,7 +219,7 @@ class JupyterHelper():
 
         # Verify password
         if not self._check_password(username, password):
-            msg = 'User authentication failed with "{}", operation denied.'.format(
+            msg = 'Authentication failed with user "{}", operation denied.'.format(
                 username)
             LOG.error(msg)
             return False, msg
@@ -376,7 +381,7 @@ class JupyterHelper():
         if lab:
             # Verify password
             if not self._check_password(username, password):
-                msg = 'User authentication failed with "{}", operation denied.'.format(
+                msg = 'Authentication failed with user "{}", operation denied.'.format(
                     username)
                 LOG.error(msg)
                 return False, msg
@@ -419,7 +424,7 @@ class JupyterHelper():
 
         # Verify password
         if not self._check_password(username, password):
-            msg = 'User authentication failed with "{}", operation denied.'.format(
+            msg = 'Authentication failed with user "{}", operation denied.'.format(
                 username)
             LOG.error(msg)
             return False, msg
