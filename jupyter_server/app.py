@@ -91,7 +91,7 @@ class JupyterHelper():
         """Get information of the running lab by username.
 
         Restriction: When the user has multiple labs, only the first one will
-        be returned. This may cause problems. But the logic of start lab will
+        be returned. This may cause problems. But the logic of create-lab will
         check the running list, so it will not happen. Only care should be
         taken to prevent users from manually creating labs.
 
@@ -136,7 +136,7 @@ class JupyterHelper():
             LOG.error('Password for user "{}" is invalid.'.format(username))
             return False
 
-    def _start_lab(self, username, password):
+    def _create_lab(self, username, password):
         """Start a JupyterLab server for the specified user.
 
         Restriction: A user can only have one lab, please check it before
@@ -195,7 +195,7 @@ class JupyterHelper():
             lab = self._get_lab_by_user(username)
             return True, lab
 
-    def _stop_lab(self, username, password):
+    def _delete_lab(self, username, password):
         """Stop the JupyterLab server for the specified user.
 
         Input:
@@ -224,7 +224,7 @@ class JupyterHelper():
         res = os.system(cmd)
 
         if res > 0:
-            msg = 'Failed to stop lab "{}" for user "{}".'.format(
+            msg = 'Failed to delete lab "{}" for user "{}".'.format(
                 lab.get('port'), username)
             LOG.error(msg)
             return False, msg
@@ -306,7 +306,7 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
 
-        return self._start_lab(username, password)
+        return self._create_lab(username, password)
 
     def delete_lab(self, username, password):
         """Delete a Jupyter lab for the specified user.
@@ -318,7 +318,7 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        return self._stop_lab(username, password)
+        return self._delete_lab(username, password)
 
     # Study Functions
     def query_studies(self):
@@ -382,7 +382,7 @@ class JupyterHelper():
                 return False, msg
         else:
             # Create a Jupyter lab for the user
-            res, lab = self._start_lab(username, password)
+            res, lab = self._create_lab(username, password)
             if res is False:
                 msg = 'Failed to create lab for user "{}"'.format(username)
                 LOG.error(msg)
@@ -510,7 +510,7 @@ def query_studies():
 
 
 @app.post('/studies')
-def create_study():
+def start_study():
     LOG.info('Received request to start a study.')
 
     if request.is_json:
@@ -541,7 +541,7 @@ def create_study():
 
 
 @app.delete('/studies')
-def delete_study():
+def stop_study():
     LOG.info('Received request to stop a study.')
 
     if request.is_json:
