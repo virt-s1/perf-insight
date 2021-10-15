@@ -99,7 +99,7 @@ def testrun_inspect(ctx, testrun_id):
 @click.pass_context
 def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
                  update_dashboard):
-    """Load TestRun from the staging area."""
+    """Load a TestRun from the staging area."""
 
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
 
@@ -152,7 +152,7 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
 @click.pass_context
 def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
                    create_datastore, update_dashboard):
-    """Import TestRun from external pbench server."""
+    """Import a TestRun from external pbench server."""
 
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
 
@@ -201,7 +201,7 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
               help='The TestRun to be processed.')
 @click.pass_context
 def testrun_fetch(ctx, testrun_id):
-    """Fetch TestRun to the staging area."""
+    """Fetch a TestRun to the staging area."""
 
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
@@ -233,7 +233,7 @@ def testrun_fetch(ctx, testrun_id):
               help='The TestRun to be processed.')
 @click.pass_context
 def testrun_delete(ctx, testrun_id):
-    """Delete a specified TestRun."""
+    """Delete the specified TestRun."""
 
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
@@ -263,7 +263,7 @@ def testrun_delete(ctx, testrun_id):
 @cli.command()
 @click.pass_context
 def lab_list(ctx):
-    """Query all the running labs."""
+    """List all running labs."""
 
     # Build the request
     request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
@@ -299,10 +299,10 @@ def lab_list(ctx):
 @click.option('--username', required=True, prompt='Username',
               help='The username associated with the lab.')
 @click.password_option('--password', required=True, prompt='Password',
-                       help='The password to encrypt the lab.')
+                       help='The lab password to be created.')
 @click.pass_context
 def lab_create(ctx, username, password):
-    """Query all the running labs."""
+    """Create a lab to associate with the specified user."""
 
     # Build the request
     request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
@@ -338,10 +338,10 @@ def lab_create(ctx, username, password):
 @click.option('--username', required=True, prompt='Username',
               help='The username associated with the lab.')
 @click.option('--password', required=True, prompt='Password',
-              hide_input=True, help='The password to authenticate.')
+              hide_input=True, help='The lab password to be verified.')
 @click.pass_context
 def lab_delete(ctx, username, password):
-    """Query all the running labs."""
+    """Delete the lab associated with the specified user."""
 
     # Build the request
     request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
