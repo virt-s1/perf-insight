@@ -7,9 +7,16 @@ Read this for more details on Click Context:
 https://click.palletsprojects.com/en/8.0.x/commands/
 """
 
+from functools import partial
 import click
 import requests
 import json
+
+echo = partial(click.secho, fg='reset')
+echo_debug = partial(click.secho, fg='bright_black', err=True)
+echo_info = partial(click.secho, fg='blue', err=True)
+echo_warn = partial(click.secho, fg='yellow', err=True)
+echo_error = partial(click.secho, fg='red', err=True)
 
 
 @click.group()
@@ -37,10 +44,10 @@ def testrun_list(ctx):
         result = response.json()
 
         # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
+        echo('{}'.format(json.dumps(result, indent=4)))
 
         # for testrun in result.get('testruns', {}):
-        #     click.echo('{}'.format(testrun['id']))
+        #     echo('{}'.format(testrun['id']))
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details
@@ -50,9 +57,9 @@ def testrun_list(ctx):
             details = None
 
         # Failed request
-        click.echo('{}'.format(ex))
+        echo('{}'.format(ex))
         if details:
-            click.echo('{}'.format(details))
+            echo('{}'.format(details))
 
 
 @cli.command()
@@ -72,7 +79,7 @@ def testrun_inspect(ctx, testrun_id):
         result = response.json()
 
         # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
+        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details
@@ -82,9 +89,9 @@ def testrun_inspect(ctx, testrun_id):
             details = None
 
         # Failed request
-        click.echo('{}'.format(ex))
+        echo('{}'.format(ex))
         if details:
-            click.echo('{}'.format(details))
+            echo('{}'.format(details))
 
 
 @cli.command()
@@ -121,7 +128,7 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
         result = response.json()
 
         # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
+        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details
@@ -131,9 +138,9 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
             details = None
 
         # Failed request
-        click.echo('{}'.format(ex))
+        echo('{}'.format(ex))
         if details:
-            click.echo('{}'.format(details))
+            echo('{}'.format(details))
 
 
 @cli.command()
@@ -181,7 +188,7 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
         result = response.json()
 
         # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
+        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details
@@ -191,9 +198,9 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
             details = None
 
         # Failed request
-        click.echo('{}'.format(ex))
+        echo('{}'.format(ex))
         if details:
-            click.echo('{}'.format(details))
+            echo('{}'.format(details))
 
 
 @cli.command()
@@ -213,7 +220,7 @@ def testrun_fetch(ctx, testrun_id):
         result = response.json()
 
         # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
+        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details
@@ -223,9 +230,9 @@ def testrun_fetch(ctx, testrun_id):
             details = None
 
         # Failed request
-        click.echo('{}'.format(ex))
+        echo('{}'.format(ex))
         if details:
-            click.echo('{}'.format(details))
+            echo('{}'.format(details))
 
 
 @cli.command()
@@ -245,7 +252,7 @@ def testrun_delete(ctx, testrun_id):
         result = response.json()
 
         # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
+        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
         # Try to get more details
@@ -255,9 +262,9 @@ def testrun_delete(ctx, testrun_id):
             details = None
 
         # Failed request
-        click.echo('{}'.format(ex))
+        echo('{}'.format(ex))
         if details:
-            click.echo('{}'.format(details))
+            echo('{}'.format(details))
 
 
 @cli.command()
@@ -287,12 +294,12 @@ def benchmark_list(ctx):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -325,12 +332,12 @@ def benchmark_inspect(ctx, report_id):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -384,12 +391,12 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -424,12 +431,12 @@ def benchmark_delete(ctx, report_id, update_dashboard):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -459,12 +466,12 @@ def lab_list(ctx):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -498,12 +505,12 @@ def lab_create(ctx, username, password):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -537,12 +544,12 @@ def lab_delete(ctx, username, password):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -572,12 +579,12 @@ def study_list(ctx):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -614,12 +621,12 @@ def study_start(ctx, report_id, username, password):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -656,12 +663,12 @@ def study_stop(ctx, report_id, username, password):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 if __name__ == '__main__':
