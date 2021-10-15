@@ -106,12 +106,10 @@ class JupyterHelper():
         """
         labs = self._get_labs()
 
-        if labs is None:
-            return None
-
-        for lab in labs:
-            if lab['user'] == username:
-                return lab
+        if isinstance(labs, list):
+            for lab in labs:
+                if lab['user'] == username:
+                    return lab
 
         return None
 
@@ -201,13 +199,7 @@ class JupyterHelper():
         else:
             time.sleep(1)
             lab = self._get_lab_by_user(username)
-            lab_safe = {
-                'user': lab.get('user'),
-                'host': lab.get('host'),
-                'port': lab.get('port'),
-                'url': lab.get('url')
-            }
-            return True, lab_safe
+            return True, lab
 
     def _delete_lab(self, username, password):
         """Stop the JupyterLab server for the specified user.
@@ -330,7 +322,19 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
 
-        return self._create_lab(username, password)
+        res, con = self._create_lab(username, password)
+
+        if res:
+            # Remove sensitive information from lab info
+            lab_safe = {
+                'user': con.get('user'),
+                'host': con.get('host'),
+                'port': con.get('port'),
+                'url': con.get('url')
+            }
+            return True, lab_safe
+        else:
+            return res, con
 
     def delete_lab(self, username, password):
         """Delete a Jupyter lab for the specified user.
@@ -342,9 +346,22 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        return self._delete_lab(username, password)
+        res, con = self._delete_lab(username, password)
+
+        if res:
+            # Remove sensitive information from lab info
+            lab_safe = {
+                'user': con.get('user'),
+                'host': con.get('host'),
+                'port': con.get('port'),
+                'url': con.get('url')
+            }
+            return True, lab_safe
+        else:
+            return res, con
 
     # Study Functions
+
     def query_studies(self):
         """Query information of the current studies.
 
@@ -396,8 +413,7 @@ class JupyterHelper():
             return False, msg
 
         # Check if the user already have a Jupyter lab
-        lab = self._get_lab_by_user(username)
-        if lab:
+        if self._get_lab_by_user(username):
             # Verify password
             if not self._check_password(username, password):
                 msg = 'Authentication failed with user "{}", operation denied.'.format(
@@ -406,13 +422,12 @@ class JupyterHelper():
                 return False, msg
         else:
             # Create a Jupyter lab for the user
-            res, lab = self._create_lab(username, password)
+            res, con = self._create_lab(username, password)
             if res is False:
-                msg = 'Failed to create lab for user "{}"'.format(username)
-                LOG.error(msg)
-                return False, msg
+                return False, con
 
         # Check out the report
+        lab = self._get_lab_by_user(username)
         os.symlink(source, os.path.join(lab['path'], report_id))
 
         # Compile return data
