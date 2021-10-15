@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+
+"""
+PiCLI - the CLI tool for perf-insight server.
+
+Read this for more details on Click Context:
+https://click.palletsprojects.com/en/8.0.x/commands/
+"""
+
+import click
+import requests
+import json
+
+
+@click.group()
+@click.option('--debug/--no-debug', default=False)
+@click.option('--api-server')
+@click.pass_context
+def cli(ctx, debug, api_server):
+    ctx.ensure_object(dict)
+    ctx.obj['DEBUG'] = debug
+    if api_server:
+        ctx.obj['API_SERVER'] = api_server
+
+
+@cli.command()
+@click.pass_context
+def testrun_list(ctx):
+    """List all TestRuns."""
+
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+
+    try:
+        response = requests.get(url=request_url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+        # for testrun in result.get('testruns', {}):
+        #     click.echo('{}'.format(testrun['id']))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
+
+
+@cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.pass_context
+def testrun_inspect(ctx, testrun_id):
+    """Inspect a specified TestRun."""
+
+    request_url = 'http://{}/testruns/{}'.format(
+        ctx.obj['API_SERVER'], testrun_id)
+
+    try:
+        response = requests.get(url=request_url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
+
+
+@cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.option('--generate-plots', required=False, type=bool, default=False,
+              help='Generate plots for fio TestRun.', show_default=True)
+@click.option('--create-datastore', required=False, type=bool, default=True,
+              help='Create datastore file.', show_default=True)
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard.', show_default=True)
+@click.pass_context
+def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
+                 update_dashboard):
+    """Load TestRun from the staging area."""
+
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+
+    try:
+        response = requests.post(
+            url=request_url,
+            headers={
+                'Content-Type': 'application/json; charset=UTF-8'
+            },
+            json={
+                'action': 'load',
+                'generate_plots': generate_plots,
+                'create_datastore': create_datastore,
+                'update_dashboard': update_dashboard,
+                'id': testrun_id
+            })
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
+
+
+@cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.option('--external-url', required=True, multiple=True,
+              help='The external URL to be imported. \
+(This option can be provided multiple times)')
+@click.option('--metadata-keypair', required=True, multiple=True,
+              help='The metadata in KEY=VALUE format to be added. \
+(This option can be provided multiple times)')
+@click.option('--create-datastore', required=False, type=bool, default=True,
+              help='Create datastore file.', show_default=True)
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard.', show_default=True)
+@click.pass_context
+def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
+                   create_datastore, update_dashboard):
+    """Import TestRun from external pbench server."""
+
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+
+    external_urls = list(external_url)
+    metadata = {}
+    for keypair in metadata_keypair:
+        key, value = keypair.split('=')
+        metadata[key] = value
+
+    try:
+        response = requests.post(
+            url=request_url,
+            headers={
+                'Content-Type': 'application/json; charset=UTF-8'
+            },
+            json={
+                'action': 'import',
+                'create_datastore': create_datastore,
+                'update_dashboard': update_dashboard,
+                'id': testrun_id,
+                'metadata': metadata,
+                'external_urls': external_urls
+            })
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
+
+
+@cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.pass_context
+def testrun_fetch(ctx, testrun_id):
+    """Fetch TestRun to the staging area."""
+
+    request_url = 'http://{}/testruns/{}'.format(
+        ctx.obj['API_SERVER'], testrun_id)
+
+    try:
+        response = requests.put(url=request_url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
+
+
+@cli.command()
+@click.option('--testrun-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.pass_context
+def testrun_delete(ctx, testrun_id):
+    """Delete a specified TestRun."""
+
+    request_url = 'http://{}/testruns/{}'.format(
+        ctx.obj['API_SERVER'], testrun_id)
+
+    try:
+        response = requests.delete(url=request_url)
+
+        response.raise_for_status()
+        result = response.json()
+
+        # Successful request
+        click.echo('{}'.format(json.dumps(result, indent=4)))
+
+    except requests.exceptions.RequestException as ex:
+        # Try to get more details
+        try:
+            details = response.json()
+        except:
+            details = None
+
+        # Failed request
+        click.echo('{}'.format(ex))
+        if details:
+            click.echo('{}'.format(details))
+
+
+@cli.command()
+@click.pass_context
+def lab_list(ctx):
+    """Query all the running labs."""
+
+    # Build the request
+    request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--username', required=True, prompt='Username',
+              help='The username associated with the lab.')
+@click.password_option('--password', required=True, prompt='Password',
+                       help='The password to encrypt the lab.')
+@click.pass_context
+def lab_create(ctx, username, password):
+    """Query all the running labs."""
+
+    # Build the request
+    request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'username': username, 'password': password}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+
+@cli.command()
+@click.option('--username', required=True, prompt='Username',
+              help='The username associated with the lab.')
+@click.option('--password', required=True, prompt='Password',
+              hide_input=True, help='The password to authenticate.')
+@click.pass_context
+def lab_delete(ctx, username, password):
+    """Query all the running labs."""
+
+    # Build the request
+    request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
+    request_method = 'DELETE'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'username': username, 'password': password}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        click.echo(details)
+        return None
+
+    # Successful request
+    jsonresp = response.json()
+    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+# def study_list():
+# def study_start():
+# def study_stop():
+
+
+if __name__ == '__main__':
+    config = {'API_SERVER': 'localhost:5001'}
+    cli(obj=config)

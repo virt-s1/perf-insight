@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+File:  views.py @flask-appbuilder
+Owner: Frank Liang <xiliang@redhat.com>
+"""
+
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder.api import ModelRestApi
 from flask_appbuilder.models.sqla.filters import FilterEqualFunction, FilterContains
@@ -25,19 +31,25 @@ from flask_appbuilder.charts.views import (DirectByChartView, DirectChartView,
 from flask_appbuilder.models.group import (aggregate_sum, aggregate_count,
                                            aggregate, aggregate_avg)
 
-import shutil, os
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+import shutil
+import os
+import yaml
 
-with open(os.getenv('HOME') + '/.perf-insight.yaml', 'r') as fh:
-    keys_data = load(fh, Loader=Loader)
-APACHE_SERVER = keys_data['flask']['apache_server']
-DATA_PATH = keys_data['flask']['data_path']
-REPORT_PATH = '{}/reports/'.format(DATA_PATH)
-PERF_INSIGHT_REPO = keys_data['flask']['perf_insight_repo']
+
+# Load perf-insight configure
+with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
+    user_config = yaml.safe_load(f)
+
+
+config = user_config.get('global', {})
+config.update(user_config.get('dashboard', {}))
+
+PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
+PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
+FILE_SERVER = config.get('file_server', 'localhost')
+REPORT_PATH = os.path.join(PERF_INSIGHT_ROOT, 'reports')
+
+
 
 TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/generate_2way_benchmark.yaml'
 TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/generate_2way_metadata.yaml'
@@ -45,8 +57,8 @@ TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/generate_testrun_results.
 
 
 def jupiter_prepare(baserun, testrun, target_dir):
-    baserun_dir = DATA_PATH + '/testruns/' + baserun
-    testrun_dir = DATA_PATH + '/testruns/' + testrun
+    baserun_dir = PERF_INSIGHT_ROOT + '/testruns/' + baserun
+    testrun_dir = PERF_INSIGHT_ROOT + '/testruns/' + testrun
     shutil.copy(baserun_dir + '/datastore.json',
                 target_dir + '/base.datastore.json')
     shutil.copy(baserun_dir + '/metadata.json',
@@ -104,7 +116,7 @@ class YamlFormView(SimpleFormView):
             return redirect(self.get_redirect())
 
         if session.get('yaml1') is None:
-            TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/\
+            TESTRUN_RESULTS_YAML = '/opt/perf-insight/\
 templates/generate_testrun_results-{}.yaml'.format(testrun_type)
             with open(TESTRUN_RESULTS_YAML, 'r') as fh:
                 form.yaml1.data = fh.read()
@@ -112,7 +124,7 @@ templates/generate_testrun_results-{}.yaml'.format(testrun_type)
             form.yaml1.data = session['yaml1']
 
         if session.get('yaml2') is None:
-            TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/\
+            TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/\
 templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_BENCHMARK_YAML, 'r') as fh:
                 form.yaml2.data = fh.read()
@@ -120,7 +132,7 @@ templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
             form.yaml2.data = session['yaml2']
 
         if session.get('yaml3') is None:
-            TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/\
+            TWO_WAY_METADATA_YAML = '/opt/perf-insight/\
 templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_METADATA_YAML, 'r') as fh:
                 form.yaml3.data = fh.read()
@@ -166,7 +178,7 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
         self.result = baserun + ' vs ' + testrun
         self.message = Markup('Benchmark report is available at \
 <a href="http://{}/perf-insight/reports/{}/report.html" \
-class="alert-link">compared {}</a>'.format(APACHE_SERVER, new_dir,
+class="alert-link">compared {}</a>'.format(FILE_SERVER, new_dir,
                                            self.result))
         jupiter_prepare(baserun, testrun, workspace)
         cmd = 'podman run --rm \
@@ -282,7 +294,7 @@ class NetworkRunPubView(ModelView):
             testruns = testruns.rstrip('_')
         #form = YamlForm
         baserun, testrun = items[0].testrun, items[1].testrun
-        #return self.render_template(self.yaml_template, form=form, appbuilder=self.appbuilder)
+        # return self.render_template(self.yaml_template, form=form, appbuilder=self.appbuilder)
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
@@ -475,6 +487,7 @@ class StorageRunPubView(ModelView):
     base_permissions = ["can_list", "can_show", "menu_access"]
     #show_widget = MyShowWidget
     #list_widget = MyListWidget
+
     @action("compareruns",
             "Compare2runs",
             "Compare 2 test runs?",
@@ -493,7 +506,7 @@ class StorageRunPubView(ModelView):
             testruns = testruns.rstrip('_')
         #form = YamlForm
         baserun, testrun = items[0].testrun, items[1].testrun
-        #return self.render_template(self.yaml_template, form=form, appbuilder=self.appbuilder)
+        # return self.render_template(self.yaml_template, form=form, appbuilder=self.appbuilder)
         return redirect("/yamlformview/form?baserun={}&testrun={}".format(
             testrun, baserun))
 
@@ -987,7 +1000,7 @@ appbuilder.add_view(BugsPubView,
                     icon="fa-angle-double-right",
                     category="TestBugs")
 
-#appbuilder.add_view(YamlFormView, "My form View", icon="fa-group", label=_('My form View'),
+# appbuilder.add_view(YamlFormView, "My form View", icon="fa-group", label=_('My form View'),
 #                     category="My Forms", category_icon="fa-cogs")
 appbuilder.add_view_no_menu(YamlFormView)
 appbuilder.add_api(StorageResultModelApi)

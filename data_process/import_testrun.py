@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Import externel data from pbench-server as a TestRun."""
 
 import argparse
@@ -32,7 +32,7 @@ def download_file(from_url, to_file):
     """Download file from specified URL."""
 
     try:
-        logging.debug('Downloading from URL "{}" to "{}".'.format(
+        LOG.debug('Downloading from URL "{}" to "{}".'.format(
             from_url, to_file))
         urllib.request.urlretrieve(from_url, filename=to_file)
         return 0
@@ -46,7 +46,7 @@ def create_redirect_html(externel_url,
                          filename=None,
                          wait_sec=1):
     """Create an html file for redirecting to a specified URL."""
-    logging.debug('Creating redirect html for "{}".'.format(externel_url))
+    LOG.debug('Creating redirect html for "{}".'.format(externel_url))
 
     if filename is None:
         # Determine the filename from externel_url
@@ -86,11 +86,11 @@ if __name__ == '__main__':
 
     # Verify TestRun ID and path
     if not testrun_id.startswith(('fio_', 'uperf_')):
-        logging.error('Invalid TestRun ID "{}".'.formart(testrun_id))
+        LOG.error('Invalid TestRun ID "{}".'.formart(testrun_id))
         exit(1)
 
     if os.path.exists(testrun_path):
-        logging.error('"{}" already exists, exit!'.format(testrun_path))
+        LOG.error('"{}" already exists, exit!'.format(testrun_path))
         exit(1)
 
     # Create workspace
@@ -98,10 +98,10 @@ if __name__ == '__main__':
     if os.path.exists(workspace):
         shutil.rmtree(workspace, ignore_errors=True)
     os.makedirs(workspace)
-    logging.debug('Created workspace "{}".'.format(workspace))
+    LOG.debug('Created workspace "{}".'.format(workspace))
 
     # Collect external data
-    logging.info('Collecting external data.')
+    LOG.info('Collecting external data.')
     for externel_url in externel_urls:
         # Download result.json to workspace
         entities = [x for x in externel_url.split('/') if x]
@@ -117,23 +117,23 @@ if __name__ == '__main__':
         create_redirect_html(externel_url, output_path=workspace)
 
     # Gather datastore
-    logging.info('Gathering datastore.')
+    LOG.info('Gathering datastore.')
     cmd = '{}/data_process/gather_testrun_datastore.py \
         --logdir {} --output {}'.format(PERF_INSIGHT_REPO, workspace,
                                         workspace + '/datastore.json')
-    logging.debug('Run command: {}'.format(cmd))
+    LOG.debug('Run command: {}'.format(cmd))
     res = os.system(cmd)
     if res > 0:
-        logging.error('Command failed.')
+        LOG.error('Command failed.')
         exit(1)
 
     # Save the metadata
-    logging.info('Saving the metadata.')
+    LOG.info('Saving the metadata.')
     with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
         json.dump(metadata, f, indent=3)
 
     # Remove subfolders
-    logging.info('Removing subfolders.')
+    LOG.info('Removing subfolders.')
     for d in os.listdir(workspace):
         dname = os.path.join(workspace, d)
         if os.path.isdir(dname) and d.startswith(('fio_', 'uperf_')):

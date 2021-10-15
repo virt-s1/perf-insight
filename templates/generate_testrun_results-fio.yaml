@@ -4,35 +4,43 @@ testrun_results_generator:
     round: 6
     fillna: "NaN"
   columns:
+    - name: CaseID
+      method: batch_query_datastore
+      format: "%s-%s-%sd-%sj"
+      jqexpr:
+        - ".iteration_data.parameters.benchmark[].rw"
+        - ".iteration_data.parameters.benchmark[].bs"
+        - ".iteration_data.parameters.benchmark[].iodepth"
+        - ".iteration_data.parameters.benchmark[].numjobs"
     - name: RW
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].rw"
     - name: BS
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].bs"
     - name: IOdepth
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].iodepth"
     - name: Numjobs
-      source: datastore
+      method: query_datastore
       jqexpr: ".iteration_data.parameters.benchmark[].numjobs"
     - name: Sample
-      source: auto
+      method: get_sample
     - name: IOPS
-      source: datastore
+      method: query_datastore
       jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].value'
       round: 1
     - name: LAT
-      source: datastore
+      method: query_datastore
       jqexpr: '.iteration_data.latency.lat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
       round: 3
     - name: CLAT
-      source: datastore
+      method: query_datastore
       jqexpr: '.iteration_data.latency.clat[] | select(.client_hostname=="all") | .samples[].value'
       unit: ms
       factor: 0.000001
       round: 3
     - name: Path
-      source: auto
+      method: get_source_url

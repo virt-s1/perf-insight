@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Generate the 2-way benchmark comparison for the TEST and BASE testruns.
 """
@@ -432,7 +432,7 @@ class benchmark_comparison_generator():
                 for suffix in ('TEST-AVG', 'BASE-AVG'):
                     old_name = '{0}-{1}'.format(name, suffix)
                     new_name = '{0}-{1}({2})'.format(name, suffix, unit)
-                columns_mapper.update({old_name: new_name})
+                    columns_mapper.update({old_name: new_name})
 
         self.df_report.rename(columns=columns_mapper, inplace=True)
 

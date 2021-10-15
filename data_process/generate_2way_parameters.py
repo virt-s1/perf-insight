@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Generate user parameter report for the 2-way benchmark comparison.
 """

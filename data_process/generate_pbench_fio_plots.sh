@@ -5,9 +5,9 @@
 #   fio_generate_plots.sh
 
 function show_usage() {
-    echo "Generates SVG plots for a specified TestRun."
-    echo "$(basename $0) [-h] [-d logdir]"
-    echo "Note: provide '-d' or run directly from it."
+    echo "Generates SVG plots for a specified TestRun." >&2
+    echo "$(basename $0) [-h] [-d logdir]" >&2
+    echo "Note: provide '-d' or run directly from it." >&2
 }
 
 while getopts :hd: ARGS; do
@@ -44,8 +44,14 @@ done
 fio_generate_plots="$(dirname $(which $0))/fio_generate_plots.sh"
 
 # Get paths containing source data
-echo "Analyze the directory structure..."
-paths=$(ls -d $logdir/*/*/sample*/clients/*/)
+echo "$(basename $0): INFO: Analyze the directory structure..." >&2
+paths=$(ls -d $logdir/*/*/sample*/clients/*/ 2>/dev/null)
+
+# Exit if no source data found
+if [ -z "$paths" ]; then
+    echo "$(basename $0): INFO: No plots need to be generated." >&2
+    exit 0
+fi
 
 # Lock
 lockfile=$logdir/generate_pbench_fio_plots.lock
@@ -60,7 +66,7 @@ fi
 # Generate plots
 for path in $paths; do
     pushd $path &>/dev/null
-    echo -e "\nGenerating plots in $(pwd)..."
+    echo "$(basename $0): INFO: Generating plots in $(pwd)..." >&2
     $fio_generate_plots fio 2>/dev/null
     popd &>/dev/null
 done

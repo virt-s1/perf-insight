@@ -131,3 +131,5 @@ dmypy.json
 # customized settings
 data_process/data_source
 data_process/workspace
+dashboard_server/app.db*
+dashboard_server/nohup.out

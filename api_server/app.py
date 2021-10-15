@@ -1,0 +1,1091 @@
+from flask import Flask, request, redirect, jsonify
+import logging
+import os
+import yaml
+import json
+import shutil
+import time
+import urllib
+import requests
+
+
+class PerfInsightManager():
+    # Shared functions
+    def _get_template(self, filename, platform=None):
+        """Select template and return the file path.
+
+        Input:
+            filename  - The filename of the template
+            platform  - The platform on which to use the template
+        Return:
+            - The path or None if something goes wrong.
+        """
+        # Try to find platform specific template
+        ext = filename.split('.')[-1]
+        base = filename.removesuffix('.' + ext)
+
+        if platform:
+            file = '{}-{}.{}'.format(base, platform, ext)
+            path = os.path.join(PERF_INSIGHT_TEMP, file)
+            if os.path.exists(path):
+                LOG.info(
+                    'Found platform specific template "{}".'.format(file))
+                return path
+
+        # Try to find the specified template
+        path = os.path.join(PERF_INSIGHT_TEMP, filename)
+        if os.path.exists(path):
+            LOG.info('Found the specified template "{}".'.format(filename))
+            return path
+
+        # No template was found
+        LOG.error('Cannot find template "{}" in "{}".'.format(
+            filename, PERF_INSIGHT_TEMP))
+        return None
+
+    def _select_file(self, search_path, candidates):
+        """Select the first available file from candidates.
+
+        Input:
+            search_path - Where to search the candidate
+            candidates  - A list of filenames (priority decreases)
+        Return:
+            - The selected filename, or
+            - '' if not found
+        """
+        LOG.debug('Searching from path "{}"...'.format(search_path))
+
+        for name in candidates:
+            if os.path.isfile(os.path.join(search_path, name)):
+                LOG.debug('"{}" -> YES'.format(name))
+                return name
+            else:
+                LOG.debug('"{}" -> NO'.format(name))
+
+        LOG.debug('No candidate can be found.')
+        return ''
+
+    # TestRun Functions
+    def query_testruns(self):
+        """Query all the TestRunIDs from PERF_INSIGHT_ROOT.
+
+        Input:
+            None
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        testruns = []
+        valid_prefix = ('fio_', 'uperf_')
+        search_path = os.path.join(PERF_INSIGHT_ROOT, 'testruns')
+
+        if not os.path.isdir(search_path):
+            msg = 'Path "{}" does not exist.'.format(search_path)
+            LOG.error(msg)
+            return False, msg
+
+        for entry in os.listdir(search_path):
+            if not os.path.isdir(os.path.join(search_path, entry)):
+                continue
+            if entry.startswith(valid_prefix):
+                LOG.debug('Found TestRunID "{}".'.format(entry))
+                testruns.append({'id': entry})
+
+        return True, {'testruns': testruns}
+
+    def inspect_testrun(self, id):
+        """Inspect a specified TestRunID from PERF_INSIGHT_ROOT.
+
+        Input:
+            id - TestRunID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        search_path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(search_path):
+            msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Get TestRunID
+        testrun = {'id': id}
+
+        # Get metadata
+        try:
+            metadata_file = os.path.join(search_path, 'metadata.json')
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+        except Exception as err:
+            msg = 'Failed to get metadata from {}. error: {}'.format(
+                metadata_file, err)
+            LOG.warning(msg)
+            metadata = None
+
+        testrun.update({'metadata': metadata})
+
+        # Get datastore
+        # try:
+        #     datastore_file = os.path.join(search_path, 'datastore.json')
+        #     with open(datastore_file, 'r') as f:
+        #         datastore = json.load(f)
+        # except Exception as err:
+        #     msg = 'Failed to get datastore from {}. error: {}'.format(
+        #         datastore_file, err)
+        #     LOG.warning(msg)
+        #     datastore = None
+
+        # testrun.update({'datastore': datastore})
+
+        return True, testrun
+
+    def load_testrun(self, id, generate_plots, create_datastore,
+                     update_dashboard):
+        """Load TestRun from staging area.
+
+        Input:
+            id               - TestRunID
+            generate_plots   - [bool] generate plots
+            create_datastore - [bool] create datastore
+            update_dashboard - [bool] update dashboard
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if os.path.isdir(target):
+            msg = 'TestRunID "{}" already exists.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        workspace = os.path.join(PERF_INSIGHT_STAG, id)
+        if not os.path.isdir(workspace):
+            msg = 'Folder "{}" can not be found in the staging area.'.format(
+                id)
+            LOG.error(msg)
+            return False, msg
+
+        # Get TestRunID and metadata
+        testrun = {'id': id}
+
+        try:
+            metadata_file = os.path.join(workspace, 'metadata.json')
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+        except Exception as err:
+            msg = 'Failed to get metadata from {}. error: {}'.format(
+                metadata_file, err)
+            LOG.error(msg)
+            return False, msg
+
+        testrun.update({'metadata': metadata})
+
+        # Perform data process
+        if generate_plots:
+            res, msg = self._generate_plots(workspace)
+            if res is False:
+                return False, msg
+
+        if create_datastore:
+            res, msg = self._create_datastore(workspace)
+            if res is False:
+                return False, msg
+
+        if update_dashboard:
+            res, msg = self._update_dashboard(workspace)
+            if res is False:
+                return False, msg
+
+        # Deal with the files
+        try:
+            shutil.copytree(workspace, target)
+            shutil.move(workspace, os.path.join(
+                os.path.dirname(workspace),
+                '.deleted_after_loading_{}__{}'.format(
+                    time.strftime('%y%m%d%H%M%S',
+                                  time.localtime()),
+                    os.path.basename(workspace))))
+        except Exception as err:
+            msg = 'Failed to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, testrun
+
+    def import_testrun(self, id, create_datastore, update_dashboard,
+                       metadata, external_urls):
+        """Import TestRun from external pbench server.
+
+        Input:
+            id               - TestRunID
+            create_datastore - [bool] create datastore
+            update_dashboard - [bool] update dashboard
+            metadata         - [dict] metadata
+            external_urls    - [list] external URLs
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if os.path.isdir(target):
+            msg = 'TestRunID "{}" already exists.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        workspace = os.path.join(PERF_INSIGHT_STAG, id)
+        if os.path.isdir(workspace):
+            LOG.warning(
+                'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
+            shutil.rmtree(workspace, ignore_errors=True)
+
+        testrun_type = metadata.get('testrun-type')
+        if testrun_type is None:
+            msg = '"testrun-type" must be provisioned in metadata.'
+            LOG.error(msg)
+            return False, msg
+        if testrun_type not in ('fio', 'uperf'):
+            msg = 'Unsupported testrun-type "{}" from metadata. Valid types: "fio", "uperf".'.format(
+                testrun_type)
+            LOG.error(msg)
+            return False, msg
+
+        for url in external_urls:
+            url = url.strip('/')
+            basename = os.path.basename(url)
+            if not basename.startswith(testrun_type):
+                msg = 'URL with "{}" cannot be handled as "{}" tests.'.format(
+                    basename, testrun_type)
+                LOG.error(msg)
+                return False, msg
+
+        # Create a workspace in the staging area
+        os.makedirs(workspace)
+
+        # Retrive data from the URLs
+        for url in external_urls:
+            url = url.strip('/')
+            subfolder = os.path.join(workspace, os.path.basename(url))
+
+            # Download the result.json file
+            from_file = url + '/result.json'
+            to_file = os.path.join(subfolder, 'result.json')
+
+            LOG.debug('Downloading "{}" as "{}".'.format(from_file, to_file))
+            try:
+                os.makedirs(subfolder)
+                urllib.request.urlretrieve(from_file, to_file)
+            except Exception as e:
+                msg = 'Failed to download {}: {}'.format(from_file, e)
+                LOG.error(msg)
+                return False, msg
+
+            # Write down external_url.txt
+            with open(os.path.join(subfolder, 'external_url.txt'), 'w') as f:
+                f.write(url)
+
+            # Create an html file for redirecting
+            LOG.debug('Creating an html file for redirecting "{}".'.format(url))
+            filename = os.path.basename(url) + '.html'
+            html_content = '''
+                <head><meta http-equiv="refresh" content="{0};url={1}"></head>
+                <body>Redirecting to <a href="{1}">{1}</a></body>
+                '''.format(1, url)
+
+            with open(os.path.join(workspace, filename), 'w') as f:
+                f.write(html_content)
+
+        # Update metadata and dump to metadata.json
+        if metadata.get('testrun-id') is None:
+            metadata['testrun-id'] = id
+        elif metadata.get('testrun-id') != id:
+            LOG.warning(
+                'The "testrun-id" in metadata is mismatched, replace with "{}".'.format(id))
+            metadata['testrun-id'] = id
+
+        if metadata.get('external_urls') is None:
+            metadata['external_urls'] = external_urls
+        elif not isinstance(metadata.get('external_urls'), list) or set(metadata.get('external_urls')) != set(external_urls):
+            LOG.warning(
+                'The "external_urls" in metadata is mismatched, replace with "{}".'.format(external_urls))
+            metadata['external_urls'] = external_urls
+
+        with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
+            json.dump(metadata, f, indent=3)
+
+        # Create datastore if needed
+        if create_datastore:
+            res, msg = self._create_datastore(workspace)
+            if res is False:
+                return False, msg
+
+        # Update dashboard if needed
+        if update_dashboard:
+            res, msg = self._update_dashboard(workspace)
+            if res is False:
+                return False, msg
+
+        # Deal with the files
+        try:
+            shutil.copytree(workspace, target)
+            shutil.move(workspace, os.path.join(
+                os.path.dirname(workspace),
+                '.deleted_after_importing_{}__{}'.format(
+                    time.strftime('%y%m%d%H%M%S',
+                                  time.localtime()),
+                    os.path.basename(workspace))))
+        except Exception as err:
+            msg = 'Failed to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id, 'metadata': metadata}
+
+    def _generate_plots(self, workspace):
+        """Generate plots for pbench-fio results.
+        Input:
+            workspace - the path of the workspace.
+        Return:
+            - (True, None), or
+            - (False, message) if something goes wrong.
+        """
+
+        LOG.info('Generate plots for pbench-fio results.')
+
+        cmd = '{}/data_process/generate_pbench_fio_plots.sh -d {}'.format(
+            PERF_INSIGHT_REPO, workspace)
+        res = os.system(cmd)
+
+        if res == 0:
+            return True, None
+        else:
+            msg = 'Failed to generate plots for pbench-fio results.'
+            LOG.error(msg)
+            return False, msg
+
+    def _create_datastore(self, workspace):
+        """Create datastore for the TestRun.
+        Input:
+            workspace - the path of the workspace.
+        Return:
+            - (True, None), or
+            - (False, message) if something goes wrong.
+        """
+        LOG.info('Create datastore for the TestRun.')
+
+        cmd = '{}/data_process/gather_testrun_datastore.py --logdir {} \
+            --output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
+        res = os.system(cmd)
+
+        if res == 0:
+            return True, None
+        else:
+            msg = 'Failed to create datastore for the TestRun.'
+            LOG.error(msg)
+            return False, msg
+
+    def _update_dashboard(self, workspace):
+        """Update the testrun into dashboard.
+        Input:
+            workspace - the path of the workspace.
+        Return:
+            - (True, None), or
+            - (False, message) if something goes wrong.
+        """
+        LOG.info('Update the dashboard database.')
+
+        # Get keywords from metadata
+        try:
+            f = os.path.join(workspace, 'metadata.json')
+            with open(f, 'r') as f:
+                m = json.load(f)
+            testrun_id = m.get('testrun-id')
+            testrun_type = m.get('testrun-type')
+            testrun_platform = m.get('testrun-platform')
+        except Exception as err:
+            msg = 'Failed to get metadata from "{}". error: {}'.format(f, err)
+            LOG.error(msg)
+            return False, msg
+
+        # Get template
+        candidates = [
+            'generate_testrun_results-{}-{}-dbloader.yaml'.format(
+                testrun_type, testrun_platform),
+            'generate_testrun_results-{}-dbloader.yaml'.format(
+                testrun_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, '.testrun_results_dbloader.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        # Create DB loader CSV
+        datastore = os.path.join(workspace, 'datastore.json')
+        metadata = os.path.join(workspace, 'metadata.json')
+        dbloader = os.path.join(workspace, '.testrun_results_dbloader.csv')
+
+        cmd = '{}/data_process/generate_testrun_results.py --config {} --datastore {} \
+            --metadata {} --output-format csv --output {}'.format(
+            PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
+        res = os.system(cmd)
+        if res > 0:
+            msg = 'Failed to create DB loader CSV.'
+            LOG.error(msg)
+            return False, msg
+
+        # Update database
+        if os.path.exists(DASHBOARD_DB_FILE):
+            db_file = DASHBOARD_DB_FILE
+        else:
+            msg = 'Can not find the dashboard DB file "{}".'.format(
+                DASHBOARD_DB_FILE)
+            LOG.error(msg)
+            return False, msg
+
+        if testrun_type == 'fio':
+            flag = '--storage'
+        elif testrun_type == 'uperf':
+            flag = '--network'
+        else:
+            msg = 'Unsupported TestRun Type "{}" for "flask_load_db.py".'.format(
+                testrun_type)
+            LOG.error(msg)
+            return False, msg
+
+        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+            PERF_INSIGHT_REPO, flag, db_file, testrun_id)
+        res = os.system(cmd)
+        if res > 0:
+            msg = 'Failed to clean up specified TestRunID from database.'
+            LOG.error(msg)
+            return False, msg
+
+        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --csv_file {}'.format(
+            PERF_INSIGHT_REPO, flag, db_file, dbloader)
+        res = os.system(cmd)
+        if res > 0:
+            msg = 'Failed to load specified TestRunID into database.'
+            LOG.error(msg)
+            return False, msg
+
+        return True, None
+
+    def fetch_testrun(self, id):
+        """Fetch a specified TestRunID to the staging area.
+
+        Input:
+            id - TestRunID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(target):
+            msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Deal with the files
+        try:
+            shutil.copytree(target, os.path.join(PERF_INSIGHT_STAG, id))
+        except Exception as err:
+            msg = 'Failed to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id}
+
+    def delete_testrun(self, id):
+        """Delete a specified TestRunID from PERF_INSIGHT_ROOT.
+
+        Input:
+            id - TestRunID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(target):
+            msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Remove from dashboard
+        if os.path.exists(DASHBOARD_DB_FILE):
+            db_file = DASHBOARD_DB_FILE
+        else:
+            msg = 'Can not find the dashboard DB file "{}".'.format(
+                DASHBOARD_DB_FILE)
+            LOG.error(msg)
+            return False, msg
+
+        testrun_type = id.split('_')[0]
+        if testrun_type == 'fio':
+            flag = '--storage'
+        elif testrun_type == 'uperf':
+            flag = '--network'
+        else:
+            msg = 'Unsupported TestRun Type "{}" for "flask_load_db.py".'.format(
+                testrun_type)
+            LOG.error(msg)
+            return False, msg
+
+        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+            PERF_INSIGHT_REPO, flag, db_file, id)
+        res = os.system(cmd)
+        if res > 0:
+            msg = 'Failed to clean up specified TestRunID from database.'
+            LOG.error(msg)
+            return False, msg
+
+        # Deal with the files
+        try:
+            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+                time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
+        except Exception as err:
+            msg = 'Failed to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id}
+
+    # Benchmark Functions
+    def query_benchmarks(self):
+        """Query all Benchmark reports from PERF_INSIGHT_ROOT.
+
+        Input:
+            None
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        benchmarks = []
+        search_path = os.path.join(PERF_INSIGHT_ROOT, 'reports')
+
+        if not os.path.isdir(search_path):
+            msg = 'Path "{}" does not exist.'.format(search_path)
+            LOG.error(msg)
+            return False, msg
+
+        for entry in os.listdir(search_path):
+            if not os.path.isdir(os.path.join(search_path, entry)):
+                continue
+            if entry.startswith('benchmark_'):
+                LOG.debug('Found benchmark "{}".'.format(entry))
+                benchmarks.append({'id': entry})
+
+        return True, {'benchmarks': benchmarks}
+
+    def inspect_benchmark(self, id):
+        """Inspect a specified benchmark from PERF_INSIGHT_ROOT.
+
+        Input:
+            id - Benchmark ID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        search_path = os.path.join(PERF_INSIGHT_ROOT, 'reports', id)
+        if not os.path.isdir(search_path):
+            msg = 'Benchmark "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # Get BenchmarkID
+        benchmark = {'id': id}
+
+        # Get metadata
+        try:
+            metadata_file = os.path.join(search_path, 'metadata.json')
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+        except Exception as err:
+            msg = 'Failed to get metadata from {}. error: {}'.format(
+                metadata_file, err)
+            LOG.warning(msg)
+            metadata = None
+
+        benchmark.update({'metadata': metadata})
+
+        return True, benchmark
+
+    def create_benchmark(self, test_id, base_id, test_yaml=None,
+                         base_yaml=None, benchmark_yaml=None,
+                         metadata_yaml=None, allow_overwrite=True):
+        """Create benchmark report for the specified TestRuns.
+
+        Input:
+            test_id        - TestRun to be checked/compared
+            base_id        - TestRun to be used as baseline
+            test_yaml      - Configure file to parse the TEST samples
+            base_yaml      - Configure file to parse the BASE samples
+            benchmark_yaml - Configure file for the benchmark comparsion
+            metadata_yaml  - Configure file for the metadata comparsion
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        benchmark = 'benchmark_{}_over_{}'.format(test_id, base_id)
+        target = os.path.join(PERF_INSIGHT_ROOT, 'reports', benchmark)
+        if os.path.isdir(target):
+            msg = 'Benchmark report "{}" already exists.'.format(benchmark)
+            LOG.error(msg)
+            return False, msg
+
+        for id in (test_id, base_id):
+            path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+            if not os.path.isdir(path):
+                msg = 'TestRunID "{}" does not exist.'.format(id)
+                LOG.error(msg)
+                return False, msg
+            for file in ('datastore.json', 'metadata.json'):
+                path = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id, file)
+                if not os.path.exists(path):
+                    msg = 'File "{}" does not exist.'.format(path)
+                    LOG.error(msg)
+                    return False, msg
+
+        # Prepare benchmark workspace
+        workspace = os.path.join(PERF_INSIGHT_STAG, benchmark)
+        if os.path.isdir(workspace):
+            if allow_overwrite:
+                LOG.warning(
+                    'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
+                shutil.rmtree(workspace, ignore_errors=True)
+            else:
+                msg = 'Folder "{}" already exists in the staging area.'.format(
+                    benchmark)
+                LOG.error(msg)
+                return False, msg
+
+        # Copy data files
+        os.makedirs(workspace)
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         test_id, 'datastore.json'),
+            os.path.join(workspace, 'test.datastore.json'))
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         test_id, 'metadata.json'),
+            os.path.join(workspace, 'test.metadata.json'))
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         base_id, 'datastore.json'),
+            os.path.join(workspace, 'base.datastore.json'))
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
+                         base_id, 'metadata.json'),
+            os.path.join(workspace, 'base.metadata.json'))
+
+        # Get keywords from metadata
+        try:
+            with open(os.path.join(workspace, 'test.metadata.json'), 'r') as f:
+                test_metadata = json.load(f)
+            with open(os.path.join(workspace, 'base.metadata.json'), 'r') as f:
+                base_metadata = json.load(f)
+        except Exception as err:
+            msg = 'Failed to get metadata from "{}". error: {}'.format(f, err)
+            LOG.error(msg)
+            return False, msg
+
+        test_type = test_metadata.get('testrun-type')
+        test_platform = test_metadata.get('testrun-platform')
+        base_type = base_metadata.get('testrun-type')
+        base_platform = base_metadata.get('testrun-platform')
+
+        # Check TestRun types
+        if test_type != base_type:
+            msg = 'Different tests "{}:{}" cannot be benchmarked.'.format(
+                test_type, base_type)
+
+        # Deploy configure files
+        candidates = [test_yaml] if test_yaml else [
+            'generate_testrun_results-{}-{}.yaml'.format(
+                test_type, test_platform),
+            'generate_testrun_results-{}.yaml'.format(test_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'test.generate_testrun_results.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        candidates = [base_yaml] if base_yaml else [
+            'generate_testrun_results-{}-{}.yaml'.format(
+                base_type, base_platform),
+            'generate_testrun_results-{}.yaml'.format(base_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'base.generate_testrun_results.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        candidates = [benchmark_yaml] if benchmark_yaml else [
+            'generate_2way_benchmark-{}-{}.yaml'.format(
+                test_type, test_platform),
+            'generate_2way_benchmark-{}.yaml'.format(test_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'generate_2way_benchmark.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        candidates = [metadata_yaml] if metadata_yaml else [
+            'generate_2way_metadata-{}-{}.yaml'.format(
+                test_type, test_platform),
+            'generate_2way_metadata-{}.yaml'.format(test_type)
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'generate_2way_metadata.yaml'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        # Connect to Jupyter server and generate the report
+        request_url = 'http://{}/reports/{}'.format(
+            JUPYTER_API_SERVER, benchmark)
+
+        try:
+            LOG.debug('Send request: {}'.format(request_url))
+            response = requests.post(url=request_url)
+
+            response.raise_for_status()
+            result = response.json()
+
+            # Successful request
+            LOG.info('Benchmark report generated.')
+
+        except requests.exceptions.RequestException as ex:
+            LOG.error('Failed to generate benchmark report with Jupyter server.')
+
+            # Use json reply if available
+            try:
+                details = response.json()['error']
+            except:
+                details = str(ex)
+
+            # Failed request
+            LOG.error(details)
+            return False, details
+
+        # TODO: Update the dashboard database
+
+    # {
+    #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
+    #     'base_id':	'fio_ESXi_RHEL-8.3.0-GA-x86_64_lite_scsi_D210108T114621',
+    #     'test_id':	'fio_ESXi_RHEL-8.4.0-x86_64_lite_scsi_D210108T210650',
+    #     'create_time': '2021-01-19 23:43:21.058955',
+    #     'report_url': 'http://xxx/xx/x/report.html',
+    #     'comments': '',
+    #     'metadata': {'id': 'benchmark',
+    #                  'path': 'target'}
+    # }
+
+        # Update metadata and dump to metadata.json
+        metadata = {'id': benchmark,
+                    'path': target,
+                    'create_time': time.strftime(
+                        '%Y-%m-%d %H:%M:%S', time.localtime()),
+                    'test_id': test_id,
+                    'base_id': base_id,
+                    'test_metadata': test_metadata,
+                    'base_metadata': base_metadata}
+
+        with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
+            json.dump(metadata, f, indent=3)
+
+        # Deal with the files
+        try:
+            shutil.copytree(workspace, target)
+            shutil.move(workspace, os.path.join(
+                os.path.dirname(workspace),
+                '.deleted_after_creating_{}__{}'.format(
+                    time.strftime('%y%m%d%H%M%S', time.localtime()),
+                    os.path.basename(workspace))))
+        except Exception as err:
+            msg = 'Failed to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, metadata
+
+    def delete_benchmark(self, id):
+        """Delete a specified benchmark from PERF_INSIGHT_ROOT.
+
+        Input:
+            id - Benchmark ID
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Criteria check
+        target = os.path.join(PERF_INSIGHT_ROOT, 'reports', id)
+        if not os.path.isdir(target):
+            msg = 'Benchmark "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        # TODO: Remove from the dashboard DB
+
+        # Deal with the files
+        try:
+            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+                time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
+        except Exception as err:
+            msg = 'Failed to deal with the files. error: {}'.format(err)
+            LOG.error(msg)
+            return False, msg
+
+        return True, {'id': id}
+
+
+# Flask
+app = Flask(__name__)
+
+
+# TestRun entrypoints
+
+
+@app.get('/testruns')
+def query_testruns():
+    LOG.info('Received request to query all TestRuns.')
+    res, con = manager.query_testruns()
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.get('/testruns/<id>')
+def inspect_testrun(id):
+    LOG.info('Received request to inspect TestRun "{}".'.format(id))
+    res, con = manager.inspect_testrun(id)
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.post('/testruns')
+def add_testrun():
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    action = req.get('action')
+    if action is None:
+        return jsonify({'error': '"action" is missing in request.'}), 415
+    elif not action in ('load', 'import'):
+        return jsonify({'error': '"action" must be "load" or "import".'}), 415
+
+    id = req.get('id')
+    if id is None:
+        return jsonify({'error': '"id" is missing in request.'}), 415
+
+    if action == 'load':
+        LOG.info('Received request to load TestRun "{}".'.format(id))
+    elif action == 'import':
+        LOG.info('Received request to import TestRun "{}".'.format(id))
+
+    create_datastore = req.get('create_datastore')
+    if create_datastore is None:
+        return jsonify({'error': '"create_datastore" is missing in request.'}), 415
+    elif not isinstance(create_datastore, bool):
+        return jsonify({'error': '"create_datastore" in request must be a bool value.'}), 415
+
+    update_dashboard = req.get('update_dashboard')
+    if update_dashboard is None:
+        return jsonify({'error': '"update_dashboard" is missing in request.'}), 415
+    elif not isinstance(update_dashboard, bool):
+        return jsonify({'error': '"update_dashboard" in request must be a bool value.'}), 415
+
+    if action == 'load':
+        generate_plots = req.get('generate_plots')
+        if generate_plots is None:
+            return jsonify({'error': '"generate_plots" is missing in request.'}), 415
+        elif not isinstance(generate_plots, bool):
+            return jsonify({'error': '"generate_plots" in request must be a bool value.'}), 415
+
+    if action == 'import':
+        metadata = req.get('metadata')
+        if metadata is None:
+            return jsonify({'error': '"metadata" is missing in request.'}), 415
+        elif not isinstance(metadata, dict):
+            return jsonify({'error': '"metadata" in request must be a json block.'}), 415
+
+        external_urls = req.get('external_urls')
+        if external_urls is None:
+            return jsonify({'error': '"external_urls" is missing in request.'}), 415
+        elif not isinstance(external_urls, list):
+            return jsonify({'error': '"external_urls" in request must be a json block.'}), 415
+
+    # Execute action
+    if action == 'load':
+        res, con = manager.load_testrun(
+            id=id,
+            generate_plots=generate_plots,
+            create_datastore=create_datastore,
+            update_dashboard=update_dashboard)
+    elif action == 'import':
+        res, con = manager.import_testrun(
+            id=id,
+            create_datastore=create_datastore,
+            update_dashboard=update_dashboard,
+            metadata=metadata,
+            external_urls=external_urls)
+
+    if res:
+        return jsonify(con), 201
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.put('/testruns/<id>')
+def fetch_testrun(id):
+    LOG.info('Received request to fetch TestRun "{}".'.format(id))
+    res, con = manager.fetch_testrun(id)
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.delete('/testruns/<id>')
+def delete_testrun(id):
+    LOG.info('Received request to delete TestRun "{}".'.format(id))
+    res, con = manager.delete_testrun(id)
+    if res:
+        return jsonify(con), 200    # use 200 since 204 returns no json
+    else:
+        return jsonify({'error': con}), 500
+
+
+# Benchmark entrypoints
+
+
+@app.get('/benchmarks')
+def query_benchmarks():
+    LOG.info('Received request to query all benchmarks.')
+    res, con = manager.query_benchmarks()
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.get('/benchmarks/<id>')
+def inspect_benchmark(id):
+    LOG.info('Received request to inspect benchmark "{}".'.format(id))
+    res, con = manager.inspect_benchmark(id)
+    if res:
+        return jsonify(con), 200
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.post('/benchmarks')
+def create_benchmark():
+    LOG.info('Received request to create benchmark report.')
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    test_id = req.get('test_id')
+    if test_id is None:
+        return jsonify({'error': '"test_id" is missing in request.'}), 415
+
+    base_id = req.get('base_id')
+    if base_id is None:
+        return jsonify({'error': '"base_id" is missing in request.'}), 415
+
+    test_yaml = req.get('test_yaml')
+    base_yaml = req.get('base_yaml')
+    benchmark_yaml = req.get('benchmark_yaml')
+    metadata_yaml = req.get('metadata_yaml')
+
+    res, con = manager.create_benchmark(
+        test_id, base_id, test_yaml, base_yaml, benchmark_yaml, metadata_yaml)
+
+    if res:
+        return jsonify(con), 201
+    else:
+        return jsonify({'error': con}), 500
+
+
+@app.delete('/benchmarks/<id>')
+def delete_benchmark(id):
+    LOG.info('Received request to delete benchmark "{}".'.format(id))
+    res, con = manager.delete_benchmark(id)
+    if res:
+        return jsonify(con), 200    # use 200 since 204 returns no json
+    else:
+        return jsonify({'error': con}), 500
+
+
+# Jupyter server's entrypoints (labs, studies)
+
+@app.route('/labs', methods=['GET', 'POST', 'DELETE', 'PUT'])
+@app.route('/studies', methods=['GET', 'POST', 'DELETE', 'PUT'])
+def jupyter_server_proxy():
+    LOG.debug(request)
+    LOG.info('Redirect request to the Jupyter API Server.')
+
+    jupyter_server = 'http://{}/'.format(JUPYTER_API_SERVER)
+    response = requests.request(
+        method=request.method,
+        url=request.url.replace(request.host_url, jupyter_server),
+        data=request.get_data(),
+        headers=request.headers)
+
+    return jsonify(response.json()), response.status_code
+
+
+# Main
+LOG = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+
+
+# Load perf-insight configure
+with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
+    user_config = yaml.safe_load(f)
+
+config = user_config.get('global', {})
+config.update(user_config.get('api', {}))
+
+PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
+PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
+PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
+PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
+DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
+JUPYTER_API_SERVER = config.get('jupyter_api_server', 'localhost:8880')
+
+manager = PerfInsightManager()
