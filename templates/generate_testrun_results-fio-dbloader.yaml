@@ -4,7 +4,7 @@ testrun_results_generator:
     round: 6
     fillna: "NaN"
   columns:
-    - name: CaseName
+    - name: CaseID
       method: batch_query_datastore
       format: "%s-%s-%sd-%sj"
       jqexpr:

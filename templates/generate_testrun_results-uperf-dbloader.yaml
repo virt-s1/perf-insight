@@ -58,7 +58,7 @@ testrun_results_generator:
     - name: Comments
       method: query_metadata
       key: testrun-comments
-    - name: CaseName
+    - name: CaseID
       method: batch_query_datastore
       format: "%s-%s-%s-%sB-%si"
       jqexpr:
