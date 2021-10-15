@@ -214,7 +214,7 @@ class JupyterHelper():
 
         # Verify password
         if not self._check_password(username, password):
-            msg = 'Failed to verify user "{}", operation denied.'.format(
+            msg = 'User authentication failed with "{}", operation denied.'.format(
                 username)
             LOG.error(msg)
             return False, msg
@@ -376,7 +376,7 @@ class JupyterHelper():
         if lab:
             # Verify password
             if not self._check_password(username, password):
-                msg = 'Failed to verify user "{}", operation denied.'.format(
+                msg = 'User authentication failed with "{}", operation denied.'.format(
                     username)
                 LOG.error(msg)
                 return False, msg
@@ -414,6 +414,13 @@ class JupyterHelper():
         if (report_id, username) not in [(study['id'], study['user']) for study in studies]:
             msg = 'Report "{}" is not checked out by user "{}".'.format(
                 report_id, username)
+            LOG.error(msg)
+            return False, msg
+
+        # Verify password
+        if not self._check_password(username, password):
+            msg = 'User authentication failed with "{}", operation denied.'.format(
+                username)
             LOG.error(msg)
             return False, msg
 
