@@ -68,6 +68,9 @@ class JupyterHelper():
                     token = m[3][7:] if m[3].startswith('?token=') else None
                     path = m[4]
                     user = path.split('/')[-1]
+                    host = JUPYTER_LAB_HOST
+                    port = m[2]
+                    url = 'http://{}:{}/lab'.format(host, port)
 
                     try:
                         with open(os.path.join(path, '.passwd'), 'r') as f:
@@ -77,9 +80,9 @@ class JupyterHelper():
                             user, err))
                         hash = None
 
-                    labs.append({'line': m[0], 'host': m[1], 'port': m[2],
+                    labs.append({'line': m[0], 'host': host, 'port': port,
                                  'token': token, 'path': path, 'user': user,
-                                 'hash': hash})
+                                 'hash': hash, 'url': url})
         except Exception as err:
             msg = 'Failed to read jupyter server list. error: {}'.format(err)
             LOG.error(msg)
@@ -597,6 +600,7 @@ PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/mnt/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 JUPYTER_WORKSPACE = config.get('jupyter_workspace', '/app/workspace')
+JUPYTER_LAB_HOST = config.get('jupyter_lab_host', 'localhost')
 JUPYTER_LAB_PORTS = config.get('jupyter_lab_ports', '8890-8899')
 
 helper = JupyterHelper()
