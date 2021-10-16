@@ -13,6 +13,7 @@ import requests
 import json
 
 echo = partial(click.secho, fg='reset')
+echo_log = partial(click.secho, fg='green')
 echo_debug = partial(click.secho, fg='bright_black', err=True)
 echo_info = partial(click.secho, fg='blue', err=True)
 echo_warn = partial(click.secho, fg='yellow', err=True)
@@ -602,7 +603,20 @@ def study_list(ctx):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        fstring = '{:<12s}  {:<}'
+        echo_log(fstring.format('USER', 'REPORT_ID'))
+        for study in jsonresp:
+            user = study.get('user')
+            report_id = study.get('id')
+            echo_log(fstring.format(user, report_id))
+
+    exit(0)
 
 
 @cli.command()
