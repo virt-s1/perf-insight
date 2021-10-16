@@ -21,13 +21,31 @@ echo_error = partial(click.secho, fg='red', err=True)
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--api-server')
+@click.option('--api-server', help='RESTful API server.')
+@click.option('--output-format', help='Output format (json/text).')
 @click.pass_context
-def cli(ctx, debug, api_server):
+def cli(ctx, debug, api_server, output_format):
     ctx.ensure_object(dict)
     ctx.obj['DEBUG'] = debug
+
     if api_server:
         ctx.obj['API_SERVER'] = api_server
+
+    if output_format:
+        if output_format not in ('json', 'text'):
+            echo_warn(
+                'Unsupported output-format "{}", using "json".'.format(
+                    output_format))
+            output_format = 'json'
+        ctx.obj['OUTPUT_FORMAT'] = output_format
+
+    if 'API_SERVER' not in ctx.obj:
+        echo_error('API_SERVER must be specified.')
+        exit(1)
+
+    if 'OUTPUT_FORMAT' not in ctx.obj:
+        echo_error('OUTPUT_FORMAT must be specified.')
+        exit(1)
 
 
 @cli.command()
@@ -672,5 +690,8 @@ def study_stop(ctx, report_id, username, password):
 
 
 if __name__ == '__main__':
-    config = {'API_SERVER': 'localhost:5001'}
+    config = {
+        'API_SERVER': 'localhost:5001',
+        'OUTPUT_FORMAT': 'text'
+    }
     cli(obj=config)
