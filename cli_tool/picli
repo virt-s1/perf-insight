@@ -20,6 +20,7 @@ echo_info = partial(click.secho, fg='blue', err=True)
 echo_warn = partial(click.secho, fg='yellow', err=True)
 echo_error = partial(click.secho, fg='red', err=True)
 
+mklist = partial(tabulate, tablefmt='simple')
 mktable = partial(tabulate, headers='firstrow',
                   tablefmt='simple', showindex='always')
 
@@ -140,8 +141,17 @@ def testrun_inspect(ctx, testrun_id):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('TestRun ID:\n{}'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
 
     exit(0)
 
@@ -199,8 +209,17 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('TestRun "{}" has been loaded.'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
 
     exit(0)
 
@@ -270,8 +289,17 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('TestRun "{}" has been imported.'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
 
     exit(0)
 
@@ -317,8 +345,8 @@ def testrun_fetch(ctx, testrun_id):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('TestRun "{}" has been fetched to the staging area.'.format(
+            jsonresp.get('id')))
 
     exit(0)
 
@@ -364,8 +392,7 @@ def testrun_delete(ctx, testrun_id):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('TestRun "{}" has been deleted.'.format(jsonresp.get('id')))
 
     exit(0)
 
