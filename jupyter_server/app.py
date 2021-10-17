@@ -375,7 +375,7 @@ class JupyterHelper():
         if studies is not None:
             return True, {'studies': studies}
         else:
-            msg = 'Failed to query information of the current studies.'
+            msg = 'Failed to query the current studies.'
             LOG.error(msg)
             return False, msg
 
@@ -393,22 +393,22 @@ class JupyterHelper():
         # Check if the report exists
         source = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
         if not os.path.isdir(source):
-            msg = 'Report ID "{}" does not exist.'.format(id)
+            msg = 'Report "{}" does not exist.'.format(id)
             LOG.error(msg)
             return False, msg
 
         # Check if the report is available for checking out
         studies = self._get_studies()
         if studies is None:
-            msg = 'Failed to query information of the current studies.'
+            msg = 'Failed to query the current studies.'
             LOG.error(msg)
             return False, msg
 
         users = [x['user'] for x in studies if x['id'] == report_id]
         if users:
             # Report has been checked out
-            msg = 'The report has been checked out by user "{}".'.format(
-                ', '.join(users))
+            msg = 'Report "{}" is being studied by user "{}".'.format(
+                report_id, ', '.join(users))
             LOG.error(msg)
             return False, msg
 
@@ -427,8 +427,14 @@ class JupyterHelper():
                 return False, con
 
         # Check out the report
-        lab = self._get_lab_by_user(username)
-        os.symlink(source, os.path.join(lab['path'], report_id))
+        try:
+            lab = self._get_lab_by_user(username)
+            os.symlink(source, os.path.join(lab['path'], report_id))
+        except Exception as err:
+            msg = 'Failed to check out report "{}" for user "{}". error: {}'.format(
+                report_id, username, err)
+            LOG.error(msg)
+            return False, msg
 
         # Compile return data
         data = {
@@ -456,12 +462,21 @@ class JupyterHelper():
         # Check if the report is checked out by the user
         studies = self._get_studies()
         if studies is None:
-            msg = 'Failed to query information of the current studies.'
+            msg = 'Failed to query the current studies.'
             LOG.error(msg)
             return False, msg
 
-        if (report_id, username) not in [(study['id'], study['user']) for study in studies]:
-            msg = 'Report "{}" is not checked out by user "{}".'.format(
+        users = [x['user'] for x in studies if x['id'] == report_id]
+        if not users:
+            # Report has not been checked out
+            msg = 'Report "{}" is not being studied by anyone.'.format(
+                report_id)
+            LOG.error(msg)
+            return False, msg
+
+        if username not in users:
+            # Report has been checked out by other users
+            msg = 'Report "{}" is being studied by someone other than "{}".'.format(
                 report_id, username)
             LOG.error(msg)
             return False, msg
@@ -474,7 +489,13 @@ class JupyterHelper():
             return False, msg
 
         # Check in the report
-        os.unlink(os.path.join(JUPYTER_WORKSPACE, username, report_id))
+        try:
+            os.unlink(os.path.join(JUPYTER_WORKSPACE, username, report_id))
+        except Exception as err:
+            msg = 'Failed to check in report "{}" for user "{}". error: {}'.format(
+                report_id, username, err)
+            LOG.error(msg)
+            return False, msg
 
         return True, {'id': report_id, 'user': username}
 
