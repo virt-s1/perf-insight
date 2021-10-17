@@ -947,8 +947,19 @@ def study_start(ctx, report_id, username, password):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('User "{}" is now studying the report "{}".'.format(
+            jsonresp.get('user'), jsonresp.get('id')))
+
+        table = []
+        for k, v in jsonresp.get('lab_info', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nLAB INFO:')
+        echo_log(mklist(table))
 
     exit(0)
 
@@ -998,8 +1009,8 @@ def study_stop(ctx, report_id, username, password):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('User "{}" has stopped studying report "{}".'.format(
+            jsonresp.get('user'), jsonresp.get('id')))
 
     exit(0)
 
