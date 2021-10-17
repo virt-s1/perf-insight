@@ -416,6 +416,7 @@ class PerfInsightManager():
             return False, msg
 
         # Get template
+        config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
         candidates = [
             'generate_testrun_results-{}-{}-dbloader.yaml'.format(
                 testrun_type, testrun_platform),
@@ -425,7 +426,7 @@ class PerfInsightManager():
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
         if filename:
             shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
-                            os.path.join(workspace, '.testrun_results_dbloader.yaml'))
+                            config)
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
 
