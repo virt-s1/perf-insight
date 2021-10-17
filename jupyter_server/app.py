@@ -305,7 +305,7 @@ class JupyterHelper():
                 'url': lab.get('url')
             })
 
-        return True, labs_safe
+        return True, {'labs': labs_safe}
 
     def create_lab(self, username, password):
         """Create a Jupyter lab for the specified user.
@@ -373,7 +373,7 @@ class JupyterHelper():
         """
         studies = self._get_studies()
         if studies is not None:
-            return True, studies
+            return True, {'studies': studies}
         else:
             msg = 'Failed to query information of the current studies.'
             LOG.error(msg)
