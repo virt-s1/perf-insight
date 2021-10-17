@@ -492,15 +492,21 @@ class PerfInsightManager():
         """
 
         # Criteria check
-        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
-        if not os.path.isdir(target):
+        source = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(source):
             msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        target = os.path.join(PERF_INSIGHT_STAG, id)
+        if os.path.isdir(target):
+            msg = 'Folder "{}" already exists in the staging area.'.format(id)
             LOG.error(msg)
             return False, msg
 
         # Deal with the files
         try:
-            shutil.copytree(target, os.path.join(PERF_INSIGHT_STAG, id))
+            shutil.copytree(source, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
