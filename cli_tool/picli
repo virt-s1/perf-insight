@@ -321,7 +321,18 @@ def benchmark_list(ctx):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['Report ID']]
+        for x in jsonresp.get('benchmarks', []):
+            table.append([x.get('id')])
+        echo_log(mktable(table))
+
+    exit(0)
 
 
 @cli.command()
@@ -493,7 +504,19 @@ def lab_list(ctx):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['Username', 'URL', 'Host', 'Port']]
+        for x in jsonresp.get('labs', []):
+            table.append([x.get('user'), x.get('url'),
+                         x.get('host'), x.get('port')])
+        echo_log(mktable(table))
+
+    exit(0)
 
 
 @cli.command()
@@ -613,7 +636,7 @@ def study_list(ctx):
     else:
         # Parse and print
         table = [['Username', 'Report ID']]
-        for x in jsonresp:
+        for x in jsonresp.get('studies', []):
             table.append([x.get('user'), x.get('id')])
         echo_log(mktable(table))
 
