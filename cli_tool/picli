@@ -20,7 +20,8 @@ echo_info = partial(click.secho, fg='blue', err=True)
 echo_warn = partial(click.secho, fg='yellow', err=True)
 echo_error = partial(click.secho, fg='red', err=True)
 
-mktable = partial(tabulate, headers='firstrow', tablefmt='simple')
+mktable = partial(tabulate, headers='firstrow',
+                  tablefmt='simple', showindex='always')
 
 
 @click.group()
@@ -57,31 +58,45 @@ def cli(ctx, debug, api_server, output_format):
 def testrun_list(ctx):
     """List all TestRuns."""
 
+    # Build the request
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.get(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        echo('{}'.format(json.dumps(result, indent=4)))
-
-        # for testrun in result.get('testruns', {}):
-        #     echo('{}'.format(testrun['id']))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        echo('{}'.format(ex))
-        if details:
-            echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['TestRun ID']]
+        for x in jsonresp.get('testruns', []):
+            table.append([x.get('id')])
+        echo_log(mktable(table))
+
+    exit(0)
 
 
 @cli.command()
