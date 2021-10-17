@@ -484,8 +484,50 @@ def benchmark_inspect(ctx, report_id):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('Report ID:\n{}'.format(jsonresp.get('id')))
+
+        table = []
+        base_metadata = test_metadata = None
+        for k, v in jsonresp.get('metadata', {}).items():
+            # Deal with TestRun metadata
+            if k == 'base_metadata' and isinstance(v, dict):
+                base_metadata = v
+                v = '[...]'
+            if k == 'test_metadata' and isinstance(v, dict):
+                test_metadata = v
+                v = '[...]'
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nMETADATA:')
+        echo_log(mklist(table))
+
+        if base_metadata is not None:
+            table = []
+            for k, v in base_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nBASE-METADATA:')
+            echo_log(mklist(table))
+
+        if test_metadata is not None:
+            table = []
+            for k, v in test_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nTEST-METADATA:')
+            echo_log(mklist(table))
 
     exit(0)
 
@@ -552,7 +594,50 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
+        echo_log('Report "{}" has been created.'.format(jsonresp.get('id')))
+
+        table = []
+        base_metadata = test_metadata = None
+        for k, v in jsonresp.get('metadata', {}).items():
+            # Deal with TestRun metadata
+            if k == 'base_metadata' and isinstance(v, dict):
+                base_metadata = v
+                v = '[...]'
+            if k == 'test_metadata' and isinstance(v, dict):
+                test_metadata = v
+                v = '[...]'
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nMETADATA:')
+        echo_log(mklist(table))
+
+        if base_metadata is not None:
+            table = []
+            for k, v in base_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nBASE-METADATA:')
+            echo_log(mklist(table))
+
+        if test_metadata is not None:
+            table = []
+            for k, v in test_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nTEST-METADATA:')
+            echo_log(mklist(table))
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
     exit(0)
@@ -601,8 +686,7 @@ def benchmark_delete(ctx, report_id, update_dashboard):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('Report "{}" has been deleted.'.format(jsonresp.get('id')))
 
     exit(0)
 
