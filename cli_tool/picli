@@ -780,8 +780,19 @@ def lab_create(ctx, username, password):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('A lab has been created for user "{}".'.format(
+            jsonresp.get('user')))
+
+        table = []
+        for k, v in jsonresp.items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nLAB INFO:')
+        echo_log(mklist(table))
 
     exit(0)
 
@@ -828,8 +839,19 @@ def lab_delete(ctx, username, password):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        # TODO: implement the text output
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+        echo_log('The lab associated with user "{}" has been deleted.'.format(
+            jsonresp.get('user')))
+
+        table = []
+        for k, v in jsonresp.items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nLAB INFO:')
+        echo_log(mklist(table))
 
     exit(0)
 
