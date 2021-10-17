@@ -106,29 +106,35 @@ def testrun_list(ctx):
 def testrun_inspect(ctx, testrun_id):
     """Inspect a specified TestRun."""
 
+    # Build the request
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.get(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        echo('{}'.format(ex))
-        if details:
-            echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -145,39 +151,40 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
                  update_dashboard):
     """Load a TestRun from the staging area."""
 
+    # Build the request
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        'action': 'load',
+        'generate_plots': generate_plots,
+        'create_datastore': create_datastore,
+        'update_dashboard': update_dashboard,
+        'id': testrun_id
+    }
 
     try:
-        response = requests.post(
-            url=request_url,
-            headers={
-                'Content-Type': 'application/json; charset=UTF-8'
-            },
-            json={
-                'action': 'load',
-                'generate_plots': generate_plots,
-                'create_datastore': create_datastore,
-                'update_dashboard': update_dashboard,
-                'id': testrun_id
-            })
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        echo('{}'.format(ex))
-        if details:
-            echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -198,46 +205,48 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
                    create_datastore, update_dashboard):
     """Import a TestRun from external pbench server."""
 
-    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
-
+    # Parse input
     external_urls = list(external_url)
     metadata = {}
     for keypair in metadata_keypair:
         key, value = keypair.split('=')
         metadata[key] = value
 
+    # Build the request
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        'action': 'import',
+        'create_datastore': create_datastore,
+        'update_dashboard': update_dashboard,
+        'id': testrun_id,
+        'metadata': metadata,
+        'external_urls': external_urls
+    }
+
     try:
-        response = requests.post(
-            url=request_url,
-            headers={
-                'Content-Type': 'application/json; charset=UTF-8'
-            },
-            json={
-                'action': 'import',
-                'create_datastore': create_datastore,
-                'update_dashboard': update_dashboard,
-                'id': testrun_id,
-                'metadata': metadata,
-                'external_urls': external_urls
-            })
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        echo('{}'.format(ex))
-        if details:
-            echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -247,29 +256,35 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
 def testrun_fetch(ctx, testrun_id):
     """Fetch a TestRun to the staging area."""
 
+    # Build the request
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
+    request_method = 'PUT'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.put(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        echo('{}'.format(ex))
-        if details:
-            echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
@@ -279,29 +294,35 @@ def testrun_fetch(ctx, testrun_id):
 def testrun_delete(ctx, testrun_id):
     """Delete the specified TestRun."""
 
+    # Build the request
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
+    request_method = 'DELETE'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.delete(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        echo('{}'.format(ex))
-        if details:
-            echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+    echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
 
 @cli.command()
