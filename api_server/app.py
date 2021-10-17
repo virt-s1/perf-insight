@@ -821,7 +821,6 @@ class PerfInsightManager():
 
         # Update metadata and dump to metadata.json
         metadata = {'id': benchmark,
-                    'path': target,
                     'create_time': time.strftime(
                         '%Y-%m-%d %H:%M:%S', time.localtime()),
                     'test_id': test_id,
@@ -845,7 +844,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        return True, metadata
+        return True, {'id': benchmark, 'metadata': metadata}
 
     def delete_benchmark(self, id, update_dashboard=True):
         """Delete a specified benchmark from PERF_INSIGHT_ROOT.
