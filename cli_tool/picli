@@ -7,20 +7,51 @@ Read this for more details on Click Context:
 https://click.palletsprojects.com/en/8.0.x/commands/
 """
 
+from functools import partial
+from tabulate import tabulate
 import click
 import requests
 import json
 
+echo = partial(click.secho, fg='reset')
+echo_log = partial(click.secho, fg='green')
+echo_debug = partial(click.secho, fg='bright_black', err=True)
+echo_info = partial(click.secho, fg='blue', err=True)
+echo_warn = partial(click.secho, fg='yellow', err=True)
+echo_error = partial(click.secho, fg='red', err=True)
+
+mklist = partial(tabulate, tablefmt='simple')
+mktable = partial(tabulate, headers='firstrow',
+                  tablefmt='simple', showindex='always')
+
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
-@click.option('--api-server')
+@click.option('--api-server', help='RESTful API server.')
+@click.option('--output-format', help='Output format (json/text).')
 @click.pass_context
-def cli(ctx, debug, api_server):
+def cli(ctx, debug, api_server, output_format):
     ctx.ensure_object(dict)
     ctx.obj['DEBUG'] = debug
+
     if api_server:
         ctx.obj['API_SERVER'] = api_server
+
+    if output_format:
+        if output_format not in ('json', 'text'):
+            echo_warn(
+                'Unsupported output-format "{}", using "json".'.format(
+                    output_format))
+            output_format = 'json'
+        ctx.obj['OUTPUT_FORMAT'] = output_format
+
+    if 'API_SERVER' not in ctx.obj:
+        echo_error('API_SERVER must be specified.')
+        exit(1)
+
+    if 'OUTPUT_FORMAT' not in ctx.obj:
+        echo_error('OUTPUT_FORMAT must be specified.')
+        exit(1)
 
 
 @cli.command()
@@ -28,31 +59,45 @@ def cli(ctx, debug, api_server):
 def testrun_list(ctx):
     """List all TestRuns."""
 
+    # Build the request
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.get(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
-
-        # for testrun in result.get('testruns', {}):
-        #     click.echo('{}'.format(testrun['id']))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        click.echo('{}'.format(ex))
-        if details:
-            click.echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['TestRun ID']]
+        for x in jsonresp.get('testruns', []):
+            table.append([x.get('id')])
+        echo_log(mktable(table))
+
+    exit(0)
 
 
 @cli.command()
@@ -62,29 +107,53 @@ def testrun_list(ctx):
 def testrun_inspect(ctx, testrun_id):
     """Inspect a specified TestRun."""
 
+    # Build the request
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.get(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        click.echo('{}'.format(ex))
-        if details:
-            click.echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('TestRun ID:\n{}'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
+
+    exit(0)
 
 
 @cli.command()
@@ -99,41 +168,60 @@ def testrun_inspect(ctx, testrun_id):
 @click.pass_context
 def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
                  update_dashboard):
-    """Load TestRun from the staging area."""
+    """Load a TestRun from the staging area."""
 
+    # Build the request
     request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        'action': 'load',
+        'generate_plots': generate_plots,
+        'create_datastore': create_datastore,
+        'update_dashboard': update_dashboard,
+        'id': testrun_id
+    }
 
     try:
-        response = requests.post(
-            url=request_url,
-            headers={
-                'Content-Type': 'application/json; charset=UTF-8'
-            },
-            json={
-                'action': 'load',
-                'generate_plots': generate_plots,
-                'create_datastore': create_datastore,
-                'update_dashboard': update_dashboard,
-                'id': testrun_id
-            })
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        click.echo('{}'.format(ex))
-        if details:
-            click.echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('TestRun "{}" has been loaded.'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
+
+    exit(0)
 
 
 @cli.command()
@@ -152,48 +240,68 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
 @click.pass_context
 def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
                    create_datastore, update_dashboard):
-    """Import TestRun from external pbench server."""
+    """Import a TestRun from external pbench server."""
 
-    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
-
+    # Parse input
     external_urls = list(external_url)
     metadata = {}
     for keypair in metadata_keypair:
         key, value = keypair.split('=')
         metadata[key] = value
 
+    # Build the request
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        'action': 'import',
+        'create_datastore': create_datastore,
+        'update_dashboard': update_dashboard,
+        'id': testrun_id,
+        'metadata': metadata,
+        'external_urls': external_urls
+    }
+
     try:
-        response = requests.post(
-            url=request_url,
-            headers={
-                'Content-Type': 'application/json; charset=UTF-8'
-            },
-            json={
-                'action': 'import',
-                'create_datastore': create_datastore,
-                'update_dashboard': update_dashboard,
-                'id': testrun_id,
-                'metadata': metadata,
-                'external_urls': external_urls
-            })
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        click.echo('{}'.format(ex))
-        if details:
-            click.echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('TestRun "{}" has been imported.'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
+
+    exit(0)
 
 
 @cli.command()
@@ -201,31 +309,46 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
               help='The TestRun to be processed.')
 @click.pass_context
 def testrun_fetch(ctx, testrun_id):
-    """Fetch TestRun to the staging area."""
+    """Fetch a TestRun to the staging area."""
 
+    # Build the request
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
+    request_method = 'PUT'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.put(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        click.echo('{}'.format(ex))
-        if details:
-            click.echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('TestRun "{}" has been fetched to the staging area.'.format(
+            jsonresp.get('id')))
+
+    exit(0)
 
 
 @cli.command()
@@ -233,37 +356,344 @@ def testrun_fetch(ctx, testrun_id):
               help='The TestRun to be processed.')
 @click.pass_context
 def testrun_delete(ctx, testrun_id):
-    """Delete a specified TestRun."""
+    """Delete the specified TestRun."""
 
+    # Build the request
     request_url = 'http://{}/testruns/{}'.format(
         ctx.obj['API_SERVER'], testrun_id)
+    request_method = 'DELETE'
+    request_headers = None
+    request_json = None
 
     try:
-        response = requests.delete(url=request_url)
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
 
         response.raise_for_status()
-        result = response.json()
-
-        # Successful request
-        click.echo('{}'.format(json.dumps(result, indent=4)))
 
     except requests.exceptions.RequestException as ex:
-        # Try to get more details
+        # Use json reply if available
         try:
-            details = response.json()
+            details = response.json()['error']
         except:
-            details = None
+            details = str(ex)
 
         # Failed request
-        click.echo('{}'.format(ex))
-        if details:
-            click.echo('{}'.format(details))
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('TestRun "{}" has been deleted.'.format(jsonresp.get('id')))
+
+    exit(0)
+
+
+@cli.command()
+@click.pass_context
+def benchmark_list(ctx):
+    """List all benchmark reports."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['Report ID']]
+        for x in jsonresp.get('benchmarks', []):
+            table.append([x.get('id')])
+        echo_log(mktable(table))
+
+    exit(0)
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='TestRun ID',
+              help='The TestRun to be processed.')
+@click.pass_context
+def benchmark_inspect(ctx, report_id):
+    """Inspect a specified benchmark report."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks/{}'.format(
+        ctx.obj['API_SERVER'], report_id)
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('Report ID:\n{}'.format(jsonresp.get('id')))
+
+        table = []
+        base_metadata = test_metadata = None
+        for k, v in jsonresp.get('metadata', {}).items():
+            # Deal with TestRun metadata
+            if k == 'base_metadata' and isinstance(v, dict):
+                base_metadata = v
+                v = '[...]'
+            if k == 'test_metadata' and isinstance(v, dict):
+                test_metadata = v
+                v = '[...]'
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nMETADATA:')
+        echo_log(mklist(table))
+
+        if base_metadata is not None:
+            table = []
+            for k, v in base_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nBASE-METADATA:')
+            echo_log(mklist(table))
+
+        if test_metadata is not None:
+            table = []
+            for k, v in test_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nTEST-METADATA:')
+            echo_log(mklist(table))
+
+    exit(0)
+
+
+@cli.command()
+@click.option('--base-id', required=True, prompt='TestRunID(BASE)',
+              help='The TestRunID of the base samples.')
+@click.option('--test-id', required=True, prompt='TestRunID(TEST)',
+              help='The TestRunID of the test samples.')
+@click.option('--base-yaml', required=False,
+              help='The parse configure for the base samples.')
+@click.option('--test-yaml', required=False,
+              help='The parse configure for the test samples.')
+@click.option('--benchmark-yaml', required=False,
+              help='The configure file for benchmark comparison.')
+@click.option('--metadata-yaml', required=False,
+              help='The configure file for metadata comparison.')
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard or not.', show_default=True)
+@click.option('--allow-overwrite', required=False, type=bool, default=True,
+              help=' Allow overwrite content in the staging area.', show_default=True)
+@click.pass_context
+def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
+                     benchmark_yaml, metadata_yaml, update_dashboard, allow_overwrite):
+    """Create a benchmark report."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        "base_id": base_id, "test_id": test_id,
+        'test_yaml': test_yaml, 'base_yaml': base_yaml,
+        'benchmark_yaml': benchmark_yaml,
+        'metadata_yaml': metadata_yaml,
+        'update_dashboard': update_dashboard,
+        'allow_overwrite': allow_overwrite
+    }
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('Report "{}" has been created.'.format(jsonresp.get('id')))
+
+        table = []
+        base_metadata = test_metadata = None
+        for k, v in jsonresp.get('metadata', {}).items():
+            # Deal with TestRun metadata
+            if k == 'base_metadata' and isinstance(v, dict):
+                base_metadata = v
+                v = '[...]'
+            if k == 'test_metadata' and isinstance(v, dict):
+                test_metadata = v
+                v = '[...]'
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nMETADATA:')
+        echo_log(mklist(table))
+
+        if base_metadata is not None:
+            table = []
+            for k, v in base_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nBASE-METADATA:')
+            echo_log(mklist(table))
+
+        if test_metadata is not None:
+            table = []
+            for k, v in test_metadata.items():
+                if isinstance(v, list):
+                    # Expand the list
+                    for sv in v:
+                        table.append([k, sv])
+                else:
+                    table.append([k, v])
+            echo_log('\nTEST-METADATA:')
+            echo_log(mklist(table))
+
+    exit(0)
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The ID of the benchmark report.')
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard or not.', show_default=True)
+@click.pass_context
+def benchmark_delete(ctx, report_id, update_dashboard):
+    """Delete a benchmark report."""
+
+    # Build the request
+    request_url = 'http://{}/benchmarks'.format(ctx.obj['API_SERVER'])
+    request_method = 'DELETE'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'report_id': report_id,
+                    'update_dashboard': update_dashboard}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('Report "{}" has been deleted.'.format(jsonresp.get('id')))
+
+    exit(0)
 
 
 @cli.command()
 @click.pass_context
 def lab_list(ctx):
-    """Query all the running labs."""
+    """List all running labs."""
 
     # Build the request
     request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
@@ -287,22 +717,34 @@ def lab_list(ctx):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['Username', 'URL', 'Host', 'Port']]
+        for x in jsonresp.get('labs', []):
+            table.append([x.get('user'), x.get('url'),
+                         x.get('host'), x.get('port')])
+        echo_log(mktable(table))
+
+    exit(0)
 
 
 @cli.command()
 @click.option('--username', required=True, prompt='Username',
               help='The username associated with the lab.')
 @click.password_option('--password', required=True, prompt='Password',
-                       help='The password to encrypt the lab.')
+                       help='The lab password to be created.')
 @click.pass_context
 def lab_create(ctx, username, password):
-    """Query all the running labs."""
+    """Create a lab to associate with the specified user."""
 
     # Build the request
     request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
@@ -326,22 +768,42 @@ def lab_create(ctx, username, password):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('A lab has been created for user "{}".'.format(
+            jsonresp.get('user')))
+
+        table = []
+        for k, v in jsonresp.items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nLAB INFO:')
+        echo_log(mklist(table))
+
+    exit(0)
 
 
 @cli.command()
 @click.option('--username', required=True, prompt='Username',
               help='The username associated with the lab.')
 @click.option('--password', required=True, prompt='Password',
-              hide_input=True, help='The password to authenticate.')
+              hide_input=True, help='The lab password to be verified.')
 @click.pass_context
 def lab_delete(ctx, username, password):
-    """Query all the running labs."""
+    """Delete the lab associated with the specified user."""
 
     # Build the request
     request_url = 'http://{}/labs'.format(ctx.obj['API_SERVER'])
@@ -365,18 +827,196 @@ def lab_delete(ctx, username, password):
             details = str(ex)
 
         # Failed request
-        click.echo(details)
-        return None
+        echo_error(details)
+        exit(1)
 
     # Successful request
     jsonresp = response.json()
-    click.echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
-# def study_list():
-# def study_start():
-# def study_stop():
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('The lab associated with user "{}" has been deleted.'.format(
+            jsonresp.get('user')))
+
+        table = []
+        for k, v in jsonresp.items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nLAB INFO:')
+        echo_log(mklist(table))
+
+    exit(0)
+
+
+@cli.command()
+@click.pass_context
+def study_list(ctx):
+    """List all current studies."""
+
+    # Build the request
+    request_url = 'http://{}/studies'.format(ctx.obj['API_SERVER'])
+    request_method = 'GET'
+    request_headers = None
+    request_json = None
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        table = [['Username', 'Report ID']]
+        for x in jsonresp.get('studies', []):
+            table.append([x.get('user'), x.get('id')])
+        echo_log(mktable(table))
+
+    exit(0)
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The ID of the report to be studied.')
+@click.option('--username', required=True, prompt='Username',
+              help='The username associated with the lab.')
+@click.option('--password', required=True, prompt='Password',
+              hide_input=True, help='The lab password to be verified.')
+@click.pass_context
+def study_start(ctx, report_id, username, password):
+    """Start a study for the specified user."""
+
+    # Build the request
+    request_url = 'http://{}/studies'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'report_id': report_id,
+                    'username': username, 'password': password}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('User "{}" is now studying the report "{}".'.format(
+            jsonresp.get('user'), jsonresp.get('id')))
+
+        table = []
+        for k, v in jsonresp.get('lab_info', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log('\nLAB INFO:')
+        echo_log(mklist(table))
+
+    exit(0)
+
+
+@cli.command()
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The ID of the report to be studied.')
+@click.option('--username', required=True, prompt='Username',
+              help='The username associated with the lab.')
+@click.option('--password', required=True, prompt='Password',
+              hide_input=True, help='The lab password to be verified.')
+@click.pass_context
+def study_stop(ctx, report_id, username, password):
+    """Stop a study for the specified user."""
+
+    # Build the request
+    request_url = 'http://{}/studies'.format(ctx.obj['API_SERVER'])
+    request_method = 'DELETE'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {'report_id': report_id,
+                    'username': username, 'password': password}
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('User "{}" has stopped studying report "{}".'.format(
+            jsonresp.get('user'), jsonresp.get('id')))
+
+    exit(0)
 
 
 if __name__ == '__main__':
-    config = {'API_SERVER': 'localhost:5001'}
+    config = {
+        'API_SERVER': 'localhost:5001',
+        'OUTPUT_FORMAT': 'text'
+    }
     cli(obj=config)

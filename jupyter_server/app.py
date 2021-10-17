@@ -68,6 +68,9 @@ class JupyterHelper():
                     token = m[3][7:] if m[3].startswith('?token=') else None
                     path = m[4]
                     user = path.split('/')[-1]
+                    host = JUPYTER_LAB_HOST
+                    port = m[2]
+                    url = 'http://{}:{}/lab'.format(host, port)
 
                     try:
                         with open(os.path.join(path, '.passwd'), 'r') as f:
@@ -77,9 +80,9 @@ class JupyterHelper():
                             user, err))
                         hash = None
 
-                    labs.append({'line': m[0], 'host': m[1], 'port': m[2],
+                    labs.append({'line': m[0], 'host': host, 'port': port,
                                  'token': token, 'path': path, 'user': user,
-                                 'hash': hash})
+                                 'hash': hash, 'url': url})
         except Exception as err:
             msg = 'Failed to read jupyter server list. error: {}'.format(err)
             LOG.error(msg)
@@ -103,12 +106,10 @@ class JupyterHelper():
         """
         labs = self._get_labs()
 
-        if labs is None:
-            return None
-
-        for lab in labs:
-            if lab['user'] == username:
-                return lab
+        if isinstance(labs, list):
+            for lab in labs:
+                if lab['user'] == username:
+                    return lab
 
         return None
 
@@ -122,14 +123,19 @@ class JupyterHelper():
             - True   - Valid password
             - False  - Something wrong or invalid password
         """
-        lab = self._get_lab_by_user(username)
-        hashed_password = lab.get('hash') if lab else None
+        try:
+            with open(os.path.join(
+                    JUPYTER_WORKSPACE, username, '.passwd'), 'r') as f:
+                hashed_password = f.readline()
+        except:
+            hashed_password = None
+
         if hashed_password is None:
             LOG.error('Cannot get hashed password for user "{}".'.format(
                 username))
             return False
 
-        if passwd_check(lab['hash'], password):
+        if passwd_check(hashed_password, password):
             LOG.info('Password for user "{}" is valid.'.format(username))
             return True
         else:
@@ -176,7 +182,7 @@ class JupyterHelper():
         else:
             port = min_port
 
-        # Start Jupyter lab
+        # Create a Jupyter lab
         cmd = 'jupyter-lab -y --allow-root --no-browser --collaborative \
             --ip 0.0.0.0 --port {} --notebook-dir={} \
             --ServerApp.password_required=True \
@@ -214,12 +220,12 @@ class JupyterHelper():
 
         # Verify password
         if not self._check_password(username, password):
-            msg = 'Failed to verify user "{}", operation denied.'.format(
+            msg = 'Authentication failed with user "{}", operation denied.'.format(
                 username)
             LOG.error(msg)
             return False, msg
 
-        # Stop the lab
+        # Delete the Jupyter lab
         cmd = 'jupyter server stop {}'.format(lab.get('port'))
         res = os.system(cmd)
 
@@ -229,7 +235,13 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
         else:
-            return True, lab
+            lab_safe = {
+                'user': lab.get('user'),
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')
+            }
+            return True, lab_safe
 
     # Report Functions
     def create_report(self, report_id):
@@ -277,19 +289,23 @@ class JupyterHelper():
             - (False, message) if something goes wrong.
         """
         labs = self._get_labs()
-        if labs is not None:
-            # Remove sensitive information
-            for lab in labs:
-                lab.pop('line')
-                lab.pop('token')
-                lab.pop('path')
-                lab.pop('hash')
 
-            return True, labs
-        else:
+        if labs is None:
             msg = 'Failed to query information of the running labs.'
             LOG.error(msg)
             return False, msg
+
+        # Remove sensitive information
+        labs_safe = []
+        for lab in labs:
+            labs_safe.append({
+                'user': lab.get('user'),
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')
+            })
+
+        return True, {'labs': labs_safe}
 
     def create_lab(self, username, password):
         """Create a Jupyter lab for the specified user.
@@ -306,7 +322,19 @@ class JupyterHelper():
             LOG.error(msg)
             return False, msg
 
-        return self._create_lab(username, password)
+        res, con = self._create_lab(username, password)
+
+        if res:
+            # Remove sensitive information from lab info
+            lab_safe = {
+                'user': con.get('user'),
+                'host': con.get('host'),
+                'port': con.get('port'),
+                'url': con.get('url')
+            }
+            return True, lab_safe
+        else:
+            return res, con
 
     def delete_lab(self, username, password):
         """Delete a Jupyter lab for the specified user.
@@ -318,9 +346,22 @@ class JupyterHelper():
             - (True, json-block), or
             - (False, message) if something goes wrong.
         """
-        return self._delete_lab(username, password)
+        res, con = self._delete_lab(username, password)
+
+        if res:
+            # Remove sensitive information from lab info
+            lab_safe = {
+                'user': con.get('user'),
+                'host': con.get('host'),
+                'port': con.get('port'),
+                'url': con.get('url')
+            }
+            return True, lab_safe
+        else:
+            return res, con
 
     # Study Functions
+
     def query_studies(self):
         """Query information of the current studies.
 
@@ -332,9 +373,9 @@ class JupyterHelper():
         """
         studies = self._get_studies()
         if studies is not None:
-            return True, studies
+            return True, {'studies': studies}
         else:
-            msg = 'Failed to query information of the current studies.'
+            msg = 'Failed to query the current studies.'
             LOG.error(msg)
             return False, msg
 
@@ -352,46 +393,60 @@ class JupyterHelper():
         # Check if the report exists
         source = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
         if not os.path.isdir(source):
-            msg = 'Report ID "{}" does not exist.'.format(id)
+            msg = 'Report "{}" does not exist.'.format(report_id)
             LOG.error(msg)
             return False, msg
 
         # Check if the report is available for checking out
         studies = self._get_studies()
         if studies is None:
-            msg = 'Failed to query information of the current studies.'
+            msg = 'Failed to query the current studies.'
             LOG.error(msg)
             return False, msg
 
         users = [x['user'] for x in studies if x['id'] == report_id]
         if users:
             # Report has been checked out
-            msg = 'The report has been checked out by user "{}".'.format(
-                ', '.join(users))
+            msg = 'Report "{}" is being studied by user "{}".'.format(
+                report_id, ', '.join(users))
             LOG.error(msg)
             return False, msg
 
         # Check if the user already have a Jupyter lab
-        lab = self._get_lab_by_user(username)
-        if lab:
+        if self._get_lab_by_user(username):
             # Verify password
             if not self._check_password(username, password):
-                msg = 'Failed to verify user "{}", operation denied.'.format(
+                msg = 'Authentication failed with user "{}", operation denied.'.format(
                     username)
                 LOG.error(msg)
                 return False, msg
         else:
             # Create a Jupyter lab for the user
-            res, lab = self._create_lab(username, password)
+            res, con = self._create_lab(username, password)
             if res is False:
-                msg = 'Failed to create lab for user "{}"'.format(username)
-                LOG.error(msg)
-                return False, msg
+                return False, con
 
         # Check out the report
-        os.symlink(source, os.path.join(lab['path'], report_id))
+        try:
+            lab = self._get_lab_by_user(username)
+            os.symlink(source, os.path.join(lab['path'], report_id))
+        except Exception as err:
+            msg = 'Failed to check out report "{}" for user "{}". error: {}'.format(
+                report_id, username, err)
+            LOG.error(msg)
+            return False, msg
 
-        return True, {'id': report_id, 'user': username}
+        # Compile return data
+        data = {
+            'id': report_id,
+            'user': username,
+            'lab_info': {
+                'host': lab.get('host'),
+                'port': lab.get('port'),
+                'url': lab.get('url')}
+        }
+
+        return True, data
 
     def stop_study(self, report_id, username, password):
         """Stop the study for a specified user.
@@ -407,18 +462,40 @@ class JupyterHelper():
         # Check if the report is checked out by the user
         studies = self._get_studies()
         if studies is None:
-            msg = 'Failed to query information of the current studies.'
+            msg = 'Failed to query the current studies.'
             LOG.error(msg)
             return False, msg
 
-        if (report_id, username) not in [(study['id'], study['user']) for study in studies]:
-            msg = 'Report "{}" is not checked out by user "{}".'.format(
+        users = [x['user'] for x in studies if x['id'] == report_id]
+        if not users:
+            # Report has not been checked out
+            msg = 'Report "{}" is not being studied by anyone.'.format(
+                report_id)
+            LOG.error(msg)
+            return False, msg
+
+        if username not in users:
+            # Report has been checked out by other users
+            msg = 'Report "{}" is being studied by someone other than "{}".'.format(
                 report_id, username)
             LOG.error(msg)
             return False, msg
 
+        # Verify password
+        if not self._check_password(username, password):
+            msg = 'Authentication failed with user "{}", operation denied.'.format(
+                username)
+            LOG.error(msg)
+            return False, msg
+
         # Check in the report
-        os.unlink(os.path.join(JUPYTER_WORKSPACE, username, report_id))
+        try:
+            os.unlink(os.path.join(JUPYTER_WORKSPACE, username, report_id))
+        except Exception as err:
+            msg = 'Failed to check in report "{}" for user "{}". error: {}'.format(
+                report_id, username, err)
+            LOG.error(msg)
+            return False, msg
 
         return True, {'id': report_id, 'user': username}
 
@@ -585,6 +662,7 @@ PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/mnt/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 JUPYTER_WORKSPACE = config.get('jupyter_workspace', '/app/workspace')
+JUPYTER_LAB_HOST = config.get('jupyter_lab_host', 'localhost')
 JUPYTER_LAB_PORTS = config.get('jupyter_lab_ports', '8890-8899')
 
 helper = JupyterHelper()

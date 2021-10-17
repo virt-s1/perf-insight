@@ -191,11 +191,13 @@ class PerfInsightManager():
             if res is False:
                 return False, msg
 
+        # Create datastore as requested
         if create_datastore:
             res, msg = self._create_datastore(workspace)
             if res is False:
                 return False, msg
 
+        # Update dashboard as requested
         if update_dashboard:
             res, msg = self._update_dashboard(workspace)
             if res is False:
@@ -319,13 +321,13 @@ class PerfInsightManager():
         with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
             json.dump(metadata, f, indent=3)
 
-        # Create datastore if needed
+        # Create datastore as requested
         if create_datastore:
             res, msg = self._create_datastore(workspace)
             if res is False:
                 return False, msg
 
-        # Update dashboard if needed
+        # Update dashboard as requested
         if update_dashboard:
             res, msg = self._update_dashboard(workspace)
             if res is False:
@@ -414,6 +416,7 @@ class PerfInsightManager():
             return False, msg
 
         # Get template
+        config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
         candidates = [
             'generate_testrun_results-{}-{}-dbloader.yaml'.format(
                 testrun_type, testrun_platform),
@@ -423,7 +426,7 @@ class PerfInsightManager():
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
         if filename:
             shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
-                            os.path.join(workspace, '.testrun_results_dbloader.yaml'))
+                            config)
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
 
@@ -489,15 +492,21 @@ class PerfInsightManager():
         """
 
         # Criteria check
-        target = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
-        if not os.path.isdir(target):
+        source = os.path.join(PERF_INSIGHT_ROOT, 'testruns', id)
+        if not os.path.isdir(source):
             msg = 'TestRunID "{}" does not exist.'.format(id)
+            LOG.error(msg)
+            return False, msg
+
+        target = os.path.join(PERF_INSIGHT_STAG, id)
+        if os.path.isdir(target):
+            msg = 'Folder "{}" already exists in the staging area.'.format(id)
             LOG.error(msg)
             return False, msg
 
         # Deal with the files
         try:
-            shutil.copytree(target, os.path.join(PERF_INSIGHT_STAG, id))
+            shutil.copytree(source, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -626,16 +635,19 @@ class PerfInsightManager():
 
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
-                         metadata_yaml=None, allow_overwrite=True):
+                         metadata_yaml=None, update_dashboard=True,
+                         allow_overwrite=True):
         """Create benchmark report for the specified TestRuns.
 
         Input:
-            test_id        - TestRun to be checked/compared
-            base_id        - TestRun to be used as baseline
-            test_yaml      - Configure file to parse the TEST samples
-            base_yaml      - Configure file to parse the BASE samples
-            benchmark_yaml - Configure file for the benchmark comparsion
-            metadata_yaml  - Configure file for the metadata comparsion
+            test_id          - TestRun to be checked/compared
+            base_id          - TestRun to be used as baseline
+            test_yaml        - Configure file to parse the TEST samples
+            base_yaml        - Configure file to parse the BASE samples
+            benchmark_yaml   - Configure file for the benchmark comparison
+            metadata_yaml    - Configure file for the metadata comparison
+            update_dashboard - Update the dashboard or not
+            allow_overwrite  - Allow overwrite content in the staging area
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -792,6 +804,9 @@ class PerfInsightManager():
             return False, details
 
         # TODO: Update the dashboard database
+        # Update dashboard as requested
+        if update_dashboard:
+            pass
 
     # {
     #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
@@ -806,7 +821,6 @@ class PerfInsightManager():
 
         # Update metadata and dump to metadata.json
         metadata = {'id': benchmark,
-                    'path': target,
                     'create_time': time.strftime(
                         '%Y-%m-%d %H:%M:%S', time.localtime()),
                     'test_id': test_id,
@@ -830,13 +844,15 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        return True, metadata
+        return True, {'id': benchmark, 'metadata': metadata}
 
-    def delete_benchmark(self, id):
+    def delete_benchmark(self, id, update_dashboard=True):
         """Delete a specified benchmark from PERF_INSIGHT_ROOT.
 
         Input:
-            id - Benchmark ID
+            id               - Benchmark ID
+            update_dashboard - Update the dashboard or not
+
         Return:
             - (True, json-block), or
             - (False, message) if something goes wrong.
@@ -850,6 +866,9 @@ class PerfInsightManager():
             return False, msg
 
         # TODO: Remove from the dashboard DB
+        # Update dashboard as requested
+        if update_dashboard:
+            pass
 
         # Deal with the files
         try:
@@ -1031,9 +1050,12 @@ def create_benchmark():
     base_yaml = req.get('base_yaml')
     benchmark_yaml = req.get('benchmark_yaml')
     metadata_yaml = req.get('metadata_yaml')
+    update_dashboard = req.get('update_dashboard', True)
+    allow_overwrite = req.get('allow_overwrite', True)
 
     res, con = manager.create_benchmark(
-        test_id, base_id, test_yaml, base_yaml, benchmark_yaml, metadata_yaml)
+        test_id, base_id, test_yaml, base_yaml, benchmark_yaml, metadata_yaml,
+        update_dashboard, allow_overwrite)
 
     if res:
         return jsonify(con), 201
@@ -1041,10 +1063,23 @@ def create_benchmark():
         return jsonify({'error': con}), 500
 
 
-@app.delete('/benchmarks/<id>')
-def delete_benchmark(id):
-    LOG.info('Received request to delete benchmark "{}".'.format(id))
-    res, con = manager.delete_benchmark(id)
+@app.delete('/benchmarks')
+def delete_benchmark():
+    LOG.info('Received request to delete benchmark.')
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    report_id = req.get('report_id')
+    if report_id is None:
+        return jsonify({'error': '"report_id" is missing in request.'}), 415
+
+    update_dashboard = req.get('update_dashboard', True)
+
+    res, con = manager.delete_benchmark(report_id, update_dashboard)
     if res:
         return jsonify(con), 200    # use 200 since 204 returns no json
     else:
