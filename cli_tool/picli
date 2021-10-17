@@ -134,7 +134,16 @@ def testrun_inspect(ctx, testrun_id):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -184,7 +193,16 @@ def testrun_load(ctx, testrun_id, generate_plots, create_datastore,
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -246,7 +264,16 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -284,7 +311,16 @@ def testrun_fetch(ctx, testrun_id):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -322,7 +358,16 @@ def testrun_delete(ctx, testrun_id):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -406,7 +451,16 @@ def benchmark_inspect(ctx, report_id):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -465,7 +519,16 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -505,7 +568,16 @@ def benchmark_delete(ctx, report_id, update_dashboard):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -591,7 +663,16 @@ def lab_create(ctx, username, password):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -630,7 +711,16 @@ def lab_delete(ctx, username, password):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -718,7 +808,16 @@ def study_start(ctx, report_id, username, password):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 @cli.command()
@@ -760,7 +859,16 @@ def study_stop(ctx, report_id, username, password):
 
     # Successful request
     jsonresp = response.json()
-    echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        # TODO: implement the text output
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+
+    exit(0)
 
 
 if __name__ == '__main__':
