@@ -8,6 +8,7 @@ https://click.palletsprojects.com/en/8.0.x/commands/
 """
 
 from functools import partial
+from tabulate import tabulate
 import click
 import requests
 import json
@@ -18,6 +19,8 @@ echo_debug = partial(click.secho, fg='bright_black', err=True)
 echo_info = partial(click.secho, fg='blue', err=True)
 echo_warn = partial(click.secho, fg='yellow', err=True)
 echo_error = partial(click.secho, fg='red', err=True)
+
+mktable = partial(tabulate, headers='firstrow', tablefmt='simple')
 
 
 @click.group()
@@ -609,12 +612,10 @@ def study_list(ctx):
         echo('{}'.format(json.dumps(jsonresp, indent=4)))
     else:
         # Parse and print
-        fstring = '{:<12s}  {:<}'
-        echo_log(fstring.format('USER', 'REPORT_ID'))
-        for study in jsonresp:
-            user = study.get('user')
-            report_id = study.get('id')
-            echo_log(fstring.format(user, report_id))
+        table = [['Username', 'Report ID']]
+        for x in jsonresp:
+            table.append([x.get('user'), x.get('id')])
+        echo_log(mktable(table))
 
     exit(0)
 
