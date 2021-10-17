@@ -638,7 +638,6 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
                     table.append([k, v])
             echo_log('\nTEST-METADATA:')
             echo_log(mklist(table))
-        echo('{}'.format(json.dumps(jsonresp, indent=4)))
 
     exit(0)
 

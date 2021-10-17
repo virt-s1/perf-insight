@@ -393,7 +393,7 @@ class JupyterHelper():
         # Check if the report exists
         source = os.path.join(PERF_INSIGHT_ROOT, 'reports', report_id)
         if not os.path.isdir(source):
-            msg = 'Report "{}" does not exist.'.format(id)
+            msg = 'Report "{}" does not exist.'.format(report_id)
             LOG.error(msg)
             return False, msg
 
