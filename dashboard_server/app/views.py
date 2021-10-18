@@ -50,10 +50,9 @@ FILE_SERVER = config.get('file_server', 'localhost')
 REPORT_PATH = os.path.join(PERF_INSIGHT_ROOT, 'reports')
 
 
-
-TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/generate_2way_benchmark.yaml'
-TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/generate_2way_metadata.yaml'
-TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/generate_testrun_results.yaml'
+TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/templates/generate_2way_benchmark.yaml'
+TWO_WAY_METADATA_YAML = '/opt/perf-insight/templates/generate_2way_metadata.yaml'
+TESTRUN_RESULTS_YAML = '/opt/perf-insight/templates/generate_testrun_results.yaml'
 
 
 def jupiter_prepare(baserun, testrun, target_dir):
@@ -710,7 +709,7 @@ class ComparedResultPubView(ModelView):
 
     label_columns = {
         "baseid": "BaseID",
-        "report_id ": "ReportID",
+        "report_id": "ReportID",
         "testid": "TestID",
         "createtime": "Create Time",
         "report_url": "Report Link"
@@ -720,15 +719,15 @@ class ComparedResultPubView(ModelView):
         "id", "baseid", "testid", "createtime", "report_url", "comments"
     ]
     search_columns = [
-        "id", "report_id ", "baseid", "testid", "createtime", "reportlink",
-        "comments", "metadata"
+        "id", "report_id", "baseid", "testid", "createtime", "reportlink",
+        "comments", "benchmark_metadata"
     ]
 
     show_fieldsets = [
         ("Summary", {
             "fields": [
-                "id", "report_id ", "baseid", "testid", "createtime", "report_url",
-                "comments", "metadata"
+                "id", "report_id", "baseid", "testid", "createtime", "report_url",
+                "comments", "benchmark_metadata"
             ]
         }),
         ("Description", {

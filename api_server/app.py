@@ -360,7 +360,7 @@ class PerfInsightManager():
 
         LOG.info('Generate plots for pbench-fio results.')
 
-        cmd = '{}/data_process/generate_pbench_fio_plots.sh -d {}'.format(
+        cmd = '{}/utils/generate_pbench_fio_plots.sh -d {}'.format(
             PERF_INSIGHT_REPO, workspace)
         res = os.system(cmd)
 
@@ -381,7 +381,7 @@ class PerfInsightManager():
         """
         LOG.info('Create datastore for the TestRun.')
 
-        cmd = '{}/data_process/gather_testrun_datastore.py --logdir {} \
+        cmd = '{}/utils/gather_testrun_datastore.py --logdir {} \
             --output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
         res = os.system(cmd)
 
@@ -435,7 +435,7 @@ class PerfInsightManager():
         metadata = os.path.join(workspace, 'metadata.json')
         dbloader = os.path.join(workspace, '.testrun_results_dbloader.csv')
 
-        cmd = '{}/data_process/generate_testrun_results.py --config {} --datastore {} \
+        cmd = '{}/utils/generate_testrun_results.py --config {} --datastore {} \
             --metadata {} --output-format csv --output {}'.format(
             PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
         res = os.system(cmd)
@@ -463,7 +463,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+        cmd = '{}/utils/flask_load_db.py {} --db_file {} --delete {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, testrun_id)
         res = os.system(cmd)
         if res > 0:
@@ -471,7 +471,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --csv_file {}'.format(
+        cmd = '{}/utils/flask_load_db.py {} --db_file {} --csv_file {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, dbloader)
         res = os.system(cmd)
         if res > 0:
@@ -551,7 +551,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+        cmd = '{}/utils/flask_load_db.py {} --db_file {} --delete {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, id)
         res = os.system(cmd)
         if res > 0:
@@ -635,8 +635,8 @@ class PerfInsightManager():
 
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
-                         metadata_yaml=None, update_dashboard=True,
-                         allow_overwrite=True):
+                         metadata_yaml=None, introduction_md=None,
+                         update_dashboard=True, allow_overwrite=True):
         """Create benchmark report for the specified TestRuns.
 
         Input:
@@ -646,6 +646,7 @@ class PerfInsightManager():
             base_yaml        - Configure file to parse the BASE samples
             benchmark_yaml   - Configure file for the benchmark comparison
             metadata_yaml    - Configure file for the metadata comparison
+            introduction_md  - Template for TestRun introduction
             update_dashboard - Update the dashboard or not
             allow_overwrite  - Allow overwrite content in the staging area
         Return:
@@ -674,12 +675,20 @@ class PerfInsightManager():
                     LOG.error(msg)
                     return False, msg
 
-        # Prepare benchmark workspace
+        test_datastore_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', test_id, 'datastore.json')
+        base_datastore_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', base_id, 'datastore.json')
+        test_metadata_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', test_id, 'metadata.json')
+        base_metadata_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', base_id, 'metadata.json')
+
         workspace = os.path.join(PERF_INSIGHT_STAG, benchmark)
         if os.path.isdir(workspace):
             if allow_overwrite:
                 LOG.warning(
-                    'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
+                    'Folder "{}" already exists in the staging area and will be overwritten.'.format(benchmark))
                 shutil.rmtree(workspace, ignore_errors=True)
             else:
                 msg = 'Folder "{}" already exists in the staging area.'.format(
@@ -687,30 +696,11 @@ class PerfInsightManager():
                 LOG.error(msg)
                 return False, msg
 
-        # Copy data files
-        os.makedirs(workspace)
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         test_id, 'datastore.json'),
-            os.path.join(workspace, 'test.datastore.json'))
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         test_id, 'metadata.json'),
-            os.path.join(workspace, 'test.metadata.json'))
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         base_id, 'datastore.json'),
-            os.path.join(workspace, 'base.datastore.json'))
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         base_id, 'metadata.json'),
-            os.path.join(workspace, 'base.metadata.json'))
-
-        # Get keywords from metadata
+        # Get details from metadata for checking
         try:
-            with open(os.path.join(workspace, 'test.metadata.json'), 'r') as f:
+            with open(test_metadata_file, 'r') as f:
                 test_metadata = json.load(f)
-            with open(os.path.join(workspace, 'base.metadata.json'), 'r') as f:
+            with open(base_metadata_file, 'r') as f:
                 base_metadata = json.load(f)
         except Exception as err:
             msg = 'Failed to get metadata from "{}". error: {}'.format(f, err)
@@ -727,7 +717,20 @@ class PerfInsightManager():
             msg = 'Different tests "{}:{}" cannot be benchmarked.'.format(
                 test_type, base_type)
 
-        # Deploy configure files
+        # Prepare benchmark workspace
+        os.makedirs(workspace)
+
+        # Deliver data files
+        shutil.copyfile(test_datastore_file,
+                        os.path.join(workspace, 'test.datastore.json'))
+        shutil.copyfile(base_datastore_file,
+                        os.path.join(workspace, 'base.datastore.json'))
+        shutil.copyfile(test_metadata_file,
+                        os.path.join(workspace, 'test.metadata.json'))
+        shutil.copyfile(base_metadata_file,
+                        os.path.join(workspace, 'base.metadata.json'))
+
+        # Deploy config files
         candidates = [test_yaml] if test_yaml else [
             'generate_testrun_results-{}-{}.yaml'.format(
                 test_type, test_platform),
@@ -775,6 +778,45 @@ class PerfInsightManager():
                             os.path.join(workspace, 'generate_2way_metadata.yaml'))
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
+
+        # Deliver templates
+        shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, 'benchmark_description.md'),
+                        os.path.join(workspace, 'benchmark_description.md'))
+
+        candidates = [introduction_md] if introduction_md else [
+            'introduction_{}_{}.md'.format(test_platform, test_type),
+            'introduction_default.md'
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'testrun_introduction.md'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        # Deliver scripts
+        os.makedirs(os.path.join(workspace, 'utils'))
+
+        script_list = ['generate_testrun_results.py',
+                       'generate_2way_benchmark.py',
+                       'generate_2way_metadata.py',
+                       'generate_2way_parameters.py',
+                       'generate_2way_statistics.py',
+                       'generate_2way_summary.py']
+        for filename in script_list:
+            shutil.copyfile(
+                os.path.join(PERF_INSIGHT_REPO, 'utils', filename),
+                os.path.join(workspace, 'utils', filename))
+
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_REPO, 'jupyter_server',
+                         'utils', 'html_report.sh'),
+            os.path.join(workspace, 'utils', 'html_report.sh'))
+
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_REPO, 'jupyter_server',
+                         'utils', 'report_portal.ipynb'),
+            os.path.join(workspace, 'report_portal.ipynb'))
 
         # Connect to Jupyter server and generate the report
         request_url = 'http://{}/reports/{}'.format(
@@ -1050,11 +1092,13 @@ def create_benchmark():
     base_yaml = req.get('base_yaml')
     benchmark_yaml = req.get('benchmark_yaml')
     metadata_yaml = req.get('metadata_yaml')
+    introduction_md = req.get('introduction_md')
     update_dashboard = req.get('update_dashboard', True)
     allow_overwrite = req.get('allow_overwrite', True)
 
     res, con = manager.create_benchmark(
-        test_id, base_id, test_yaml, base_yaml, benchmark_yaml, metadata_yaml,
+        test_id, base_id, test_yaml, base_yaml,
+        benchmark_yaml, metadata_yaml, introduction_md,
         update_dashboard, allow_overwrite)
 
     if res:

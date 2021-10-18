@@ -5,10 +5,7 @@ import logging
 import os
 import yaml
 import re
-import json
-import shutil
 import time
-import urllib
 
 
 class JupyterHelper():
@@ -267,12 +264,12 @@ class JupyterHelper():
             return False, msg
 
         # Create the report html
-        cmd = '{}/data_process/generate_report.sh {} &>{}/generate_report.log'.format(
-            PERF_INSIGHT_REPO, workspace, workspace)
+        cmd = 'cd {} && /bin/bash -x ./utils/html_report.sh . &>./html_report.log'.format(
+            workspace)
         res = os.system(cmd)
 
         if res > 0:
-            msg = 'Failed to generate report html, see generate_report.log for more details.'
+            msg = 'Failed to generate report html, see html_report.log for more details.'
             LOG.error(msg)
             return False, msg
 
