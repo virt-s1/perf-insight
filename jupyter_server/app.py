@@ -264,8 +264,8 @@ class JupyterHelper():
             return False, msg
 
         # Create the report html
-        cmd = '/bin/bash -x {}/utils/html_report.sh {} &>{}/html_report.log'.format(
-            PERF_INSIGHT_REPO, workspace, workspace)
+        cmd = 'cd {} && /bin/bash -x ./utils/html_report.sh . &>./html_report.log'.format(
+            workspace)
         res = os.system(cmd)
 
         if res > 0:

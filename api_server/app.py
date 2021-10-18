@@ -794,6 +794,30 @@ class PerfInsightManager():
         shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, 'summary_introduction.html'),
                         os.path.join(workspace, 'summary_introduction.html'))
 
+        # Deliver scripts
+        os.makedirs(os.path.join(workspace, 'utils'))
+
+        script_list = ['generate_testrun_results.py',
+                       'generate_2way_benchmark.py',
+                       'generate_2way_metadata.py',
+                       'generate_2way_parameters.py',
+                       'generate_2way_statistics.py',
+                       'generate_2way_summary.py']
+        for filename in script_list:
+            shutil.copyfile(
+                os.path.join(PERF_INSIGHT_REPO, 'utils', filename),
+                os.path.join(workspace, 'utils', filename))
+
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_REPO, 'jupyter_server',
+                         'utils', 'html_report.sh'),
+            os.path.join(workspace, 'utils', 'html_report.sh'))
+
+        shutil.copyfile(
+            os.path.join(PERF_INSIGHT_REPO, 'jupyter_server',
+                         'utils', 'report_portal.ipynb'),
+            os.path.join(workspace, 'report_portal.ipynb'))
+
         # Connect to Jupyter server and generate the report
         request_url = 'http://{}/reports/{}'.format(
             JUPYTER_API_SERVER, benchmark)
