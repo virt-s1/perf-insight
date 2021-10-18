@@ -198,7 +198,7 @@ class ComparedResult(Model):
     createtime = Column(DateTime)
     reportlink = Column(String(300))
     comments = Column(String, nullable=True)
-    metadata = Column(Text)
+    benchmark_metadata = Column(Text)
 
     def report_url(self):
         if self.reportlink:

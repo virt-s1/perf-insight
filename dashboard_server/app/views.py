@@ -709,7 +709,7 @@ class ComparedResultPubView(ModelView):
 
     label_columns = {
         "baseid": "BaseID",
-        "report_id ": "ReportID",
+        "report_id": "ReportID",
         "testid": "TestID",
         "createtime": "Create Time",
         "report_url": "Report Link"
@@ -719,15 +719,15 @@ class ComparedResultPubView(ModelView):
         "id", "baseid", "testid", "createtime", "report_url", "comments"
     ]
     search_columns = [
-        "id", "report_id ", "baseid", "testid", "createtime", "reportlink",
-        "comments", "metadata"
+        "id", "report_id", "baseid", "testid", "createtime", "reportlink",
+        "comments", "benchmark_metadata"
     ]
 
     show_fieldsets = [
         ("Summary", {
             "fields": [
-                "id", "report_id ", "baseid", "testid", "createtime", "report_url",
-                "comments", "metadata"
+                "id", "report_id", "baseid", "testid", "createtime", "report_url",
+                "comments", "benchmark_metadata"
             ]
         }),
         ("Description", {

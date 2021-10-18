@@ -2,6 +2,18 @@
 '''
 Write/delete test data to sqlite for flask
 
+Interface between API server:
+# {
+#     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
+#     'base_id':	'fio_ESXi_RHEL-8.3.0-GA-x86_64_lite_scsi_D210108T114621',
+#     'test_id':	'fio_ESXi_RHEL-8.4.0-x86_64_lite_scsi_D210108T210650',
+#     'create_time': '2021-01-19 23:43:21.058955',
+#     'report_url': 'http://xxx/xx/x/report.html',
+#     'comments': '',
+#     'metadata': {'id': 'benchmark',
+#                  'path': 'target'}
+# }
+
 '''
 from __future__ import print_function
 import json
@@ -94,7 +106,6 @@ class NetworkRun(DB_BASE):
     kernel = Column(String(50))
     casenum = Column(Integer)
     result = Column(String(50))
-    # metadata location in the file system
     rawdata = Column(String, nullable=True)
     sqlite_autoincrement = True
 
@@ -150,7 +161,6 @@ class StorageTestRun(DB_BASE):
     kernel = Column(String(50))
     casenum = Column(Integer)
     result = Column(String(50))
-    # metadata location in the file system
     rawdata = Column(String)
     sqlite_autoincrement = True
 
@@ -189,6 +199,7 @@ class StorageTestResult(DB_BASE):
     rawdata = Column(String, nullable=True)
     sqlite_autoincrement = True
 
+
 class BenchmarkReport(DB_BASE):
     '''
     The benchmark report table's schema definication.
@@ -201,8 +212,9 @@ class BenchmarkReport(DB_BASE):
     createtime = Column(String)
     reportlink = Column(String(300))
     comments = Column(String, nullable=True)
-    metadata = Column(String)
+    benchmark_metadata = Column(String)
     sqlite_autoincrement = True
+
 
 def network_testrun_write():
     tmp_raw = {}
@@ -456,6 +468,7 @@ def testresult_delete(resultmode=None):
     print('Done')
     LOG.info("Line delete: {}".format(case_count))
 
+
 def benchmark_report_write():
     tmp_data = {}
     if not os.path.exists(ARGS.json_file):
@@ -463,7 +476,7 @@ def benchmark_report_write():
         sys.exit(1)
     with open(ARGS.json_file) as fh:
         tmp_data = json.load(fh)
-    
+
     BS = BenchmarkReport()
     BS.report_id = tmp_data['id']
     BS.baseid = tmp_data['base_id']
@@ -471,10 +484,11 @@ def benchmark_report_write():
     BS.createtime = tmp_data['create_time']
     BS.reportlink = tmp_data['report_url']
     BS.comments = tmp_data['comments']
-    BS.metadata = tmp_data['metadata']
+    BS.benchmark_metadata = tmp_data['metadata']
 
     if not BS.report_id.startswith('benchmark_'):
-        LOG.error('Benchmark Report id "{}" is invalid, start with "benchmark_" expected'.format(BS.report_id))
+        LOG.error('Benchmark Report id "{}" is invalid, start with "benchmark_" expected'.format(
+            BS.report_id))
         return 1
 
     session = DB_SESSION()
@@ -492,6 +506,7 @@ def benchmark_report_write():
     else:
         session.commit()
 
+
 def benchmark_delete(runmode=None):
     if ARGS.testrun_delete is None:
         LOG.info("Please specify --delete option to delete a benchmark record.")
@@ -500,7 +515,8 @@ def benchmark_delete(runmode=None):
     session = DB_SESSION()
     results = session.query(runmode).filter_by(report_id=testrun).all()
     if len(results) == 0:
-        LOG.info("No related benchmark entries. Skip.".format(ARGS.testrun_delete))
+        LOG.info("No related benchmark entries. Skip.".format(
+            ARGS.testrun_delete))
         return True
     for testrun in results:
         try:
@@ -511,6 +527,7 @@ def benchmark_delete(runmode=None):
             LOG.info("{}".format(err))
         else:
             session.commit()
+
 
 if __name__ == "__main__":
     if ARGS.csv_file is not None:
@@ -535,14 +552,3 @@ if __name__ == "__main__":
             testresult_delete(resultmode=StorageTestResult)
         elif ARGS.is_benchmark:
             benchmark_delete(runmode=BenchmarkReport)
-
-    # {
-    #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
-    #     'base_id':	'fio_ESXi_RHEL-8.3.0-GA-x86_64_lite_scsi_D210108T114621',
-    #     'test_id':	'fio_ESXi_RHEL-8.4.0-x86_64_lite_scsi_D210108T210650',
-    #     'create_time': '2021-01-19 23:43:21.058955',
-    #     'report_url': 'http://xxx/xx/x/report.html',
-    #     'comments': '',
-    #     'metadata': {'id': 'benchmark',
-    #                  'path': 'target'}
-    # }
