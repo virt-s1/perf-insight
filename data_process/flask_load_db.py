@@ -12,6 +12,7 @@ import argparse
 import logging
 import time
 import csv
+import json
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, Float, Date
 from sqlalchemy.ext.declarative import declarative_base
@@ -48,7 +49,7 @@ ARG_PARSER.add_argument('--db_file',
 ARG_PARSER.add_argument('--delete',
                         dest='testrun_delete',
                         action='store',
-                        help="delete testrun if you want",
+                        help="delete matched test record if you want",
                         default=None,
                         required=False)
 ARG_PARSER.add_argument('-d',
@@ -105,7 +106,7 @@ class NetworkResult(DB_BASE):
     __tablename__ = 'network_result'
     id = Column(Integer, primary_key=True)
     testrun = Column(String(200))
-    # TODO: case_id = Column(String(50))
+    case_id = Column(String(100))
     run_type = Column(String(50))
     platform = Column(String(50))
     flavor = Column(String(50), nullable=True)
@@ -161,7 +162,7 @@ class StorageTestResult(DB_BASE):
     __tablename__ = 'storage_result'
     id = Column(Integer, primary_key=True)
     testrun = Column(String(100))
-    # TODO: case_id = Column(String(50))
+    case_id = Column(String(100))
     kernel = Column(String(50))
     branch = Column(String(50))
     backend = Column(String(50))
@@ -188,6 +189,20 @@ class StorageTestResult(DB_BASE):
     rawdata = Column(String, nullable=True)
     sqlite_autoincrement = True
 
+class BenchmarkReport(DB_BASE):
+    '''
+    The benchmark report table's schema definication.
+    '''
+    __tablename__ = 'compared_result'
+    id = Column(Integer, primary_key=True)
+    report_id = Column(String(200))
+    baseid = Column(String(200))
+    testid = Column(String(200))
+    createtime = Column(String)
+    reportlink = Column(String(300))
+    comments = Column(String, nullable=True)
+    metadata = Column(String)
+    sqlite_autoincrement = True
 
 def network_testrun_write():
     tmp_raw = {}
@@ -259,6 +274,7 @@ def network_testresult_write():
             testresult.net_speed = tmp_raw['Net-Speed']
             testresult.protocol = tmp_raw['Protocol']
             testresult.testtype = tmp_raw['TestType']
+            testresult.case_id = tmp_raw['CaseID']
             testresult.msize = tmp_raw['MSize']
             testresult.instance = tmp_raw['Instance']
             testresult.sample = tmp_raw['Sample']
@@ -350,6 +366,7 @@ def storage_testresult_write():
             testresult.backend = tmp_raw['Backend']
             testresult.driver = tmp_raw['Driver']
             testresult.format = tmp_raw['Format']
+            testresult.case_id = tmp_raw['CaseID']
             testresult.rw = tmp_raw['RW']
             testresult.bs = tmp_raw['BS']
             testresult.iodepth = tmp_raw['IOdepth']
@@ -439,6 +456,61 @@ def testresult_delete(resultmode=None):
     print('Done')
     LOG.info("Line delete: {}".format(case_count))
 
+def benchmark_report_write():
+    tmp_data = {}
+    if not os.path.exists(ARGS.json_file):
+        LOG.info("{} not found".format(ARGS.json_file))
+        sys.exit(1)
+    with open(ARGS.json_file) as fh:
+        tmp_data = json.load(fh)
+    
+    BS = BenchmarkReport()
+    BS.report_id = tmp_data['id']
+    BS.baseid = tmp_data['base_id']
+    BS.testid = tmp_data['test_id']
+    BS.createtime = tmp_data['create_time']
+    BS.reportlink = tmp_data['report_url']
+    BS.comments = tmp_data['comments']
+    BS.metadata = tmp_data['metadata']
+
+    if not BS.report_id.startswith('benchmark_'):
+        LOG.error('Benchmark Report id "{}" is invalid, start with "benchmark_" expected'.format(BS.report_id))
+        return 1
+
+    session = DB_SESSION()
+    results = session.query(BenchmarkReport).filter_by(
+        report_id=BS.report_id).all()
+    if len(results) >= 1:
+        LOG.info("{} already exists!".format(BS.report_id))
+        sys.exit(1)
+    try:
+        LOG.info("Create benchmark record: {}".format(BS.report_id))
+        session.add(BS)
+    except Exception as err:
+        session.rollback()
+        LOG.info("{}".format(err))
+    else:
+        session.commit()
+
+def benchmark_delete(runmode=None):
+    if ARGS.testrun_delete is None:
+        LOG.info("Please specify --delete option to delete a benchmark record.")
+        return False
+    testrun = ARGS.testrun_delete
+    session = DB_SESSION()
+    results = session.query(runmode).filter_by(report_id=testrun).all()
+    if len(results) == 0:
+        LOG.info("No related benchmark entries. Skip.".format(ARGS.testrun_delete))
+        return True
+    for testrun in results:
+        try:
+            LOG.info("Delete TestRun '{}'".format(testrun.testrun))
+            session.delete(testrun)
+        except Exception as err:
+            session.rollback()
+            LOG.info("{}".format(err))
+        else:
+            session.commit()
 
 if __name__ == "__main__":
     if ARGS.csv_file is not None:
@@ -449,14 +521,20 @@ if __name__ == "__main__":
         elif ARGS.is_storage:
             storage_testrun_write()
             storage_testresult_write()
+    if ARGS.json_file is not None:
+        LOG.info("Load benchmark report into database.")
+        if ARGS.is_benchmark:
+            benchmark_report_write()
     if ARGS.testrun_delete is not None:
-        LOG.info("Delete TestRun '{}' from database.".format(ARGS.testrun_delete))
+        LOG.info("Delete '{}' from database.".format(ARGS.testrun_delete))
         if ARGS.is_network:
             testrun_delete(runmode=NetworkRun)
             testresult_delete(resultmode=NetworkResult)
         elif ARGS.is_storage:
             testrun_delete(runmode=StorageTestRun)
             testresult_delete(resultmode=StorageTestResult)
+        elif ARGS.is_benchmark:
+            benchmark_delete(runmode=BenchmarkReport)
 
     # {
     #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
