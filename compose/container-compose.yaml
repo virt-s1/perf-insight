@@ -1,0 +1,32 @@
+version: "2.0"
+services:
+  perf_insight_api:
+    build: ../api_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ${HOST_PERF_INSIGHT_REPO}:/opt/perf-insight:rw
+      - ${HOST_PERF_INSIGHT_ROOT}:/mnt/perf-insight:rw
+      - ${HOST_PERF_INSIGHT_DATA}:/data:rw
+  perf_insight_dashboard:
+    build: ../dashboard_server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${HOST_PERF_INSIGHT_REPO}:/opt/perf-insight:ro
+      - ${HOST_PERF_INSIGHT_DATA}:/data:rw
+  perf_insight_jupyter:
+    build: ../jupyter_server
+    ports:
+      - "8880-8899:8880-8899"
+    volumes:
+      - ${HOST_PERF_INSIGHT_REPO}:/opt/perf-insight:rw
+      - ${HOST_PERF_INSIGHT_ROOT}:/mnt/perf-insight:rw
+      - ${HOST_PERF_INSIGHT_DATA}:/data:ro
+  perf_insight_file:
+    build: ../file_server
+    ports:
+      - "8081:80"
+    volumes:
+      - ${HOST_PERF_INSIGHT_REPO}:/opt/perf-insight:ro
+      - ${HOST_PERF_INSIGHT_ROOT}:/mnt/perf-insight:ro
