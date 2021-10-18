@@ -90,6 +90,7 @@ class NetworkResult(Model):
     protocol = Column(String(100))
     testtype = Column(String(100))
     msize = Column(Integer)
+    case_id = Column(String(100), nullable=True)
     instance = Column(Integer)
     sample = Column(Integer)
     throughput = Column(String(50))
@@ -157,6 +158,7 @@ class StorageResult(Model):
     backend = Column(String(50))
     driver = Column(String(50), nullable=True)
     format = Column(String(50), nullable=True)
+    case_id = Column(String(100), nullable=True)
     rw = Column(String(50))
     bs = Column(String(50))
     iodepth = Column(Integer)
@@ -190,14 +192,13 @@ class ComparedResult(Model):
     table for storing compared result
     '''
     id = Column(Integer, primary_key=True)
+    report_id = Column(String(200))
     baseid = Column(String(200))
     testid = Column(String(200))
     createtime = Column(DateTime)
     reportlink = Column(String(300))
     comments = Column(String, nullable=True)
-    testrun_results_yaml = Column(Text)
-    two_way_benchmark_yaml = Column(Text)
-    two_way_metadata_yaml = Column(Text)
+    metadata = Column(Text)
 
     def report_url(self):
         if self.reportlink:

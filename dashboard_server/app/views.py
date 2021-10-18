@@ -278,7 +278,7 @@ class NetworkRunPubView(ModelView):
 
     @action("compareruns",
             "Compare2runs",
-            "Compare 2 test runs?",
+            "[Deprecated]Compare 2 test runs?",
             "fa-rocket",
             single=False)
     def compareruns(self, items):
@@ -389,6 +389,7 @@ class NetworkResultPubView(ModelView):
         "cpu": "CPU",
         "cpu_model": "CPU_Model",
         "vcpu": "vCPU",
+        "case_id": "Case ID",
         "net_driver": "Net-Driver",
         "net_duplex": "Net-Duplex",
         "net_speed": "Net-Speed",
@@ -400,12 +401,12 @@ class NetworkResultPubView(ModelView):
 
     list_columns = [
         "testrun", "flavor", "protocol", "testtype", "msize", "instance",
-        "sample", "throughput", "trans", "latency", "rawdata_url"
+        "case_id", "sample", "throughput", "trans", "latency", "rawdata_url"
     ]
     search_columns = [
         "id", "testrun", "run_type", "platform", "flavor", "cpu_model", "cpu",
         "hypervisor", "branch", "compose", "kernel", "vcpu", "memory",
-        "net_driver", "net_duplex", "net_speed", "protocol", "testtype",
+        "net_driver", "net_duplex", "net_speed", "protocol", "testtype", "case_id",
         "msize", "instance", "sample", "throughput", "trans", "latency",
         "tool_version", "date", "rawdata", "comments"
     ]
@@ -416,9 +417,9 @@ class NetworkResultPubView(ModelView):
                 "testrun", "run_type", "platform", "flavor", "cpu_model",
                 "cpu", "hypervisor", "branch", "compose", "kernel", "vcpu",
                 "memory", "net_driver", "net_duplex", "net_speed", "protocol",
-                "testtype", "msize", "instance", "sample", "throughput",
-                "trans", "latency", "tool_version", "date", "rawdata_url",
-                "comments"
+                "testtype", "msize", "instance", "case_id", "sample",
+                "throughput", "trans", "latency", "tool_version", "date",
+                "rawdata_url", "comments"
             ]
         }),
         ("Description", {
@@ -605,6 +606,7 @@ class StorageResultPubView(ModelView):
         "latency": "LAT(ms)",
         'clat': 'CLAT(ms)',
         "rawdata_url": "RawData",
+        "case_id": "Case ID",
         'iops': 'IOPS',
         'rw': 'RW',
         'bs': 'BS',
@@ -614,15 +616,15 @@ class StorageResultPubView(ModelView):
     }
 
     list_columns = [
-        "testrun", "flavor", "backend", "driver", "format", "rw", "bs",
-        "iodepth", "numjobs", "sample", "iops", "latency", "clat",
+        "testrun", "flavor", "backend", "driver", "format", "case_id",
+        "rw", "bs", "iodepth", "numjobs", "sample", "iops", "latency", "clat",
         "rawdata_url"
     ]
     search_columns = [
         'id', 'testrun', 'kernel', 'branch', 'backend', 'driver', 'format',
         'rw', 'bs', 'iodepth', 'numjobs', 'iops', 'latency', 'clat',
         'tool_version', 'compose', 'cpu', 'cpu_model', 'memory', 'platform',
-        'flavor', 'date', 'comments', 'sample', 'testrun'
+        'flavor', 'date', 'comments', 'sample', 'testrun', "case_id",
     ]
 
     show_fieldsets = [
@@ -630,8 +632,8 @@ class StorageResultPubView(ModelView):
             "fields": [
                 'testrun', 'platform', 'flavor', 'branch', 'compose', 'kernel',
                 'cpu', 'cpu_model', 'memory', 'backend', 'driver', 'format',
-                'rw', 'bs', 'iodepth', 'numjobs', 'sample', 'iops', 'latency',
-                'clat', 'tool_version', 'date', 'rawdata_url', 'comments'
+                "case_id", 'rw', 'bs', 'iodepth', 'numjobs', 'sample', 'iops',
+                'latency', 'clat', 'tool_version', 'date', 'rawdata_url', 'comments'
             ]
         }),
         ("Description", {
@@ -708,6 +710,7 @@ class ComparedResultPubView(ModelView):
 
     label_columns = {
         "baseid": "BaseID",
+        "report_id ": "ReportID",
         "testid": "TestID",
         "createtime": "Create Time",
         "report_url": "Report Link"
@@ -717,17 +720,15 @@ class ComparedResultPubView(ModelView):
         "id", "baseid", "testid", "createtime", "report_url", "comments"
     ]
     search_columns = [
-        "id", "baseid", "testid", "createtime", "reportlink", "comments",
-        "testrun_results_yaml", "two_way_benchmark_yaml",
-        "two_way_metadata_yaml"
+        "id", "report_id ", "baseid", "testid", "createtime", "reportlink",
+        "comments", "metadata"
     ]
 
     show_fieldsets = [
         ("Summary", {
             "fields": [
-                "id", "baseid", "testid", "createtime", "report_url",
-                "comments", "testrun_results_yaml", "two_way_benchmark_yaml",
-                "two_way_metadata_yaml"
+                "id", "report_id ", "baseid", "testid", "createtime", "report_url",
+                "comments", "metadata"
             ]
         }),
         ("Description", {
