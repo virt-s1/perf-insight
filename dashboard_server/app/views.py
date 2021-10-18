@@ -46,7 +46,7 @@ config.update(user_config.get('dashboard', {}))
 
 PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
-FILE_SERVER = config.get('file_server', 'localhost')
+FILE_SERVER = config.get('file_server', 'localhost:8081')
 REPORT_PATH = os.path.join(PERF_INSIGHT_ROOT, 'reports')
 
 

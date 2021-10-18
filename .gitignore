@@ -102,7 +102,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
+#.env
 .venv
 env/
 venv/
@@ -129,7 +129,4 @@ dmypy.json
 .pyre/
 
 # customized settings
-data_process/data_source
-data_process/workspace
-dashboard_server/app.db*
-dashboard_server/nohup.out
+nohup.out

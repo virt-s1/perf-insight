@@ -27,7 +27,7 @@ with open(os.path.expanduser('~/.perf-insight.yaml'), 'r') as f:
 config = user_config.get('global', {})
 config.update(user_config.get('dashboard', {}))
 
-FILE_SERVER = config.get('file_server', 'localhost')
+FILE_SERVER = config.get('file_server', 'localhost:8081')
 
 
 class NetworkRun(Model):
@@ -201,12 +201,13 @@ class ComparedResult(Model):
     benchmark_metadata = Column(Text)
 
     def report_url(self):
-        if self.reportlink:
-            return Markup('<a href=http://' + FILE_SERVER +
-                          '/perf-insight/reports/{}/report.html '.format(
-                              self.reportlink) + '> Report </a>')
+        if self.reportlink.startswith('http'):
+            return Markup('<a href={}>Report</a>'.format(
+                self.reportlink))
         else:
-            return self.reportlink
+            return Markup(
+                '<a href=http://{}/perf-insight/reports/{}/report.html>Report</a>'.format(
+                    FILE_SERVER, self.report_id))
 
 
 class FailureType(Model):
