@@ -76,3 +76,7 @@ wcwidth==0.2.5
 webencodings==0.5.1
 websocket-client==1.2.1
 Werkzeug==2.0.1
+scipy==1.7.1
+ipywidgets==7.6.5
+jupyterlab-widgets==1.0.2
+widgetsnbextension==3.5.1
