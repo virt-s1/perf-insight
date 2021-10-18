@@ -484,7 +484,7 @@ def benchmark_report_write():
     BS.createtime = tmp_data['create_time']
     BS.reportlink = tmp_data['report_url']
     BS.comments = tmp_data['comments']
-    BS.benchmark_metadata = tmp_data['metadata']
+    BS.benchmark_metadata = str(tmp_data['metadata'])
 
     if not BS.report_id.startswith('benchmark_'):
         LOG.error('Benchmark Report id "{}" is invalid, start with "benchmark_" expected'.format(
@@ -511,17 +511,16 @@ def benchmark_delete(runmode=None):
     if ARGS.testrun_delete is None:
         LOG.info("Please specify --delete option to delete a benchmark record.")
         return False
-    testrun = ARGS.testrun_delete
+    report = ARGS.testrun_delete
     session = DB_SESSION()
-    results = session.query(runmode).filter_by(report_id=testrun).all()
+    results = session.query(runmode).filter_by(report_id=report).all()
     if len(results) == 0:
-        LOG.info("No related benchmark entries. Skip.".format(
-            ARGS.testrun_delete))
+        LOG.info("No related benchmark entries. Skip.")
         return True
-    for testrun in results:
+    for report in results:
         try:
-            LOG.info("Delete TestRun '{}'".format(testrun.testrun))
-            session.delete(testrun)
+            LOG.info("Delete Report '{}'".format(report.report_id))
+            session.delete(report)
         except Exception as err:
             session.rollback()
             LOG.info("{}".format(err))
