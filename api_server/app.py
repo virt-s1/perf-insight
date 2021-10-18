@@ -360,7 +360,7 @@ class PerfInsightManager():
 
         LOG.info('Generate plots for pbench-fio results.')
 
-        cmd = '{}/data_process/generate_pbench_fio_plots.sh -d {}'.format(
+        cmd = '{}/utils/generate_pbench_fio_plots.sh -d {}'.format(
             PERF_INSIGHT_REPO, workspace)
         res = os.system(cmd)
 
@@ -381,7 +381,7 @@ class PerfInsightManager():
         """
         LOG.info('Create datastore for the TestRun.')
 
-        cmd = '{}/data_process/gather_testrun_datastore.py --logdir {} \
+        cmd = '{}/utils/gather_testrun_datastore.py --logdir {} \
             --output {}/datastore.json'.format(PERF_INSIGHT_REPO, workspace, workspace)
         res = os.system(cmd)
 
@@ -435,7 +435,7 @@ class PerfInsightManager():
         metadata = os.path.join(workspace, 'metadata.json')
         dbloader = os.path.join(workspace, '.testrun_results_dbloader.csv')
 
-        cmd = '{}/data_process/generate_testrun_results.py --config {} --datastore {} \
+        cmd = '{}/utils/generate_testrun_results.py --config {} --datastore {} \
             --metadata {} --output-format csv --output {}'.format(
             PERF_INSIGHT_REPO, config, datastore, metadata, dbloader)
         res = os.system(cmd)
@@ -463,7 +463,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+        cmd = '{}/utils/flask_load_db.py {} --db_file {} --delete {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, testrun_id)
         res = os.system(cmd)
         if res > 0:
@@ -471,7 +471,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --csv_file {}'.format(
+        cmd = '{}/utils/flask_load_db.py {} --db_file {} --csv_file {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, dbloader)
         res = os.system(cmd)
         if res > 0:
@@ -551,7 +551,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        cmd = '{}/data_process/flask_load_db.py {} --db_file {} --delete {}'.format(
+        cmd = '{}/utils/flask_load_db.py {} --db_file {} --delete {}'.format(
             PERF_INSIGHT_REPO, flag, db_file, id)
         res = os.system(cmd)
         if res > 0:
