@@ -50,10 +50,9 @@ FILE_SERVER = config.get('file_server', 'localhost')
 REPORT_PATH = os.path.join(PERF_INSIGHT_ROOT, 'reports')
 
 
-
-TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/data_process/generate_2way_benchmark.yaml'
-TWO_WAY_METADATA_YAML = '/opt/perf-insight/data_process/generate_2way_metadata.yaml'
-TESTRUN_RESULTS_YAML = '/opt/perf-insight/data_process/generate_testrun_results.yaml'
+TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/templates/generate_2way_benchmark.yaml'
+TWO_WAY_METADATA_YAML = '/opt/perf-insight/templates/generate_2way_metadata.yaml'
+TESTRUN_RESULTS_YAML = '/opt/perf-insight/templates/generate_testrun_results.yaml'
 
 
 def jupiter_prepare(baserun, testrun, target_dir):
