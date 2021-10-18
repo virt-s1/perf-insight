@@ -55,6 +55,7 @@ ARGS = ARG_PARSER.parse_args()
 
 class benchmark_comparison_generator():
     """Generate 2-way benchmark comparison report."""
+
     def __init__(self, ARGS):
         # load and expend config
         with open(ARGS.config, 'r') as f:
@@ -149,12 +150,15 @@ class benchmark_comparison_generator():
         keys_name = [x['name'] for x in self.keys_cfg]
         keys_from = [x['from'] for x in self.keys_cfg]
 
-        # init report dataframe based on the test
-        self.df_report = self.df_test[keys_from].drop_duplicates()
-
-        # init report dataframe based on the combination of base and test
-        self.df_report = pd.concat([self.df_base, self.df_test
-                                    ])[keys_from].drop_duplicates()
+        # init report dataframe
+        if self.config.get('functions', {}).get(
+                'report_items', 'combined_base') == 'test_only':
+            # based on the test
+            self.df_report = self.df_test[keys_from].drop_duplicates()
+        else:
+            # based on the combination of base and test
+            self.df_report = pd.concat([self.df_base, self.df_test
+                                        ])[keys_from].drop_duplicates()
 
         # rename the columns
         for key_name, key_from in zip(keys_name, keys_from):
@@ -165,6 +169,10 @@ class benchmark_comparison_generator():
         # sort the report dataframe and reset its index
         self.df_report = self.df_report.sort_values(by=keys_name)
         self.df_report = self.df_report.reset_index().drop(columns=['index'])
+
+        # insert column for case result if asked
+        if self.config.get('functions', {}).get('case_conclusion', True):
+            self.df_report.insert(len(self.df_report.columns), 'Conclusion', 0)
 
         # expaned the report dataframe with KPI columns
         for kpi_cfg in self.kpis_cfg:
@@ -331,6 +339,50 @@ class benchmark_comparison_generator():
             return conclusion if not use_abbr else abbrs.get(
                 conclusion, conclusion)
 
+        def _get_case_conclusion(row, use_abbr=False):
+            """Get the case result by anaylse each kpi's conclusion.
+
+            Input:
+                - row: the case data with conclusions in dictionary
+
+            Returns:
+                - conclusion: the conclusion of this case
+            """
+
+            abbrs = {
+                'Invalid Data': 'ID',
+                'High Variance': 'HV',
+                'No Significance': 'NS',
+                'Negligible Changes': 'NC',
+                'Moderate Improvement': 'MI',
+                'Moderate Regression': 'MR',
+                'Dramatic Improvement': 'DI',
+                'Dramatic Regression': 'DR'
+            }
+
+            # analyse the conclusion of each kpi
+            conclusions = [row[x] for x in row.keys() if x.endswith('-CON')]
+            if 'DR' in conclusions or 'Dramatic Regression' in conclusions:
+                conclusion = 'Dramatic Regression'
+            elif 'MR' in conclusions or 'Moderate Regression' in conclusions:
+                conclusion = 'Moderate Regression'
+            elif 'HV' in conclusions or 'High Variance' in conclusions:
+                conclusion = 'High Variance'
+            elif 'ID' in conclusions or 'Invalid Data' in conclusions:
+                conclusion = 'Invalid Data'
+            elif 'MI' in conclusions or 'Moderate Improvement' in conclusions:
+                conclusion = 'Moderate Improvement'
+            elif 'DI' in conclusions or 'Dramatic Improvement' in conclusions:
+                conclusion = 'Dramatic Improvement'
+            elif 'NC' in conclusions or 'Negligible Changes' in conclusions:
+                conclusion = 'Negligible Changes'
+            elif 'NS' in conclusions or 'No Significance' in conclusions:
+                conclusion = 'No Significance'
+
+            # return conclusion or its abbreviation if asked
+            return conclusion if not use_abbr else abbrs.get(
+                conclusion, conclusion)
+
         # walk each row of the report dataframe, get related data from the
         # test and base dataframes, calculate the KPIs and fill the results
         # back to the report dataframe.
@@ -371,6 +423,12 @@ class benchmark_comparison_generator():
                 row[kpi_name + '-%DF'] = pctdiff
                 row[kpi_name + '-SGN'] = significance
                 row[kpi_name + '-CON'] = conclusion
+
+            # get case conclusion if asked
+            if self.config.get('functions', {}).get('case_conclusion', True):
+                use_abbr = self.config.get('functions', {}).get(
+                    'case_conclusion_abbr', False)
+                row['Conclusion'] = _get_case_conclusion(row, use_abbr)
 
             # write the row back
             self.df_report.iloc[index] = row

@@ -1,4 +1,8 @@
 benchmark_comparison_generator:
+  functions:
+    report_items: combined_base
+    case_conclusion: yes
+    case_conclusion_abbr: no
   defaults:
     round: 6
     round_pct: 2
