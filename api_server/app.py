@@ -636,7 +636,8 @@ class PerfInsightManager():
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
                          metadata_yaml=None, introduction_md=None,
-                         update_dashboard=True, allow_overwrite=True):
+                         comments=None, update_dashboard=True,
+                         allow_overwrite=True):
         """Create benchmark report for the specified TestRuns.
 
         Input:
@@ -647,6 +648,7 @@ class PerfInsightManager():
             benchmark_yaml   - Configure file for the benchmark comparison
             metadata_yaml    - Configure file for the metadata comparison
             introduction_md  - Template for TestRun introduction
+            comments         - User comments to the report
             update_dashboard - Update the dashboard or not
             allow_overwrite  - Allow overwrite content in the staging area
         Return:
@@ -845,33 +847,62 @@ class PerfInsightManager():
             LOG.error(details)
             return False, details
 
-        # TODO: Update the dashboard database
-        # Update dashboard as requested
-        if update_dashboard:
-            pass
-
-    # {
-    #     'id': 'benchmark_TestRunA_over_TestRunB_it_can_be_super_long_like_this_______________________________________________________x',
-    #     'base_id':	'fio_ESXi_RHEL-8.3.0-GA-x86_64_lite_scsi_D210108T114621',
-    #     'test_id':	'fio_ESXi_RHEL-8.4.0-x86_64_lite_scsi_D210108T210650',
-    #     'create_time': '2021-01-19 23:43:21.058955',
-    #     'report_url': 'http://xxx/xx/x/report.html',
-    #     'comments': '',
-    #     'metadata': {'id': 'benchmark',
-    #                  'path': 'target'}
-    # }
-
         # Update metadata and dump to metadata.json
+        create_time = time.strftime(
+            '%Y-%m-%d %H:%M:%S', time.localtime())
+        report_url = 'http://{}/perf-insight/reports/{}/report.html'.format(
+            FILE_SERVER, benchmark)
+
         metadata = {'id': benchmark,
-                    'create_time': time.strftime(
-                        '%Y-%m-%d %H:%M:%S', time.localtime()),
+                    'create_time': create_time,
                     'test_id': test_id,
                     'base_id': base_id,
+                    'report_url': report_url,
+                    'comments': comments,
                     'test_metadata': test_metadata,
                     'base_metadata': base_metadata}
 
         with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
             json.dump(metadata, f, indent=3)
+
+        # Update dashboard as requested
+        if update_dashboard:
+            if os.path.exists(DASHBOARD_DB_FILE):
+                db_file = DASHBOARD_DB_FILE
+            else:
+                msg = 'Can not find the dashboard DB file "{}".'.format(
+                    DASHBOARD_DB_FILE)
+                LOG.error(msg)
+                return False, msg
+
+            dbloader = os.path.join('/tmp/benchmark_info.json')
+            benchmark_info = {
+                'id': benchmark,
+                'create_time': create_time,
+                'test_id': test_id,
+                'base_id': base_id,
+                'report_url': report_url,
+                'comments': comments,
+                'metadata': metadata
+            }
+            with open(dbloader, 'w') as f:
+                json.dump(benchmark_info, f, indent=3)
+
+            cmd = '{}/utils/flask_load_db.py --benchmark --db_file {} --delete {}'.format(
+                PERF_INSIGHT_REPO, db_file, benchmark)
+            res = os.system(cmd)
+            if res > 0:
+                msg = 'Failed to clean up specified benchmark report from database.'
+                LOG.error(msg)
+                return False, msg
+
+            cmd = '{}/utils/flask_load_db.py --benchmark --db_file {} --json_file {}'.format(
+                PERF_INSIGHT_REPO,  db_file, dbloader)
+            res = os.system(cmd)
+            if res > 0:
+                msg = 'Failed to load specified benchmark report into database.'
+                LOG.error(msg)
+                return False, msg
 
         # Deal with the files
         try:
@@ -907,10 +938,23 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        # TODO: Remove from the dashboard DB
         # Update dashboard as requested
         if update_dashboard:
-            pass
+            if os.path.exists(DASHBOARD_DB_FILE):
+                db_file = DASHBOARD_DB_FILE
+            else:
+                msg = 'Can not find the dashboard DB file "{}".'.format(
+                    DASHBOARD_DB_FILE)
+                LOG.error(msg)
+                return False, msg
+
+            cmd = '{}/utils/flask_load_db.py --benchmark --db_file {} --delete {}'.format(
+                PERF_INSIGHT_REPO, db_file, id)
+            res = os.system(cmd)
+            if res > 0:
+                msg = 'Failed to clean up specified benchmark report from database.'
+                LOG.error(msg)
+                return False, msg
 
         # Deal with the files
         try:
@@ -1093,12 +1137,13 @@ def create_benchmark():
     benchmark_yaml = req.get('benchmark_yaml')
     metadata_yaml = req.get('metadata_yaml')
     introduction_md = req.get('introduction_md')
+    comments = req.get('comments')
     update_dashboard = req.get('update_dashboard', True)
     allow_overwrite = req.get('allow_overwrite', True)
 
     res, con = manager.create_benchmark(
         test_id, base_id, test_yaml, base_yaml,
-        benchmark_yaml, metadata_yaml, introduction_md,
+        benchmark_yaml, metadata_yaml, introduction_md, comments,
         update_dashboard, allow_overwrite)
 
     if res:
@@ -1166,5 +1211,6 @@ PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
 JUPYTER_API_SERVER = config.get('jupyter_api_server', 'localhost:8880')
+FILE_SERVER = config.get('file_server', 'localhost:8081')
 
 manager = PerfInsightManager()

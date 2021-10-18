@@ -547,13 +547,16 @@ def benchmark_inspect(ctx, report_id):
               help='The configure file for metadata comparison.')
 @click.option('--introduction-md', required=False,
               help='The template for TestRun introduction.')
+@click.option('--comments', required=False,
+              help='User comments to the report.')
 @click.option('--update-dashboard', required=False, type=bool, default=True,
               help='Update dashboard or not.', show_default=True)
 @click.option('--allow-overwrite', required=False, type=bool, default=True,
               help=' Allow overwrite content in the staging area.', show_default=True)
 @click.pass_context
 def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
-                     benchmark_yaml, metadata_yaml, introduction_md, update_dashboard, allow_overwrite):
+                     benchmark_yaml, metadata_yaml, introduction_md,
+                     comments, update_dashboard, allow_overwrite):
     """Create a benchmark report."""
 
     # Build the request
@@ -568,6 +571,7 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
         'benchmark_yaml': benchmark_yaml,
         'metadata_yaml': metadata_yaml,
         'introduction_md': introduction_md,
+        'comments': comments,
         'update_dashboard': update_dashboard,
         'allow_overwrite': allow_overwrite
     }
