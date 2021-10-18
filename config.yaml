@@ -4,17 +4,11 @@ global:
   perf_insight_temp: /opt/perf-insight/templates
 dashboard:
   dashboard_db_file: /data/app.db
-  file_server: perf-insight.demo.redhat.com
+  file_server: 192.168.50.110:8081
 jupyter:
   jupyter_workspace: /app/workspace
   jupyter_lab_host: 192.168.50.110
   jupyter_lab_ports: 8890-8899
 api:
+  file_server: 192.168.50.110:8081
   jupyter_api_server: 192.168.50.110:8880
-
-flask:
-  apache_server: localhost
-  data_path: /mnt/perf-insight
-  perf_insight_repo: /opt/perf-insight
-  db_file: /opt/perf-insight/flask/app.db
-
