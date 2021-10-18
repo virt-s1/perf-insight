@@ -545,13 +545,15 @@ def benchmark_inspect(ctx, report_id):
               help='The configure file for benchmark comparison.')
 @click.option('--metadata-yaml', required=False,
               help='The configure file for metadata comparison.')
+@click.option('--introduction-md', required=False,
+              help='The template for TestRun introduction.')
 @click.option('--update-dashboard', required=False, type=bool, default=True,
               help='Update dashboard or not.', show_default=True)
 @click.option('--allow-overwrite', required=False, type=bool, default=True,
               help=' Allow overwrite content in the staging area.', show_default=True)
 @click.pass_context
 def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
-                     benchmark_yaml, metadata_yaml, update_dashboard, allow_overwrite):
+                     benchmark_yaml, metadata_yaml, introduction_md, update_dashboard, allow_overwrite):
     """Create a benchmark report."""
 
     # Build the request
@@ -559,10 +561,13 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
     request_method = 'POST'
     request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
     request_json = {
-        "base_id": base_id, "test_id": test_id,
-        'test_yaml': test_yaml, 'base_yaml': base_yaml,
+        'base_id': base_id,
+        'test_id': test_id,
+        'test_yaml': test_yaml,
+        'base_yaml': base_yaml,
         'benchmark_yaml': benchmark_yaml,
         'metadata_yaml': metadata_yaml,
+        'introduction_md': introduction_md,
         'update_dashboard': update_dashboard,
         'allow_overwrite': allow_overwrite
     }

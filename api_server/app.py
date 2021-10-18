@@ -635,8 +635,8 @@ class PerfInsightManager():
 
     def create_benchmark(self, test_id, base_id, test_yaml=None,
                          base_yaml=None, benchmark_yaml=None,
-                         metadata_yaml=None, update_dashboard=True,
-                         allow_overwrite=True):
+                         metadata_yaml=None, introduction_md=None,
+                         update_dashboard=True, allow_overwrite=True):
         """Create benchmark report for the specified TestRuns.
 
         Input:
@@ -646,6 +646,7 @@ class PerfInsightManager():
             base_yaml        - Configure file to parse the BASE samples
             benchmark_yaml   - Configure file for the benchmark comparison
             metadata_yaml    - Configure file for the metadata comparison
+            introduction_md  - Template for TestRun introduction
             update_dashboard - Update the dashboard or not
             allow_overwrite  - Allow overwrite content in the staging area
         Return:
@@ -674,12 +675,20 @@ class PerfInsightManager():
                     LOG.error(msg)
                     return False, msg
 
-        # Prepare benchmark workspace
+        test_datastore_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', test_id, 'datastore.json')
+        base_datastore_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', base_id, 'datastore.json')
+        test_metadata_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', test_id, 'metadata.json')
+        base_metadata_file = os.path.join(
+            PERF_INSIGHT_ROOT, 'testruns', base_id, 'metadata.json')
+
         workspace = os.path.join(PERF_INSIGHT_STAG, benchmark)
         if os.path.isdir(workspace):
             if allow_overwrite:
                 LOG.warning(
-                    'Folder "{}" already exists in the staging area and will be overwritten.'.format(id))
+                    'Folder "{}" already exists in the staging area and will be overwritten.'.format(benchmark))
                 shutil.rmtree(workspace, ignore_errors=True)
             else:
                 msg = 'Folder "{}" already exists in the staging area.'.format(
@@ -687,30 +696,11 @@ class PerfInsightManager():
                 LOG.error(msg)
                 return False, msg
 
-        # Copy data files
-        os.makedirs(workspace)
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         test_id, 'datastore.json'),
-            os.path.join(workspace, 'test.datastore.json'))
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         test_id, 'metadata.json'),
-            os.path.join(workspace, 'test.metadata.json'))
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         base_id, 'datastore.json'),
-            os.path.join(workspace, 'base.datastore.json'))
-        shutil.copyfile(
-            os.path.join(PERF_INSIGHT_ROOT, 'testruns',
-                         base_id, 'metadata.json'),
-            os.path.join(workspace, 'base.metadata.json'))
-
-        # Get keywords from metadata
+        # Get details from metadata for checking
         try:
-            with open(os.path.join(workspace, 'test.metadata.json'), 'r') as f:
+            with open(test_metadata_file, 'r') as f:
                 test_metadata = json.load(f)
-            with open(os.path.join(workspace, 'base.metadata.json'), 'r') as f:
+            with open(base_metadata_file, 'r') as f:
                 base_metadata = json.load(f)
         except Exception as err:
             msg = 'Failed to get metadata from "{}". error: {}'.format(f, err)
@@ -727,7 +717,20 @@ class PerfInsightManager():
             msg = 'Different tests "{}:{}" cannot be benchmarked.'.format(
                 test_type, base_type)
 
-        # Deploy configure files
+        # Prepare benchmark workspace
+        os.makedirs(workspace)
+
+        # Deliver data files
+        shutil.copyfile(test_datastore_file,
+                        os.path.join(workspace, 'test.datastore.json'))
+        shutil.copyfile(base_datastore_file,
+                        os.path.join(workspace, 'base.datastore.json'))
+        shutil.copyfile(test_metadata_file,
+                        os.path.join(workspace, 'test.metadata.json'))
+        shutil.copyfile(base_metadata_file,
+                        os.path.join(workspace, 'base.metadata.json'))
+
+        # Deploy config files
         candidates = [test_yaml] if test_yaml else [
             'generate_testrun_results-{}-{}.yaml'.format(
                 test_type, test_platform),
@@ -775,6 +778,21 @@ class PerfInsightManager():
                             os.path.join(workspace, 'generate_2way_metadata.yaml'))
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
+
+        # Deliver templates
+        candidates = [introduction_md] if introduction_md else [
+            'introduction_{}_{}.md'.format(test_platform, test_type),
+            'introduction_default.md'
+        ]
+        filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
+        if filename:
+            shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
+                            os.path.join(workspace, 'introduction.md'))
+        else:
+            return False, 'Cannot find template "{}".'.format(candidates)
+
+        shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, 'summary_introduction.html'),
+                        os.path.join(workspace, 'summary_introduction.html'))
 
         # Connect to Jupyter server and generate the report
         request_url = 'http://{}/reports/{}'.format(
@@ -1050,11 +1068,13 @@ def create_benchmark():
     base_yaml = req.get('base_yaml')
     benchmark_yaml = req.get('benchmark_yaml')
     metadata_yaml = req.get('metadata_yaml')
+    introduction_md = req.get('introduction_md')
     update_dashboard = req.get('update_dashboard', True)
     allow_overwrite = req.get('allow_overwrite', True)
 
     res, con = manager.create_benchmark(
-        test_id, base_id, test_yaml, base_yaml, benchmark_yaml, metadata_yaml,
+        test_id, base_id, test_yaml, base_yaml,
+        benchmark_yaml, metadata_yaml, introduction_md,
         update_dashboard, allow_overwrite)
 
     if res:
