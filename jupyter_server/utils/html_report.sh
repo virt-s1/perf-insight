@@ -17,6 +17,8 @@
 #     REVISION: Mon Oct 18 12:13:42 PM CST 2021
 #==============================================================================
 
+set -e
+
 # Parse parameters
 [ -z "$1" ] && echo "Usage: $0 <workspace>" >&2 && exit 1
 
@@ -24,7 +26,7 @@
 cd $1 || exit 1
 
 # Generate report html
-jupyter nbconvert --to html --execute ./report_portal.ipynb --output-dir . \
+time jupyter nbconvert --to html --execute ./report_portal.ipynb --output-dir . \
     --ExecutePreprocessor.timeout=300 --TemplateExporter.exclude_input=True \
     --output report.html
 

@@ -3,7 +3,7 @@ FROM fedora:34
 # Set metadata
 LABEL author="Charles Shih"
 LABEL maintainer="cheshi@redhat.com"
-LABEL version="1.0"
+LABEL version="1.1"
 LABEL description="This image provdes environment for Jupyter server of the perf-insight project."
 
 # Keeps Python from generating .pyc files in the container

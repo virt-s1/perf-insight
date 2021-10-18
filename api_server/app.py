@@ -780,6 +780,9 @@ class PerfInsightManager():
             return False, 'Cannot find template "{}".'.format(candidates)
 
         # Deliver templates
+        shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, 'benchmark_description.md'),
+                        os.path.join(workspace, 'benchmark_description.md'))
+
         candidates = [introduction_md] if introduction_md else [
             'introduction_{}_{}.md'.format(test_platform, test_type),
             'introduction_default.md'
@@ -787,12 +790,9 @@ class PerfInsightManager():
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
         if filename:
             shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
-                            os.path.join(workspace, 'introduction.md'))
+                            os.path.join(workspace, 'testrun_introduction.md'))
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
-
-        shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, 'summary_introduction.html'),
-                        os.path.join(workspace, 'summary_introduction.html'))
 
         # Deliver scripts
         os.makedirs(os.path.join(workspace, 'utils'))

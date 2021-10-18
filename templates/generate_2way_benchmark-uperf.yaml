@@ -11,6 +11,7 @@ benchmark_comparison_generator:
     negligible_threshold: 0.05
     regression_threshold: 0.10
   keys:
+    - name: CaseID
     - name: Protocol
     - name: TestType
     - name: MSize
