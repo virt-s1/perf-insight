@@ -26,7 +26,9 @@ set -e
 cd $1 || exit 1
 
 # Generate report html
-time jupyter nbconvert --to html --execute ./report_portal.ipynb --output-dir . \
+time jupyter nbconvert --to notebook --execute ./report_portal.ipynb --output-dir . \
+    --ExecutePreprocessor.timeout=300 --output report.ipynb
+time jupyter nbconvert --to html ./report.ipynb --output-dir . \
     --ExecutePreprocessor.timeout=300 --TemplateExporter.exclude_input=True \
     --output report.html
 
