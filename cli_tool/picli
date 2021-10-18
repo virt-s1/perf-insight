@@ -1016,7 +1016,7 @@ def study_stop(ctx, report_id, username, password):
 
 if __name__ == '__main__':
     config = {
-        'API_SERVER': 'localhost:5001',
+        'API_SERVER': 'localhost:5000',
         'OUTPUT_FORMAT': 'text'
     }
     cli(obj=config)

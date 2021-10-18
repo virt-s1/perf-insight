@@ -24,7 +24,7 @@ podman run --rm -itd --name perf-insight-api-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_DATA:/data:rw \
-    --publish 5001:5000 \
+    --publish 5000:5000 \
     perf-insight-api-server
 
 # DEBUG: Run as debug container
@@ -32,7 +32,7 @@ podman run --rm -it --name perf-insight-api-server \
     --volume $HOST_PERF_INSIGHT_REPO:/opt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_ROOT:/mnt/perf-insight:rw \
     --volume $HOST_PERF_INSIGHT_DATA:/data:rw \
-    --publish 5001:5000 \
+    --publish 5000:5000 \
     perf-insight-api-server /bin/bash
 
 # DEBUG: Start Flask server (inside container)
