@@ -205,13 +205,14 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.copytree(workspace, target)
-            shutil.move(workspace, os.path.join(
-                os.path.dirname(workspace),
-                '.deleted_after_loading_{}__{}'.format(
-                    time.strftime('%y%m%d%H%M%S',
-                                  time.localtime()),
-                    os.path.basename(workspace))))
+            # shutil.copytree(workspace, target)
+            # shutil.move(workspace, os.path.join(
+            #     os.path.dirname(workspace),
+            #     '.deleted_after_loading_{}__{}'.format(
+            #         time.strftime('%y%m%d%H%M%S',
+            #                       time.localtime()),
+            #         os.path.basename(workspace))))
+            shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -335,13 +336,14 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.copytree(workspace, target)
-            shutil.move(workspace, os.path.join(
-                os.path.dirname(workspace),
-                '.deleted_after_importing_{}__{}'.format(
-                    time.strftime('%y%m%d%H%M%S',
-                                  time.localtime()),
-                    os.path.basename(workspace))))
+            # shutil.copytree(workspace, target)
+            # shutil.move(workspace, os.path.join(
+            #     os.path.dirname(workspace),
+            #     '.deleted_after_importing_{}__{}'.format(
+            #         time.strftime('%y%m%d%H%M%S',
+            #                       time.localtime()),
+            #         os.path.basename(workspace))))
+            shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -786,7 +788,7 @@ class PerfInsightManager():
                         os.path.join(workspace, 'benchmark_description.md'))
 
         candidates = [introduction_md] if introduction_md else [
-            'introduction_{}_{}.md'.format(test_platform, test_type),
+            'introduction_{}_{}.md'.format(test_platform.lower(), test_type),
             'introduction_default.md'
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
@@ -906,12 +908,13 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.copytree(workspace, target)
-            shutil.move(workspace, os.path.join(
-                os.path.dirname(workspace),
-                '.deleted_after_creating_{}__{}'.format(
-                    time.strftime('%y%m%d%H%M%S', time.localtime()),
-                    os.path.basename(workspace))))
+            # shutil.copytree(workspace, target)
+            # shutil.move(workspace, os.path.join(
+            #     os.path.dirname(workspace),
+            #     '.deleted_after_creating_{}__{}'.format(
+            #         time.strftime('%y%m%d%H%M%S', time.localtime()),
+            #         os.path.basename(workspace))))
+            shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
