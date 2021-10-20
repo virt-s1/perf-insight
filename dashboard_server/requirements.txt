@@ -20,7 +20,7 @@ importlib-metadata==4.8.1
 itsdangerous==2.0.1
 Jinja2==3.0.1
 jsonschema==3.2.0
-libcomps==0.1.17
+libcomps==0.1.18
 MarkupSafe==2.0.1
 marshmallow==3.13.0
 marshmallow-enum==1.5.1
