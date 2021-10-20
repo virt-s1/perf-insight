@@ -47,12 +47,15 @@ class NetworkRun(Model):
     rawdata = Column(String, nullable=True)
 
     def rawdata_url(self):
-        if self.rawdata:
-            return Markup('<a href=http://' + FILE_SERVER +
-                          '/perf-insight/testruns/' + str(self.rawdata) +
-                          '> rawdata </a>')
+        if self.rawdata.startswith('http'):
+            return Markup(
+                '<a href={}>rawdata</a>'.format(str(self.rawdata))
+            )
         else:
-            return self.rawdata
+            return Markup(
+                '<a href=http://{}/perf-insight/testruns/{}>rawdata</a>'.format(
+                    FILE_SERVER, str(self.rawdata))
+            )
 
     def __repr__(self):
         return self.id
@@ -102,12 +105,15 @@ class NetworkResult(Model):
     comments = Column(String, nullable=True)
 
     def rawdata_url(self):
-        if self.rawdata:
-            return Markup('<a href=http://' + FILE_SERVER +
-                          '/perf-insight/testruns/' + str(self.testrun) + '/' +
-                          str(self.rawdata) + '> rawdata </a>')
+        if self.rawdata.startswith('http'):
+            return Markup(
+                '<a href={}>rawdata</a>'.format(str(self.rawdata))
+            )
         else:
-            return self.raw
+            return Markup(
+                '<a href=http://{}/perf-insight/testruns/{}/{}>rawdata</a>'.format(
+                    FILE_SERVER, str(self.testrun), str(self.rawdata))
+            )
 
 
 class StorageRun(Model):
@@ -127,12 +133,15 @@ class StorageRun(Model):
     rawdata = Column(String, nullable=True)
 
     def rawdata_url(self):
-        if self.rawdata:
-            return Markup('<a href=http://' + FILE_SERVER +
-                          '/perf-insight/testruns/' + str(self.rawdata) +
-                          '> rawdata </a>')
+        if self.rawdata.startswith('http'):
+            return Markup(
+                '<a href={}>rawdata</a>'.format(str(self.rawdata))
+            )
         else:
-            return self.rawdata
+            return Markup(
+                '<a href=http://{}/perf-insight/testruns/{}>rawdata</a>'.format(
+                    FILE_SERVER, str(self.rawdata))
+            )
 
     def __repr__(self):
         return self.id
@@ -179,12 +188,15 @@ class StorageResult(Model):
     rawdata = Column(String, nullable=True)
 
     def rawdata_url(self):
-        if self.rawdata:
-            return Markup('<a href=http://' + FILE_SERVER +
-                          '/perf-insight/testruns/' + str(self.testrun) + '/' +
-                          str(self.rawdata) + '> rawdata </a>')
+        if self.rawdata.startswith('http'):
+            return Markup(
+                '<a href={}>rawdata</a>'.format(str(self.rawdata))
+            )
         else:
-            return self.raw
+            return Markup(
+                '<a href=http://{}/perf-insight/testruns/{}/{}>rawdata</a>'.format(
+                    FILE_SERVER, str(self.testrun), str(self.rawdata))
+            )
 
 
 class ComparedResult(Model):
@@ -202,12 +214,14 @@ class ComparedResult(Model):
 
     def report_url(self):
         if self.reportlink.startswith('http'):
-            return Markup('<a href={}>Report</a>'.format(
-                self.reportlink))
+            return Markup(
+                '<a href={}>Report</a>'.format(self.reportlink)
+            )
         else:
             return Markup(
                 '<a href=http://{}/perf-insight/reports/{}/report.html>Report</a>'.format(
-                    FILE_SERVER, self.report_id))
+                    FILE_SERVER, self.report_id)
+            )
 
 
 class FailureType(Model):
