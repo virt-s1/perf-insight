@@ -102,7 +102,7 @@ def testrun_list(ctx):
 
 @cli.command()
 @click.option('--testrun-id', required=True, prompt='TestRun ID',
-              help='The TestRun to be processed.')
+              help='The TestRun to be inspected.')
 @click.pass_context
 def testrun_inspect(ctx, testrun_id):
     """Inspect a specified TestRun."""
@@ -444,8 +444,8 @@ def benchmark_list(ctx):
 
 
 @cli.command()
-@click.option('--report-id', required=True, prompt='TestRun ID',
-              help='The TestRun to be processed.')
+@click.option('--report-id', required=True, prompt='Report ID',
+              help='The report to be inspected.')
 @click.pass_context
 def benchmark_inspect(ctx, report_id):
     """Inspect a specified benchmark report."""
