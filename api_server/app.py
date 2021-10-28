@@ -760,26 +760,26 @@ class PerfInsightManager():
             return False, 'Cannot find template "{}".'.format(candidates)
 
         candidates = [benchmark_yaml] if benchmark_yaml else [
-            'generate_2way_benchmark-{}-{}.yaml'.format(
+            'generate_benchmark_results-{}-{}.yaml'.format(
                 test_type, test_platform),
-            'generate_2way_benchmark-{}.yaml'.format(test_type)
+            'generate_benchmark_results-{}.yaml'.format(test_type)
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
         if filename:
             shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
-                            os.path.join(workspace, 'generate_2way_benchmark.yaml'))
+                            os.path.join(workspace, 'generate_benchmark_results.yaml'))
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
 
         candidates = [metadata_yaml] if metadata_yaml else [
-            'generate_2way_metadata-{}-{}.yaml'.format(
+            'generate_benchmark_metadata-{}-{}.yaml'.format(
                 test_type, test_platform),
-            'generate_2way_metadata-{}.yaml'.format(test_type)
+            'generate_benchmark_metadata-{}.yaml'.format(test_type)
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
         if filename:
             shutil.copyfile(os.path.join(PERF_INSIGHT_TEMP, filename),
-                            os.path.join(workspace, 'generate_2way_metadata.yaml'))
+                            os.path.join(workspace, 'generate_benchmark_metadata.yaml'))
         else:
             return False, 'Cannot find template "{}".'.format(candidates)
 
@@ -802,11 +802,11 @@ class PerfInsightManager():
         os.makedirs(os.path.join(workspace, 'utils'))
 
         script_list = ['generate_testrun_results.py',
-                       'generate_2way_benchmark.py',
-                       'generate_2way_metadata.py',
-                       'generate_2way_parameters.py',
-                       'generate_2way_statistics.py',
-                       'generate_2way_summary.py']
+                       'generate_benchmark_results.py',
+                       'generate_benchmark_metadata.py',
+                       'generate_benchmark_parameters.py',
+                       'generate_benchmark_statistics.py',
+                       'generate_benchmark_summary.py']
         for filename in script_list:
             shutil.copyfile(
                 os.path.join(PERF_INSIGHT_REPO, 'utils', filename),

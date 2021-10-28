@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate the 2-way benchmark report summary.
+Generate the benchmark report summary.
 """
 
 import argparse
@@ -12,12 +12,12 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(
-    description='Generate the 2-way benchmark report summary.')
+    description='Generate the benchmark report summary.')
 ARG_PARSER.add_argument('--statistics-json',
                         dest='statistics_json',
                         action='store',
-                        help='The 2way benchmark statistics.',
-                        default='2way_statistics.json',
+                        help='The benchmark statistics.',
+                        default='benchmark_statistics.json',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
@@ -29,17 +29,17 @@ ARG_PARSER.add_argument('--output-format',
 ARG_PARSER.add_argument('--output',
                         dest='output',
                         action='store',
-                        help='The file to store 2way benchmark summary.',
-                        default='2way_summary.csv',
+                        help='The file to store benchmark summary.',
+                        default='benchmark_summary.csv',
                         required=False)
 
 ARGS = ARG_PARSER.parse_args()
 
 
 class benchmark_summary_generator():
-    """Generate 2-way benchmark report summary."""
+    """Generate benchmark report summary."""
     def __init__(self, ARGS):
-        # load the 2way benchmark statistics
+        # load the benchmark statistics
         with open(ARGS.statistics_json, 'r') as f:
             self.statistics = json.load(f)
 
@@ -48,7 +48,7 @@ class benchmark_summary_generator():
         self.output_format = ARGS.output_format
 
         if self.output is None:
-            self.output = '2way_summary.{0}'.format(self.output_format)
+            self.output = 'benchmark_summary.{0}'.format(self.output_format)
 
         # init
         self.datatable = []
@@ -56,12 +56,12 @@ class benchmark_summary_generator():
         self._parse_data()
 
     def _parse_data(self):
-        """Parse data from the 2way benchmark statistics.
+        """Parse data from the benchmark statistics.
 
         Input:
-            - self.statistics: the 2way benchmark statistics.
+            - self.statistics: the benchmark statistics.
         Update:
-            - self.datatable: the 2way benchmark summary.
+            - self.datatable: the benchmark summary.
         """
         # build the table from statistics
 

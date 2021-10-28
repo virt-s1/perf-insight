@@ -173,18 +173,18 @@ testrun_results_generator:            # This is a keyword associated with genera
                                       # of the current case by processing the relevant data in the datastore
 ```
 
-## Benchmark Comparison
+## Benchmark Results
 
-The "Benchmark Comparison" is a CSV file, which can be used for Benchmark Report generation.
-A script named `generate_2way_benchmark.py` is provided in `utils` to help you do this. The output file is usually called `2way_benchmark.csv`.
+The "Benchmark Results" is a CSV file, which can be used for Benchmark Report generation.
+A script named `generate_benchmark_results.py` is provided in `utils` to help you do this. The output file is usually called `benchmark_results.csv`.
 
-In addition, the user also needs to provide a configuration file named `generate_2way_benchmark.yaml` to complete this process.
+In addition, the user also needs to provide a configuration file named `generate_benchmark_results.yaml` to complete this process.
 You can find examples of this configuration file in the `templates` folder. In most cases, you can use them directly to complete the work.
 
 If you want to make some customizations, a detailed description of this configuration is provided below (let us take `fio` as an example):
 
 ```yaml
-benchmark_comparison_generator:       # This is a keyword associated with generate_2way_benchmark.py
+benchmark_comparison_generator:       # This is a keyword associated with generate_benchmark_results.py
   functions:                          # This section defines some function switches
     report_items: combined_base       # This option is used to handle the case when BASE and TEST sets are different;
                                       # `combined_base` means that a combination of BASE and TEST will be used, while

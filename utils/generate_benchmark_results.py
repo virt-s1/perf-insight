@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate the 2-way benchmark comparison for the TEST and BASE testruns.
+Generate the benchmark comparison for the TEST and BASE testruns.
 """
 
 import argparse
@@ -16,13 +16,13 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(
-    description="Generate the 2-way benchmark \
+    description="Generate the benchmark \
 comparison for the TEST and BASE testruns.")
 ARG_PARSER.add_argument('--config',
                         dest='config',
                         action='store',
                         help='The yaml config file for generating comparison.',
-                        default='generate_2way_benchmark.yaml',
+                        default='generate_benchmark_results.yaml',
                         required=False)
 ARG_PARSER.add_argument('--test',
                         dest='test',
@@ -54,7 +54,7 @@ ARGS = ARG_PARSER.parse_args()
 
 
 class benchmark_comparison_generator():
-    """Generate 2-way benchmark comparison report."""
+    """Generate benchmark comparison report."""
 
     def __init__(self, ARGS):
         # load and expend config
@@ -108,7 +108,7 @@ class benchmark_comparison_generator():
         self.output_format = ARGS.output_format
 
         if self.output is None:
-            self.output = '2way_benchmark.{0}'.format(self.output_format)
+            self.output = 'benchmark_results.{0}'.format(self.output_format)
 
         # init
         self.df_report = None

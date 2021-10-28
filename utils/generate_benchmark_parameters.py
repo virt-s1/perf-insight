@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate user parameter report for the 2-way benchmark comparison.
+Generate user parameter report for the benchmark comparison.
 """
 
 import argparse
@@ -13,13 +13,13 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(
-    description="Generate user parameter report for the 2-way benchmark \
+    description="Generate user parameter report for the benchmark \
 comparison.")
 ARG_PARSER.add_argument('--benchmark-config',
                         dest='config',
                         action='store',
                         help='The yaml config file for generating comparison.',
-                        default='generate_2way_benchmark.yaml',
+                        default='generate_benchmark_results.yaml',
                         required=False)
 ARG_PARSER.add_argument('--output-format',
                         dest='output_format',
@@ -39,7 +39,7 @@ ARGS = ARG_PARSER.parse_args()
 
 
 class benchmark_parameters_generator():
-    """Generate user parameter report for the 2-way benchmark comparison.."""
+    """Generate user parameter report for the benchmark comparison.."""
     def __init__(self, ARGS):
         # load and expend config
         with open(ARGS.config, 'r') as f:
@@ -78,7 +78,7 @@ class benchmark_parameters_generator():
         self.output_format = ARGS.output_format
 
         if self.output is None:
-            self.output = '2way_benchmark_configuration.{0}'.format(
+            self.output = 'benchmark_parameters.{0}'.format(
                 self.output_format)
 
         # init
@@ -88,7 +88,7 @@ class benchmark_parameters_generator():
         """Parse data and build the dataframe.
 
         Input:
-            - self.config: customized configuration.
+            - self.config: customized parameters.
         Updates:
             - self.dataframe: report dataframe to be updated.
         """

@@ -50,8 +50,8 @@ FILE_SERVER = config.get('file_server', 'localhost:8081')
 REPORT_PATH = os.path.join(PERF_INSIGHT_ROOT, 'reports')
 
 
-TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/templates/generate_2way_benchmark.yaml'
-TWO_WAY_METADATA_YAML = '/opt/perf-insight/templates/generate_2way_metadata.yaml'
+TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/templates/generate_benchmark_results.yaml'
+TWO_WAY_METADATA_YAML = '/opt/perf-insight/templates/generate_benchmark_metadata.yaml'
 TESTRUN_RESULTS_YAML = '/opt/perf-insight/templates/generate_testrun_results.yaml'
 
 
@@ -124,7 +124,7 @@ templates/generate_testrun_results-{}.yaml'.format(testrun_type)
 
         if session.get('yaml2') is None:
             TWO_WAY_BENCHMARK_YAML = '/opt/perf-insight/\
-templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
+templates/generate_benchmark_results-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_BENCHMARK_YAML, 'r') as fh:
                 form.yaml2.data = fh.read()
         else:
@@ -132,7 +132,7 @@ templates/generate_2way_benchmark-{}.yaml'.format(testrun_type)
 
         if session.get('yaml3') is None:
             TWO_WAY_METADATA_YAML = '/opt/perf-insight/\
-templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
+templates/generate_benchmark_metadata-{}.yaml'.format(testrun_type)
             with open(TWO_WAY_METADATA_YAML, 'r') as fh:
                 form.yaml3.data = fh.read()
         else:
@@ -155,9 +155,9 @@ templates/generate_2way_metadata-{}.yaml'.format(testrun_type)
         with open(workspace + '/' + 'test.generate_testrun_results.yaml',
                   'w') as fh:
             fh.write(form.yaml1.data)
-        with open(workspace + '/' + 'generate_2way_benchmark.yaml', 'w') as fh:
+        with open(workspace + '/' + 'generate_benchmark_results.yaml', 'w') as fh:
             fh.write(form.yaml2.data)
-        with open(workspace + '/' + 'generate_2way_metadata.yaml', 'w') as fh:
+        with open(workspace + '/' + 'generate_benchmark_metadata.yaml', 'w') as fh:
             fh.write(form.yaml3.data)
 
         # Save the yaml files - backward support (all-in-one yaml)
