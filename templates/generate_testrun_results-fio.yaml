@@ -44,3 +44,12 @@ testrun_results_generator:
       round: 3
     - name: Path
       method: get_source_url
+    - name: timeseries_throughput_iops_sec
+      method: query_datastore
+      jqexpr: '.iteration_data.throughput.iops_sec[] | select(.client_hostname=="all") | .samples[].timeseries'
+    - name: timeseries_throughput_lat
+      method: query_datastore
+      jqexpr: '.iteration_data.throughput.lat[] | select(.client_hostname=="all") | .samples[].timeseries'
+    - name: timeseries_throughput_clat
+      method: query_datastore
+      jqexpr: '.iteration_data.throughput.clat[] | select(.client_hostname=="all") | .samples[].timeseries'

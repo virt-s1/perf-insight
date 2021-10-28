@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate the 2-way metadata comparison for the TEST and BASE testruns.
+Generate the benchmark metadata comparison for the TEST and BASE testruns.
 """
 
 import argparse
@@ -12,13 +12,13 @@ import pandas as pd
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
-ARG_PARSER = argparse.ArgumentParser(description="Generate the 2-way metadata \
+ARG_PARSER = argparse.ArgumentParser(description="Generate the benchmark metadata \
 comparison for the TEST and BASE testruns.")
 ARG_PARSER.add_argument('--config',
                         dest='config',
                         action='store',
                         help='The yaml config file for generating comparison.',
-                        default='generate_2way_metadata.yaml',
+                        default='generate_benchmark_metadata.yaml',
                         required=False)
 ARG_PARSER.add_argument('--test',
                         dest='test',
@@ -42,19 +42,19 @@ ARG_PARSER.add_argument('--output',
                         dest='output',
                         action='store',
                         help='The file to store metadata comparison.',
-                        default='2way_benchmark_metadata.csv',
+                        default='benchmark_metadata.csv',
                         required=False)
 
 ARGS = ARG_PARSER.parse_args()
 
 
-class metadata_comparison_generator():
+class MetadataComparisonGenerator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
         with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
-            self.config = c[__class__.__name__]
+            self.config = c['metadata_comparison_generator']
 
         # load metadata for test and base testruns
         with open(ARGS.test, 'r') as f:
@@ -179,7 +179,7 @@ class metadata_comparison_generator():
 
 
 if __name__ == '__main__':
-    gen = metadata_comparison_generator(ARGS)
+    gen = MetadataComparisonGenerator(ARGS)
     gen.dump_to_file()
 
 exit(0)

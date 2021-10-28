@@ -1,4 +1,4 @@
-benchmark_comparison_generator:
+benchmark_results_generator:
   functions:
     report_items: combined_base
     case_conclusion: yes

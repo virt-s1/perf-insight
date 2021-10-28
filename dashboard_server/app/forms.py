@@ -37,11 +37,11 @@ class YamlForm(DynamicForm):
                         description=(''),
                         validators=[DataRequired()],
                         widget=BS3TextAreaFieldWidget_1())
-    yaml2 = StringField(('2way_benchmark config'),
+    yaml2 = StringField(('benchmark_results config'),
                         description=(''),
                         validators=[DataRequired()],
                         widget=BS3TextAreaFieldWidget_1())
-    yaml3 = StringField(('2way_metadata config'),
+    yaml3 = StringField(('benchmark_metadata config'),
                         description=(''),
                         validators=[DataRequired()],
                         widget=BS3TextAreaFieldWidget_1())

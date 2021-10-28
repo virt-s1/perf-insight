@@ -50,14 +50,14 @@ ARG_PARSER.add_argument('--output',
 ARGS = ARG_PARSER.parse_args()
 
 
-class testrun_results_generator():
+class TestrunResultsGenerator():
     """Generate TestRun Results according to the customized configuration."""
 
     def __init__(self, ARGS):
         # load config
         with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
-            self.config = c[__class__.__name__]
+            self.config = c['testrun_results_generator']
 
         # load datastore
         with open(ARGS.datastore, 'r') as f:
@@ -295,7 +295,7 @@ class testrun_results_generator():
 
 
 if __name__ == '__main__':
-    gen = testrun_results_generator(ARGS)
+    gen = TestrunResultsGenerator(ARGS)
     gen.dump_to_file()
 
 exit(0)

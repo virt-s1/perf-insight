@@ -46,3 +46,12 @@ testrun_results_generator:
       round: 1
     - name: Path
       method: get_source_url
+    - name: timeseries_throughput_Gb_sec
+      method: query_datastore
+      jqexpr: '.iteration_data.throughput.Gb_sec[] | select(.client_hostname=="all") | .samples[].timeseries'
+    - name: timeseries_throughput_trans_sec
+      method: query_datastore
+      jqexpr: '.iteration_data.throughput.trans_sec[] | select(.client_hostname=="all") | .samples[].timeseries'
+    - name: timeseries_latency_usec
+      method: query_datastore
+      jqexpr: '.iteration_data.latency.usec[] | select(.client_hostname=="all") | .samples[].timeseries'

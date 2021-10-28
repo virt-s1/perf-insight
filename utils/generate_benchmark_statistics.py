@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate the 2-way benchmark statistics.
+Generate the benchmark statistics.
 """
 
 import argparse
@@ -13,12 +13,12 @@ LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 ARG_PARSER = argparse.ArgumentParser(
-    description='Generate the 2-way benchmark statistics.')
+    description='Generate the benchmark statistics.')
 ARG_PARSER.add_argument('--benchmark-csv',
                         dest='benchmark_csv',
                         action='store',
-                        help='The 2way benchmark comparison.',
-                        default='2way_benchmark.csv',
+                        help='The benchmark results.',
+                        default='benchmark_results.csv',
                         required=False)
 ARG_PARSER.add_argument('--primary-metric',
                         dest='primary_metrics',
@@ -29,17 +29,17 @@ ARG_PARSER.add_argument('--primary-metric',
 ARG_PARSER.add_argument('--output',
                         dest='output',
                         action='store',
-                        help='The file to store 2-way benchmark statistics.',
-                        default='2way_statistics.json',
+                        help='The file to store benchmark statistics.',
+                        default='benchmark_statistics.json',
                         required=False)
 
 ARGS = ARG_PARSER.parse_args()
 
 
-class benchmark_statistics_generator():
-    """Generate 2-way benchmark statistics."""
+class BenchmarkStatisticsGenerator():
+    """Generate benchmark statistics."""
     def __init__(self, ARGS):
-        # load the 2way benchmark comparison
+        # load the benchmark results
         self.df_benchmark = pd.read_csv(ARGS.benchmark_csv, index_col=0)
 
         # parse parameters
@@ -51,12 +51,12 @@ class benchmark_statistics_generator():
         self._parse_data()
 
     def _parse_data(self):
-        """Parse data from the 2way benchmark comparison.
+        """Parse data from the benchmark results.
 
         Input:
-            - self.df_benchmark: the 2way benchmark comparison.
+            - self.df_benchmark: the benchmark results.
         Update:
-            - self.statistics: the 2way benchmark statistics.
+            - self.statistics: the benchmark statistics.
         """
         # convert dataframe to json
         result = self.df_benchmark.to_json(orient="records")
@@ -128,7 +128,7 @@ class benchmark_statistics_generator():
 
 
 if __name__ == '__main__':
-    gen = benchmark_statistics_generator(ARGS)
+    gen = BenchmarkStatisticsGenerator(ARGS)
     gen.dump_to_file()
 
 exit(0)

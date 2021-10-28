@@ -87,15 +87,15 @@ Before you start, you need to prepare the following stuff:
 1. datastore.json - contains the performance data of a testrun.
 2. metadata.json - contains the metadata of a testrun.
 3. generate_testrun_results.yaml - user config for generating test summary.
-4. generate_2way_benchmark.yaml - user config for generating benchmark reports.
+4. generate_benchmark_results.yaml - user config for generating benchmark reports.
 
-**Notes:** in a typical 2-way comparison, the `datastore.json` and `metadata.json` are needed for both TEST and BASE runs.
+**Notes:** in a typical benchmark comparison, the `datastore.json` and `metadata.json` are needed for both TEST and BASE runs.
 
 The following scripts are needed:
 1. generate_testrun_results.py - generate the test summary for Jupyter to display.
-2. generate_2way_metadata.py - generate the metadata comparison for Jupyter to display.
-3. generate_benchmark_config.py - generate the benchmark config for Jupyter to display.
-4. generate_2way_benchmark.py - generate the benchmark comparison for Jupyter to display.
+2. generate_benchmark_metadata.py - generate the metadata comparison for Jupyter to display.
+3. generate_benchmark_parameters.py - generate the benchmark parameters for Jupyter to display.
+4. generate_benchmark_results.py - generate the benchmark results for Jupyter to display.
 
 ### Steps
 
@@ -106,7 +106,7 @@ total 32M
 -rw-r--r--. 1 cheshi cheshi  626 Dec 16 13:55 base.metadata.json
 -rw-r--r--. 1 cheshi cheshi  25M Dec 16 13:56 test.datastore.json
 -rw-r--r--. 1 cheshi cheshi  620 Dec 16 13:57 test.metadata.json
-lrwxrwxrwx. 1 cheshi cheshi   31 Dec 16 14:33 generate_2way_benchmark.yaml -> ../generate_2way_benchmark.yaml
+lrwxrwxrwx. 1 cheshi cheshi   31 Dec 16 14:33 generate_benchmark_results.yaml -> ../generate_benchmark_results.yaml
 lrwxrwxrwx. 1 cheshi cheshi   54 Dec 16 14:32 generate_testrun_results.yaml -> ../templates/generate_testrun_results-jupyter_fio.yaml
 ```
 
@@ -126,29 +126,29 @@ Do it again for the BASE run.
 Run the following script to generate the metadata comparison:
 
 ```bash
-$ ./generate_2way_metadata.py \
+$ ./generate_benchmark_metadata.py \
     --test ./workspace/test.metadata.json \
     --base ./workspace/base.metadata.json \
     --output-format csv \
-    --output ./workspace/2way_metadata.csv
+    --output ./workspace/benchmark_metadata.csv
 ```
 
 Run the following script to generate the benchmark parameters:
 
 ```bash
-$ ./generate_2way_parameters.py \
-    --benchmark-config ./workspace/generate_2way_benchmark.yaml \
+$ ./generate_benchmark_parameters.py \
+    --benchmark-config ./workspace/generate_benchmark_results.yaml \
     --output-format csv \
-    --output ./workspace/2way_parameters.csv
+    --output ./workspace/benchmark_parameters.csv
 ```
 
-Run the following script to generate the benchmark comparison:
+Run the following script to generate the benchmark results:
 
 ```bash
-$ ./generate_2way_benchmark.py \
-    --config ./workspace/generate_2way_benchmark.yaml \
+$ ./generate_benchmark_results.py \
+    --config ./workspace/generate_benchmark_results.yaml \
     --test ./workspace/test.testrun_results.csv \
     --base ./workspace/base.testrun_results.csv \
     --output-format csv \
-    --output ./workspace/2way_benchmark.csv
+    --output ./workspace/benchmark_results.csv
 ```
