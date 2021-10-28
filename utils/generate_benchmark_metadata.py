@@ -48,13 +48,13 @@ ARG_PARSER.add_argument('--output',
 ARGS = ARG_PARSER.parse_args()
 
 
-class metadata_comparison_generator():
+class MetadataComparisonGenerator():
     """Generate TestRun Results according to the customized configuration."""
     def __init__(self, ARGS):
         # load config
         with open(ARGS.config, 'r') as f:
             c = yaml.safe_load(f)
-            self.config = c[__class__.__name__]
+            self.config = c['metadata_comparison_generator']
 
         # load metadata for test and base testruns
         with open(ARGS.test, 'r') as f:
@@ -179,7 +179,7 @@ class metadata_comparison_generator():
 
 
 if __name__ == '__main__':
-    gen = metadata_comparison_generator(ARGS)
+    gen = MetadataComparisonGenerator(ARGS)
     gen.dump_to_file()
 
 exit(0)

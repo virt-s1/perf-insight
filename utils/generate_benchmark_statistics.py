@@ -36,7 +36,7 @@ ARG_PARSER.add_argument('--output',
 ARGS = ARG_PARSER.parse_args()
 
 
-class benchmark_statistics_generator():
+class BenchmarkStatisticsGenerator():
     """Generate benchmark statistics."""
     def __init__(self, ARGS):
         # load the benchmark results
@@ -128,7 +128,7 @@ class benchmark_statistics_generator():
 
 
 if __name__ == '__main__':
-    gen = benchmark_statistics_generator(ARGS)
+    gen = BenchmarkStatisticsGenerator(ARGS)
     gen.dump_to_file()
 
 exit(0)

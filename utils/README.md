@@ -95,7 +95,7 @@ The following scripts are needed:
 1. generate_testrun_results.py - generate the test summary for Jupyter to display.
 2. generate_benchmark_metadata.py - generate the metadata comparison for Jupyter to display.
 3. generate_benchmark_parameters.py - generate the benchmark parameters for Jupyter to display.
-4. generate_benchmark_results.py - generate the benchmark comparison for Jupyter to display.
+4. generate_benchmark_results.py - generate the benchmark results for Jupyter to display.
 
 ### Steps
 
@@ -142,7 +142,7 @@ $ ./generate_benchmark_parameters.py \
     --output ./workspace/benchmark_parameters.csv
 ```
 
-Run the following script to generate the benchmark comparison:
+Run the following script to generate the benchmark results:
 
 ```bash
 $ ./generate_benchmark_results.py \

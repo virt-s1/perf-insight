@@ -184,7 +184,7 @@ You can find examples of this configuration file in the `templates` folder. In m
 If you want to make some customizations, a detailed description of this configuration is provided below (let us take `fio` as an example):
 
 ```yaml
-benchmark_comparison_generator:       # This is a keyword associated with generate_benchmark_results.py
+benchmark_results_generator:          # This is a keyword associated with generate_benchmark_results.py
   functions:                          # This section defines some function switches
     report_items: combined_base       # This option is used to handle the case when BASE and TEST sets are different;
                                       # `combined_base` means that a combination of BASE and TEST will be used, while
