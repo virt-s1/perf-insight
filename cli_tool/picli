@@ -486,6 +486,7 @@ def benchmark_inspect(ctx, report_id):
     else:
         # Parse and print
         echo_log('Report ID:\n{}'.format(jsonresp.get('id')))
+        echo_log('\nReport URL:\n{}'.format(jsonresp.get('url')))
 
         table = []
         base_metadata = test_metadata = None
@@ -605,6 +606,9 @@ def benchmark_create(ctx, test_id, base_id, test_yaml, base_yaml,
     else:
         # Parse and print
         echo_log('Report "{}" has been created.'.format(jsonresp.get('id')))
+
+        echo_log('\nReport ID:\n{}'.format(jsonresp.get('id')))
+        echo_log('\nReport URL:\n{}'.format(jsonresp.get('url')))
 
         table = []
         base_metadata = test_metadata = None

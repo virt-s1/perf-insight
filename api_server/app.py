@@ -618,8 +618,10 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        # Get BenchmarkID
-        benchmark = {'id': id}
+        # Get Benchmark ID and Report URL
+        url = 'http://{}/perf-insight/reports/{}/report.html'.format(
+            FILE_SERVER, id)
+        benchmark = {'id': id, 'url': url}
 
         # Get metadata
         try:
@@ -853,20 +855,21 @@ class PerfInsightManager():
         # Update metadata and dump to metadata.json
         create_time = time.strftime(
             '%Y-%m-%d %H:%M:%S', time.localtime())
-        report_url = 'http://{}/perf-insight/reports/{}/report.html'.format(
-            FILE_SERVER, benchmark)
 
         metadata = {'id': benchmark,
                     'create_time': create_time,
                     'test_id': test_id,
                     'base_id': base_id,
-                    'report_url': report_url,
                     'comments': comments,
                     'test_metadata': test_metadata,
                     'base_metadata': base_metadata}
 
         with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
             json.dump(metadata, f, indent=3)
+
+        # Get the Report URL
+        report_url = 'http://{}/perf-insight/reports/{}/report.html'.format(
+            FILE_SERVER, benchmark)
 
         # Update dashboard as requested
         if update_dashboard:
@@ -921,7 +924,7 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        return True, {'id': benchmark, 'metadata': metadata}
+        return True, {'id': benchmark, 'url': report_url, 'metadata': metadata}
 
     def delete_benchmark(self, id, update_dashboard=True):
         """Delete a specified benchmark from PERF_INSIGHT_ROOT.
