@@ -142,6 +142,7 @@ def testrun_inspect(ctx, testrun_id):
     else:
         # Parse and print
         echo_log('TestRun ID:\n{}'.format(jsonresp.get('id')))
+        echo_log('\nRawData URL:\n{}'.format(jsonresp.get('url')))
         echo_log('\nMETADATA:')
         table = []
         for k, v in jsonresp.get('metadata', {}).items():

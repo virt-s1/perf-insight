@@ -111,8 +111,9 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        # Get TestRunID
-        testrun = {'id': id}
+        # Get TestRunID and RawData URL
+        url = 'http://{}/perf-insight/testruns/{}/'.format(FILE_SERVER, id)
+        testrun = {'id': id, 'url': url}
 
         # Get metadata
         try:
