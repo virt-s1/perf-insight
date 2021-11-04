@@ -206,14 +206,16 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            # shutil.copytree(workspace, target)
-            # shutil.move(workspace, os.path.join(
-            #     os.path.dirname(workspace),
-            #     '.deleted_after_loading_{}__{}'.format(
-            #         time.strftime('%y%m%d%H%M%S',
-            #                       time.localtime()),
-            #         os.path.basename(workspace))))
-            shutil.move(workspace, target)
+            if SAFE_MODE:
+                shutil.copytree(workspace, target)
+                shutil.move(workspace, os.path.join(
+                    PERF_INSIGHT_RBIN,
+                    '.deleted_after_loading_{}__{}'.format(
+                        time.strftime('%y%m%d%H%M%S',
+                                      time.localtime()),
+                        os.path.basename(workspace))))
+            else:
+                shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -337,14 +339,16 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            # shutil.copytree(workspace, target)
-            # shutil.move(workspace, os.path.join(
-            #     os.path.dirname(workspace),
-            #     '.deleted_after_importing_{}__{}'.format(
-            #         time.strftime('%y%m%d%H%M%S',
-            #                       time.localtime()),
-            #         os.path.basename(workspace))))
-            shutil.move(workspace, target)
+            if SAFE_MODE:
+                shutil.copytree(workspace, target)
+                shutil.move(workspace, os.path.join(
+                    PERF_INSIGHT_RBIN,
+                    '.deleted_after_importing_{}__{}'.format(
+                        time.strftime('%y%m%d%H%M%S',
+                                      time.localtime()),
+                        os.path.basename(workspace))))
+            else:
+                shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -564,7 +568,7 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+            shutil.move(target, os.path.join(PERF_INSIGHT_RBIN, '.deleted_by_user_{}__{}'.format(
                 time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
@@ -912,13 +916,15 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            # shutil.copytree(workspace, target)
-            # shutil.move(workspace, os.path.join(
-            #     os.path.dirname(workspace),
-            #     '.deleted_after_creating_{}__{}'.format(
-            #         time.strftime('%y%m%d%H%M%S', time.localtime()),
-            #         os.path.basename(workspace))))
-            shutil.move(workspace, target)
+            if SAFE_MODE:
+                shutil.copytree(workspace, target)
+                shutil.move(workspace, os.path.join(
+                    PERF_INSIGHT_RBIN,
+                    '.deleted_after_creating_{}__{}'.format(
+                        time.strftime('%y%m%d%H%M%S', time.localtime()),
+                        os.path.basename(workspace))))
+            else:
+                shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -965,7 +971,7 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+            shutil.move(target, os.path.join(PERF_INSIGHT_RBIN, '.deleted_by_user_{}__{}'.format(
                 time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
@@ -1216,8 +1222,11 @@ PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
 PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
 PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
+PERF_INSIGHT_RBIN = config.get(
+    'perf_insight_rbin', os.path.join(PERF_INSIGHT_ROOT, '.deleted'))
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
 JUPYTER_API_SERVER = config.get('jupyter_api_server', 'localhost:8880')
 FILE_SERVER = config.get('file_server', 'localhost:8081')
+SAFE_MODE = config.get('safe_mode', False)
 
 manager = PerfInsightManager()

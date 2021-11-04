@@ -35,6 +35,7 @@ source /opt/perf-insight/compose/.env
 mkdir -p $HOST_PERF_INSIGHT_ROOT/testruns
 mkdir -p $HOST_PERF_INSIGHT_ROOT/reports
 mkdir -p $HOST_PERF_INSIGHT_ROOT/.staging
+mkdir -p $HOST_PERF_INSIGHT_ROOT/.deleted
 mkdir -p $HOST_PERF_INSIGHT_DATA
 
 cp /opt/perf-insight/config.yaml $HOST_PERF_INSIGHT_DATA
