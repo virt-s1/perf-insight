@@ -12,3 +12,4 @@ jupyter:
 api:
   file_server: 192.168.50.110:8081
   jupyter_api_server: 192.168.50.110:8880
+  safe_mode: no

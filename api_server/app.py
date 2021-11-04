@@ -111,8 +111,9 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        # Get TestRunID
-        testrun = {'id': id}
+        # Get TestRunID and RawData URL
+        url = 'http://{}/perf-insight/testruns/{}/'.format(FILE_SERVER, id)
+        testrun = {'id': id, 'url': url}
 
         # Get metadata
         try:
@@ -205,14 +206,16 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            # shutil.copytree(workspace, target)
-            # shutil.move(workspace, os.path.join(
-            #     os.path.dirname(workspace),
-            #     '.deleted_after_loading_{}__{}'.format(
-            #         time.strftime('%y%m%d%H%M%S',
-            #                       time.localtime()),
-            #         os.path.basename(workspace))))
-            shutil.move(workspace, target)
+            if SAFE_MODE:
+                shutil.copytree(workspace, target)
+                shutil.move(workspace, os.path.join(
+                    PERF_INSIGHT_RBIN,
+                    '.deleted_after_loading_{}__{}'.format(
+                        time.strftime('%y%m%d%H%M%S',
+                                      time.localtime()),
+                        os.path.basename(workspace))))
+            else:
+                shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -336,14 +339,16 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            # shutil.copytree(workspace, target)
-            # shutil.move(workspace, os.path.join(
-            #     os.path.dirname(workspace),
-            #     '.deleted_after_importing_{}__{}'.format(
-            #         time.strftime('%y%m%d%H%M%S',
-            #                       time.localtime()),
-            #         os.path.basename(workspace))))
-            shutil.move(workspace, target)
+            if SAFE_MODE:
+                shutil.copytree(workspace, target)
+                shutil.move(workspace, os.path.join(
+                    PERF_INSIGHT_RBIN,
+                    '.deleted_after_importing_{}__{}'.format(
+                        time.strftime('%y%m%d%H%M%S',
+                                      time.localtime()),
+                        os.path.basename(workspace))))
+            else:
+                shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
@@ -563,7 +568,7 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+            shutil.move(target, os.path.join(PERF_INSIGHT_RBIN, '.deleted_by_user_{}__{}'.format(
                 time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
@@ -617,8 +622,10 @@ class PerfInsightManager():
             LOG.error(msg)
             return False, msg
 
-        # Get BenchmarkID
-        benchmark = {'id': id}
+        # Get Benchmark ID and Report URL
+        url = 'http://{}/perf-insight/reports/{}/report.html'.format(
+            FILE_SERVER, id)
+        benchmark = {'id': id, 'url': url}
 
         # Get metadata
         try:
@@ -852,20 +859,21 @@ class PerfInsightManager():
         # Update metadata and dump to metadata.json
         create_time = time.strftime(
             '%Y-%m-%d %H:%M:%S', time.localtime())
-        report_url = 'http://{}/perf-insight/reports/{}/report.html'.format(
-            FILE_SERVER, benchmark)
 
         metadata = {'id': benchmark,
                     'create_time': create_time,
                     'test_id': test_id,
                     'base_id': base_id,
-                    'report_url': report_url,
                     'comments': comments,
                     'test_metadata': test_metadata,
                     'base_metadata': base_metadata}
 
         with open(os.path.join(workspace, 'metadata.json'), 'w') as f:
             json.dump(metadata, f, indent=3)
+
+        # Get the Report URL
+        report_url = 'http://{}/perf-insight/reports/{}/report.html'.format(
+            FILE_SERVER, benchmark)
 
         # Update dashboard as requested
         if update_dashboard:
@@ -908,19 +916,21 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            # shutil.copytree(workspace, target)
-            # shutil.move(workspace, os.path.join(
-            #     os.path.dirname(workspace),
-            #     '.deleted_after_creating_{}__{}'.format(
-            #         time.strftime('%y%m%d%H%M%S', time.localtime()),
-            #         os.path.basename(workspace))))
-            shutil.move(workspace, target)
+            if SAFE_MODE:
+                shutil.copytree(workspace, target)
+                shutil.move(workspace, os.path.join(
+                    PERF_INSIGHT_RBIN,
+                    '.deleted_after_creating_{}__{}'.format(
+                        time.strftime('%y%m%d%H%M%S', time.localtime()),
+                        os.path.basename(workspace))))
+            else:
+                shutil.move(workspace, target)
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
             LOG.error(msg)
             return False, msg
 
-        return True, {'id': benchmark, 'metadata': metadata}
+        return True, {'id': benchmark, 'url': report_url, 'metadata': metadata}
 
     def delete_benchmark(self, id, update_dashboard=True):
         """Delete a specified benchmark from PERF_INSIGHT_ROOT.
@@ -961,7 +971,7 @@ class PerfInsightManager():
 
         # Deal with the files
         try:
-            shutil.move(target, os.path.join(PERF_INSIGHT_STAG, '.deleted_by_user_{}__{}'.format(
+            shutil.move(target, os.path.join(PERF_INSIGHT_RBIN, '.deleted_by_user_{}__{}'.format(
                 time.strftime('%y%m%d%H%M%S', time.localtime()), id)))
         except Exception as err:
             msg = 'Failed to deal with the files. error: {}'.format(err)
@@ -1210,10 +1220,15 @@ config.update(user_config.get('api', {}))
 
 PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
-PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
-PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
+PERF_INSIGHT_TEMP = config.get(
+    'perf_insight_temp', os.path.join(PERF_INSIGHT_REPO, 'templates'))
+PERF_INSIGHT_STAG = config.get(
+    'perf_insight_stag', os.path.join(PERF_INSIGHT_ROOT, '.staging'))
+PERF_INSIGHT_RBIN = config.get(
+    'perf_insight_rbin', os.path.join(PERF_INSIGHT_ROOT, '.deleted'))
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
 JUPYTER_API_SERVER = config.get('jupyter_api_server', 'localhost:8880')
 FILE_SERVER = config.get('file_server', 'localhost:8081')
+SAFE_MODE = config.get('safe_mode', False)
 
 manager = PerfInsightManager()

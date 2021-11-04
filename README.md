@@ -1,5 +1,9 @@
 # The perf-insight Project
 
+The perf-insight is an open source project. It is a highly customizable performance test report system. By intelligently analyzing the benchmark  results, a lot of labor costs can be saved.  
+The system consists of four service modules, including dashboard, file server, Jupyter lab and API server. It also provides users with a powerful CLI tool to integrate with CI. The system is fully containerized, it can be deployed by podman-compose, and is fully compatible with Docker.  
+The project started in October 2020, and the Red Hat QE team is using this project to analyze Azure, Hyper-V and ESXi benchmark results. You are very welcome to use and/or contribute to this project. It is completely open source on Github. https://github.com/virt-s1/perf-insight
+
 ## Get started
 
 This guideline is based on Fedora 34.
@@ -31,6 +35,7 @@ source /opt/perf-insight/compose/.env
 mkdir -p $HOST_PERF_INSIGHT_ROOT/testruns
 mkdir -p $HOST_PERF_INSIGHT_ROOT/reports
 mkdir -p $HOST_PERF_INSIGHT_ROOT/.staging
+mkdir -p $HOST_PERF_INSIGHT_ROOT/.deleted
 mkdir -p $HOST_PERF_INSIGHT_DATA
 
 cp /opt/perf-insight/config.yaml $HOST_PERF_INSIGHT_DATA

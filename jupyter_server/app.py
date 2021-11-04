@@ -657,7 +657,8 @@ config.update(user_config.get('jupyter', {}))
 
 PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/mnt/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
-PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
+PERF_INSIGHT_STAG = config.get(
+    'perf_insight_stag', os.path.join(PERF_INSIGHT_ROOT, '.staging'))
 JUPYTER_WORKSPACE = config.get('jupyter_workspace', '/app/workspace')
 JUPYTER_LAB_HOST = config.get('jupyter_lab_host', 'localhost')
 JUPYTER_LAB_PORTS = config.get('jupyter_lab_ports', '8890-8899')
