@@ -1220,8 +1220,10 @@ config.update(user_config.get('api', {}))
 
 PERF_INSIGHT_ROOT = config.get('perf_insight_root', '/nfs/perf-insight')
 PERF_INSIGHT_REPO = config.get('perf_insight_repo', '/opt/perf-insight')
-PERF_INSIGHT_TEMP = os.path.join(PERF_INSIGHT_REPO, 'templates')
-PERF_INSIGHT_STAG = os.path.join(PERF_INSIGHT_ROOT, '.staging')
+PERF_INSIGHT_TEMP = config.get(
+    'perf_insight_temp', os.path.join(PERF_INSIGHT_REPO, 'templates'))
+PERF_INSIGHT_STAG = config.get(
+    'perf_insight_stag', os.path.join(PERF_INSIGHT_ROOT, '.staging'))
 PERF_INSIGHT_RBIN = config.get(
     'perf_insight_rbin', os.path.join(PERF_INSIGHT_ROOT, '.deleted'))
 DASHBOARD_DB_FILE = config.get('dashboard_db_file', '/data/app.db')
