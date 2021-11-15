@@ -157,6 +157,9 @@ class BenchmarkStatisticsGenerator():
 
             case_num_spread[conclusion] += 1
 
+            # Keep conclusion explicit in statistics
+            case.get['Conclusion'] = conclusion
+
         self.statistics['case_num_invalid_data'] = case_num_spread.get(
             'Invalid Data', 0)
         self.statistics['case_num_high_variance'] = case_num_spread.get(
