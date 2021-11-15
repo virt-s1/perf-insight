@@ -573,7 +573,7 @@ class PerfInsightManager():
 
         return True, {'benchmarks': benchmarks}
 
-    def inspect_benchmark(self, id):
+    def inspect_benchmark(self, id, get_statistics=False):
         """Inspect a specified benchmark from PERF_INSIGHT_ROOT.
 
         Input:
@@ -608,18 +608,20 @@ class PerfInsightManager():
 
         benchmark.update({'metadata': metadata})
 
-        # Get statistics
-        try:
-            statistics_file = os.path.join(search_path, 'benchmark_statistics.json')
-            with open(statistics_file, 'r') as f:
-                statistics = json.load(f)
-        except Exception as err:
-            msg = 'Failed to get statistics from {}. error: {}'.format(
-                statistics_file, err)
-            LOG.warning(msg)
-            statistics = None
+        # Get statistics if asked
+        if get_statistics:
+            try:
+                statistics_file = os.path.join(
+                    search_path, 'benchmark_statistics.json')
+                with open(statistics_file, 'r') as f:
+                    statistics = json.load(f)
+            except Exception as err:
+                msg = 'Failed to get statistics from {}. error: {}'.format(
+                    statistics_file, err)
+                LOG.warning(msg)
+                statistics = None
 
-        benchmark.update({'statistics': statistics})
+            benchmark.update({'statistics': statistics})
 
         return True, benchmark
 
@@ -1102,7 +1104,16 @@ def query_benchmarks():
 @app.get('/benchmarks/<id>')
 def inspect_benchmark(id):
     LOG.info('Received request to inspect benchmark "{}".'.format(id))
-    res, con = manager.inspect_benchmark(id)
+
+    if request.is_json:
+        req = request.get_json()
+    else:
+        return jsonify({'error': 'Request must be JSON.'}), 415
+
+    # Parse args
+    get_statistics = req.get('get_statistics')
+
+    res, con = manager.inspect_benchmark(id, get_statistics)
     if res:
         return jsonify(con), 200
     else:

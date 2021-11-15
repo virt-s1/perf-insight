@@ -447,8 +447,10 @@ def benchmark_list(ctx):
 @cli.command()
 @click.option('--report-id', required=True, prompt='Report ID',
               help='The report to be inspected.')
+@click.option('--get-statistics', required=False, default=False,
+              help='Get statistics of the benchmark report.')
 @click.pass_context
-def benchmark_inspect(ctx, report_id):
+def benchmark_inspect(ctx, report_id, get_statistics):
     """Inspect a specified benchmark report."""
 
     # Build the request
@@ -456,7 +458,7 @@ def benchmark_inspect(ctx, report_id):
         ctx.obj['API_SERVER'], report_id)
     request_method = 'GET'
     request_headers = None
-    request_json = None
+    request_json = {'get_statistics': get_statistics}
 
     try:
         # Send the request
