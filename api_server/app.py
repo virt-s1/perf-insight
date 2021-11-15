@@ -11,38 +11,6 @@ import requests
 
 class PerfInsightManager():
     # Shared functions
-    def _get_template(self, filename, platform=None):
-        """Select template and return the file path.
-
-        Input:
-            filename  - The filename of the template
-            platform  - The platform on which to use the template
-        Return:
-            - The path or None if something goes wrong.
-        """
-        # Try to find platform specific template
-        ext = filename.split('.')[-1]
-        base = filename.removesuffix('.' + ext)
-
-        if platform:
-            file = '{}-{}.{}'.format(base, platform, ext)
-            path = os.path.join(PERF_INSIGHT_TEMP, file)
-            if os.path.exists(path):
-                LOG.info(
-                    'Found platform specific template "{}".'.format(file))
-                return path
-
-        # Try to find the specified template
-        path = os.path.join(PERF_INSIGHT_TEMP, filename)
-        if os.path.exists(path):
-            LOG.info('Found the specified template "{}".'.format(filename))
-            return path
-
-        # No template was found
-        LOG.error('Cannot find template "{}" in "{}".'.format(
-            filename, PERF_INSIGHT_TEMP))
-        return None
-
     def _select_file(self, search_path, candidates):
         """Select the first available file from candidates.
 
@@ -426,7 +394,7 @@ class PerfInsightManager():
         config = os.path.join(workspace, '.testrun_results_dbloader.yaml')
         candidates = [
             'generate_testrun_results-{}-{}-dbloader.yaml'.format(
-                testrun_type, testrun_platform),
+                testrun_type, str(testrun_platform).lower()),
             'generate_testrun_results-{}-dbloader.yaml'.format(
                 testrun_type)
         ]
@@ -744,7 +712,7 @@ class PerfInsightManager():
         # Deploy config files
         candidates = [test_yaml] if test_yaml else [
             'generate_testrun_results-{}-{}.yaml'.format(
-                test_type, test_platform),
+                test_type, str(test_platform).lower()),
             'generate_testrun_results-{}.yaml'.format(test_type)
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
@@ -756,7 +724,7 @@ class PerfInsightManager():
 
         candidates = [base_yaml] if base_yaml else [
             'generate_testrun_results-{}-{}.yaml'.format(
-                base_type, base_platform),
+                base_type, str(base_platform).lower()),
             'generate_testrun_results-{}.yaml'.format(base_type)
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
@@ -768,7 +736,7 @@ class PerfInsightManager():
 
         candidates = [benchmark_yaml] if benchmark_yaml else [
             'generate_benchmark_results-{}-{}.yaml'.format(
-                test_type, test_platform),
+                test_type, str(test_platform).lower()),
             'generate_benchmark_results-{}.yaml'.format(test_type)
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
@@ -780,7 +748,7 @@ class PerfInsightManager():
 
         candidates = [metadata_yaml] if metadata_yaml else [
             'generate_benchmark_metadata-{}-{}.yaml'.format(
-                test_type, test_platform),
+                test_type, str(test_platform).lower()),
             'generate_benchmark_metadata-{}.yaml'.format(test_type)
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
@@ -795,7 +763,8 @@ class PerfInsightManager():
                         os.path.join(workspace, 'benchmark_description.md'))
 
         candidates = [introduction_md] if introduction_md else [
-            'introduction_{}_{}.md'.format(test_platform.lower(), test_type),
+            'introduction_{}_{}.md'.format(
+                str(test_platform).lower(), test_type),
             'introduction_default.md'
         ]
         filename = self._select_file(PERF_INSIGHT_TEMP, candidates)
