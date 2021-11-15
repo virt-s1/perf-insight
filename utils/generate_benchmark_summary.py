@@ -38,6 +38,7 @@ ARGS = ARG_PARSER.parse_args()
 
 class BenchmarkSummaryGenerator():
     """Generate benchmark report summary."""
+
     def __init__(self, ARGS):
         # load the benchmark statistics
         with open(ARGS.statistics_json, 'r') as f:
@@ -63,25 +64,11 @@ class BenchmarkSummaryGenerator():
         Update:
             - self.datatable: the benchmark summary.
         """
-        # build the table from statistics
-
-        self.datatable.append(
-            ('Test Result', self.statistics.get('test_result')))
-        self.datatable.append(
-            ['Total Cases',
-             self.statistics.get('total_case_num')])
-        self.datatable.append(
-            ['Failed Cases',
-             self.statistics.get('failed_case_num')])
-
+        # Build the table from statistics
         self.datatable = [
-            ('Test Result', self.statistics.get('test_result')),
-            ('Total Case', self.statistics.get('total_case_num')),
-            ('Failed Case', self.statistics.get('failed_case_num')),
-            ('Failed Rate', self.statistics.get('failed_case_rate')),
-            ('Primary Metric', self.statistics.get('primary_metric')),
-            ('Overall Performance',
-             self.statistics.get('overall_performance')),
+            ('Benchmark Result', self.statistics.get('benchmark_result')),
+            ('Total Cases', self.statistics.get('case_num_benchmark')),
+            ('Failed Cases', self.statistics.get('case_num_dramatic_regression')),
         ]
 
         self.dataframe = pd.DataFrame(data=self.datatable,
