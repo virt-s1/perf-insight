@@ -608,6 +608,19 @@ class PerfInsightManager():
 
         benchmark.update({'metadata': metadata})
 
+        # Get statistics
+        try:
+            statistics_file = os.path.join(search_path, 'benchmark_statistics.json')
+            with open(statistics_file, 'r') as f:
+                statistics = json.load(f)
+        except Exception as err:
+            msg = 'Failed to get statistics from {}. error: {}'.format(
+                statistics_file, err)
+            LOG.warning(msg)
+            statistics = None
+
+        benchmark.update({'statistics': statistics})
+
         return True, benchmark
 
     def create_benchmark(self, test_id, base_id, test_yaml=None,
