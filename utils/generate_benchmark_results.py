@@ -195,6 +195,18 @@ class BenchmarkResultsGenerator():
         Updates:
             - self.df_report: report dataframe to be updated.
         """
+
+        abbrs = {
+            'Invalid Data': 'ID',
+            'High Variance': 'HV',
+            'No Significance': 'NS',
+            'Negligible Changes': 'NC',
+            'Moderate Improvement': 'MI',
+            'Moderate Regression': 'MR',
+            'Dramatic Improvement': 'DI',
+            'Dramatic Regression': 'DR'
+        }
+
         def _get_statistics(df_base, df_test, kpi_cfg):
             """Calculate basic statistics for the specified KPI.
 
@@ -264,17 +276,6 @@ class BenchmarkResultsGenerator():
 
             Returns: any of the conclusion mentioned above or "np.nan".
             """
-
-            abbrs = {
-                'Invalid Data': 'ID',
-                'High Variance': 'HV',
-                'No Significance': 'NS',
-                'Negligible Changes': 'NC',
-                'Moderate Improvement': 'MI',
-                'Moderate Regression': 'MR',
-                'Dramatic Improvement': 'DI',
-                'Dramatic Regression': 'DR'
-            }
 
             higher_is_better = kpi_cfg['higher_is_better']
             MAX_PCTDEV_THRESHOLD = kpi_cfg['max_pctdev_threshold'] * 100
@@ -347,36 +348,26 @@ class BenchmarkResultsGenerator():
             Returns:
                 - conclusion: the conclusion of this case
             """
+            prioritized_conclusions = [
+                'Dramatic Regression',
+                'Moderate Regression',
+                'High Variance',
+                'Invalid Data',
+                'Moderate Improvement',
+                'Dramatic Improvement',
+                'Negligible Changes',
+                'No Significance'
+            ]
 
-            abbrs = {
-                'Invalid Data': 'ID',
-                'High Variance': 'HV',
-                'No Significance': 'NS',
-                'Negligible Changes': 'NC',
-                'Moderate Improvement': 'MI',
-                'Moderate Regression': 'MR',
-                'Dramatic Improvement': 'DI',
-                'Dramatic Regression': 'DR'
-            }
+            conclusion = None
 
-            # analyse the conclusion of each kpi
-            conclusions = [row[x] for x in row.keys() if x.endswith('-CON')]
-            if 'DR' in conclusions or 'Dramatic Regression' in conclusions:
-                conclusion = 'Dramatic Regression'
-            elif 'MR' in conclusions or 'Moderate Regression' in conclusions:
-                conclusion = 'Moderate Regression'
-            elif 'HV' in conclusions or 'High Variance' in conclusions:
-                conclusion = 'High Variance'
-            elif 'ID' in conclusions or 'Invalid Data' in conclusions:
-                conclusion = 'Invalid Data'
-            elif 'MI' in conclusions or 'Moderate Improvement' in conclusions:
-                conclusion = 'Moderate Improvement'
-            elif 'DI' in conclusions or 'Dramatic Improvement' in conclusions:
-                conclusion = 'Dramatic Improvement'
-            elif 'NC' in conclusions or 'Negligible Changes' in conclusions:
-                conclusion = 'Negligible Changes'
-            elif 'NS' in conclusions or 'No Significance' in conclusions:
-                conclusion = 'No Significance'
+            # collect conclusion for kpis
+            kpi_conclusions = [row[x]
+                               for x in row.keys() if x.endswith('-CON')]
+            for c in prioritized_conclusions:
+                if c in kpi_conclusions or abbrs[c] in kpi_conclusions:
+                    conclusion = c
+                    break
 
             # return conclusion or its abbreviation if asked
             return conclusion if not use_abbr else abbrs.get(
