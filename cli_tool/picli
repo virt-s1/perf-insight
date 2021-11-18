@@ -1039,19 +1039,16 @@ if __name__ == '__main__':
     try:
         with open(os.path.expanduser('~/.picli.toml'), 'r') as f:
             user_config = toml.load(f)
-
-        config = {
-            'API_SERVER': user_config.get('api_server', 'localhost:5000'),
-            'OUTPUT_FORMAT': user_config.get('output_format', 'text')
-        }
-
     except Exception as ex:
         echo_warn(
-            'Failed to read config file, use default values: {}'.format(ex))
+            'Failed to load user config, using default: {}'.format(ex))
+        user_config = {}
 
-        config = {
-            'API_SERVER': 'localhost:5000',
-            'OUTPUT_FORMAT': 'text'
-        }
+    config = {
+        'API_SERVER': user_config.get('api_server', 'localhost:5000'),
+        'OUTPUT_FORMAT': user_config.get('output_format', 'text')
+    }
 
     cli(obj=config)
+
+    exit(0)
