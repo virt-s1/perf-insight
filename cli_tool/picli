@@ -12,6 +12,9 @@ from tabulate import tabulate
 import click
 import requests
 import json
+import toml
+import os
+
 
 echo = partial(click.secho, fg='reset')
 echo_log = partial(click.secho, fg='green')
@@ -1031,8 +1034,24 @@ def study_stop(ctx, report_id, username, password):
 
 
 if __name__ == '__main__':
-    config = {
-        'API_SERVER': 'localhost:5000',
-        'OUTPUT_FORMAT': 'text'
-    }
+
+    # Load user configuration
+    try:
+        with open(os.path.expanduser('~/.picli.toml'), 'r') as f:
+            user_config = toml.load(f)
+
+        config = {
+            'API_SERVER': user_config.get('api_server', 'localhost:5000'),
+            'OUTPUT_FORMAT': user_config.get('output_format', 'text')
+        }
+
+    except Exception as ex:
+        echo_warn(
+            'Failed to read config file, use default values: {}'.format(ex))
+
+        config = {
+            'API_SERVER': 'localhost:5000',
+            'OUTPUT_FORMAT': 'text'
+        }
+
     cli(obj=config)

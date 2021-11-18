@@ -46,17 +46,13 @@ flask run --host 0.0.0.0 --port 8080
 
 ## More information
 
-### Access via RESTful API
+### Clean up user data from database
 
-```bash
-curl -XPOST http://$ip:$port/api/v1/security/login -d '{"username": "admin", "password": "$password", "provider": "db"}' -H "Content-Type: application/json"
-export TOKEN=$token
-curl http://$ip:$port/api/v1/storage/ -H "Content-Type: application/json" -H "A/0 /0uthorization: Bearer $TOKEN"
-curl -XPOST http://$ip:$port/api/v1/storage/ -d \
-    '{"backend":"test2","branch":"RHEL-9.1","bs":900,"bw":5,"comments":"Test","compose":"RHEL-9.1.0-20201112.1","cpu":"AMD Opteron(tm) Processor 4284","debug":"testlog","driver":"nvme","format":"xfs","instance_type":"x1.16xlarge","iodepth":18,"iops":50000,"kernel":"5.9.0-38.el9.x86_64","latency":4,"memory":"1900","numjobs":15,"platform":"xen","round":5,"rw":1000,"test_date":"2020-11-17","testrun":"aws_testrun_2","tool_version":"fio-3.23-5.el9"}' \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $TOKEN"
-```
+1. Open database by `sqlite3 ./app.db`
+2. List all tables by `>.table`
+3. Drop all tables except the ones start with `ab_` by `>drop table <table_name>;`
+4. Quit by `>.quit`
+
 
 ## References
 
