@@ -324,6 +324,88 @@ class PerfInsightManager():
 
         return True, {'id': id, 'metadata': metadata}
 
+    def bulk_import_testrun(self, pbench_user, pbench_controller, pbench_prefix,
+                            create_datastore, update_dashboard,
+                            pbench_server='pbench.perf.lab.eng.bos.redhat.com'):
+        """Import a bunch of TestRun from external pbench server.
+
+        Input:
+            pbench_user         - The user for pbench-copy-results
+            pbench_controller   - The controller for pbench-copy-results
+            pbench_prefix       - The prefix for pbench-copy-results
+            create_datastore    - [bool] create datastore
+            update_dashboard    - [bool] update dashboard
+            pbench_server       - The hostname of the pbench-server
+        Return:
+            - (True, json-block), or
+            - (False, message) if something goes wrong.
+        """
+
+        # Determine pbench-server URL
+        pbench_url = None
+        _url_1 = 'http://{}/users/{}/{}/{}/'.format(
+            pbench_server, pbench_user, pbench_controller, pbench_prefix)
+        if requests.get(_url_1).status_code == 200:
+            pbench_url = _url_1
+        else:
+            _url_2 = 'http://{}/users/{}/EC2::{}/{}/'.format(
+                pbench_server, pbench_user, pbench_controller, pbench_prefix)
+            if requests.get(_url_2).status_code == 200:
+                pbench_url = _url_2
+
+        if pbench_url:
+            LOG.debug('Found base URL: "{}".'.format(pbench_url))
+        else:
+            LOG.debug('URL candidate 1: "{}".'.format(_url_1))
+            LOG.debug('URL candidate 2: "{}".'.format(_url_2))
+            msg = 'Cannot find related URLs on speicific pbench-server.'
+            LOG.error(msg)
+            return False, msg
+
+        # Retrive subfolders to compile external_urls
+        html = requests.get(pbench_url)
+        if html.status_code != 200:
+            msg = 'Failed to retrive base URL "{}" (code={}).'.format(
+                pbench_url, html.status_code)
+            LOG.error(msg)
+            return False, msg
+
+        external_urls = []
+        for line in html.text.splitlines():
+            if '{}_'.format(pbench_prefix) in line:
+                for item in line.split('"'):
+                    if item.startswith(pbench_prefix):
+                        LOG.debug('Found subfolder "{}".'.format(item))
+                        external_urls.append(pbench_url + item)
+
+        if external_urls:
+            LOG.debug('Found External URLs: "{}".'.format(external_urls))
+        else:
+            msg = 'Failed to retrive External URLs from "{}".'.format(
+                pbench_url)
+            LOG.error(msg)
+            return False, msg
+
+        # Get metadata.json
+        metadata = {}
+        for external_url in external_urls:
+            html = requests.get(external_url + 'metadata.json')
+            if html.status_code == 200:
+                metadata = json.loads(html.text)
+                break
+
+        if metadata:
+            LOG.debug('Retrived Metadata: "{}".'.format(metadata))
+        else:
+            msg = 'Failed to retrive metadata.json under "{}".'.format(
+                external_urls)
+            LOG.error(msg)
+            return False, msg
+
+        LOG.debug('Call function self.import_testrun(...).')
+        return self.import_testrun(pbench_prefix, create_datastore,
+                                   update_dashboard, metadata, external_urls)
+
     def _generate_plots(self, workspace):
         """Generate plots for pbench-fio results.
         Input:
@@ -1003,8 +1085,8 @@ def add_testrun():
     action = req.get('action')
     if action is None:
         return jsonify({'error': '"action" is missing in request.'}), 415
-    elif not action in ('load', 'import'):
-        return jsonify({'error': '"action" must be "load" or "import".'}), 415
+    elif not action in ('load', 'import', 'imports'):
+        return jsonify({'error': '"action" must be "load", "import", or "imports".'}), 415
 
     id = req.get('id')
     if id is None:
@@ -1047,6 +1129,18 @@ def add_testrun():
         elif not isinstance(external_urls, list):
             return jsonify({'error': '"external_urls" in request must be a json block.'}), 415
 
+    if action == 'imports':
+        pbench_user = req.get('pbench_user')
+        if pbench_user is None:
+            return jsonify({'error': '"pbench_user" is missing in request.'}), 415
+
+        pbench_controller = req.get('pbench_controller')
+        if pbench_controller is None:
+            return jsonify({'error': '"pbench_controller" is missing in request.'}), 415
+
+        pbench_server = req.get(
+            'pbench_server', 'pbench.perf.lab.eng.bos.redhat.com')
+
     # Execute action
     if action == 'load':
         res, con = manager.load_testrun(
@@ -1061,6 +1155,15 @@ def add_testrun():
             update_dashboard=update_dashboard,
             metadata=metadata,
             external_urls=external_urls)
+    elif action == 'imports':
+        res, con = manager.bulk_import_testrun(
+            pbench_server=pbench_server,
+            pbench_user=pbench_user,
+            pbench_controller=pbench_controller,
+            pbench_prefix=id,
+            create_datastore=create_datastore,
+            update_dashboard=update_dashboard
+        )
 
     if res:
         return jsonify(con), 201
