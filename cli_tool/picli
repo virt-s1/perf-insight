@@ -309,6 +309,84 @@ def testrun_import(ctx, testrun_id, external_url, metadata_keypair,
 
 
 @cli.command()
+@click.option('--pbench-server', required=False,
+              default='pbench.perf.lab.eng.bos.redhat.com',
+              help='The hostname of the pbench-server.', show_default=True)
+@click.option('--pbench-user', required=True,
+              prompt='pbench-copy-results user',
+              help='The pbench-copy-results user.')
+@click.option('--pbench-controller', required=True,
+              prompt='pbench-copy-results controller',
+              help='The pbench-copy-results controller (Flavor).')
+@click.option('--pbench-prefix', required=True,
+              prompt='pbench-copy-results prefix',
+              help='The pbench-copy-results prefix (TestRun ID).')
+@click.option('--create-datastore', required=False, type=bool, default=True,
+              help='Create datastore file.', show_default=True)
+@click.option('--update-dashboard', required=False, type=bool, default=True,
+              help='Update dashboard.', show_default=True)
+@click.pass_context
+def testrun_imports(ctx, pbench_user, pbench_controller, pbench_prefix,
+                    pbench_server, create_datastore, update_dashboard):
+    """Import a bunch of TestRun from external pbench server."""
+
+    # Build the request
+    request_url = 'http://{}/testruns'.format(ctx.obj['API_SERVER'])
+    request_method = 'POST'
+    request_headers = {'Content-Type': 'application/json; charset=UTF-8'}
+    request_json = {
+        'action': 'imports',
+        'create_datastore': create_datastore,
+        'update_dashboard': update_dashboard,
+        'id': pbench_prefix,
+        'pbench_user': pbench_user,
+        'pbench_controller': pbench_controller,
+        'pbench_server': pbench_server
+    }
+
+    try:
+        # Send the request
+        response = requests.request(
+            url=request_url, method=request_method,
+            json=request_json, headers=request_headers)
+
+        response.raise_for_status()
+
+    except requests.exceptions.RequestException as ex:
+        # Use json reply if available
+        try:
+            details = response.json()['error']
+        except:
+            details = str(ex)
+
+        # Failed request
+        echo_error(details)
+        exit(1)
+
+    # Successful request
+    jsonresp = response.json()
+
+    if ctx.obj['OUTPUT_FORMAT'] == 'json':
+        # Print the json block directly
+        echo('{}'.format(json.dumps(jsonresp, indent=4)))
+    else:
+        # Parse and print
+        echo_log('TestRun "{}" has been imported.'.format(jsonresp.get('id')))
+        echo_log('\nMETADATA:')
+        table = []
+        for k, v in jsonresp.get('metadata', {}).items():
+            if isinstance(v, list):
+                # Expand the list
+                for sv in v:
+                    table.append([k, sv])
+            else:
+                table.append([k, v])
+        echo_log(mklist(table))
+
+    exit(0)
+
+
+@cli.command()
 @click.option('--testrun-id', required=True, prompt='TestRun ID',
               help='The TestRun to be processed.')
 @click.pass_context
@@ -1039,19 +1117,16 @@ if __name__ == '__main__':
     try:
         with open(os.path.expanduser('~/.picli.toml'), 'r') as f:
             user_config = toml.load(f)
-
-        config = {
-            'API_SERVER': user_config.get('api_server', 'localhost:5000'),
-            'OUTPUT_FORMAT': user_config.get('output_format', 'text')
-        }
-
     except Exception as ex:
         echo_warn(
-            'Failed to read config file, use default values: {}'.format(ex))
+            'Failed to load user config, using default: {}'.format(ex))
+        user_config = {}
 
-        config = {
-            'API_SERVER': 'localhost:5000',
-            'OUTPUT_FORMAT': 'text'
-        }
+    config = {
+        'API_SERVER': user_config.get('api_server', 'localhost:5000'),
+        'OUTPUT_FORMAT': user_config.get('output_format', 'text')
+    }
 
     cli(obj=config)
+
+    exit(0)
