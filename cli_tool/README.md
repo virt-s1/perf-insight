@@ -43,6 +43,9 @@ picli testrun-import --testrun-id fio_KVM_RHEL_8.3.0_x86_64_Import_External_Demo
     --metadata-keypair testrun-type=fio \
     --metadata-keypair tool-fio-version=fio-3.19-3.el8.x86_64
 
+# Import a TestRun from external pbench-server (a more graceful way)
+picli testrun-imports --pbench-user ${pbench_username} --pbench-controller ${test_machine} --pbench-prefix ${testrun_id}
+
 # List all benchmark reports
 picli benchmark-list
 
@@ -75,3 +78,8 @@ picli study-start --report-id benchmark_fio_Azure_RHEL-8.5.0-20210706.n.0_x86_ge
 picli study-stop --report-id benchmark_fio_Azure_RHEL-8.5.0-20210706.n.0_x86_gen1_localssd_quick_D210706T234925_over_fio_Azure_RHEL-8.4.0-20210503.1_x86_gen1_localssd_quick_D210508T163611 --username cheshi --password redhat
 
 ```
+
+## Notes
+The new command `picli testrun-imports` is recommended for smarter imports, see details:
+1. https://github.com/virt-s1/perf-agent/tree/main/pbench_runner#52-store-logs-on-pbench-server
+2. https://github.com/virt-s1/perf-agent/tree/main/pbench_runner#62-logs-stored-on-pbench-server
