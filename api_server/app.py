@@ -372,11 +372,13 @@ class PerfInsightManager():
 
         external_urls = []
         for line in html.text.splitlines():
-            if '{}_'.format(pbench_prefix) in line:
-                for item in line.split('"'):
-                    if item.startswith(pbench_prefix):
-                        LOG.debug('Found subfolder "{}".'.format(item))
-                        external_urls.append(pbench_url + item)
+            # Subfolder name may start with pbench_prefix or 'fio_bs'
+            for prefix in [pbench_prefix, "fio_bs"]:
+                if '{}_'.format(prefix) in line:
+                    for item in line.split('"'):
+                        if item.startswith(prefix):
+                            LOG.debug('Found subfolder "{}".'.format(item))
+                            external_urls.append(pbench_url + item)
 
         if external_urls:
             LOG.debug('Found External URLs: "{}".'.format(external_urls))
